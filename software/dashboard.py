@@ -7,14 +7,23 @@ import datetime
 import random
 import os
 
-st.set_page_config(page_title="Sprint Lab", page_icon="⚡", layout="wide")
+# ── MUST BE FIRST STREAMLIT CALL ──────────────────────────────────────────────
+st.set_page_config(
+    page_title="DRIVE PHASE",
+    page_icon="🔥",
+    layout="wide",
+    initial_sidebar_state="expanded",
+    menu_items={
+        'Get Help': None,
+        'Report a bug': None,
+        'About': "DRIVE PHASE — Sprint analytics built for athletes.",
+    }
+)
 
-# Works locally (../data/) and on Streamlit Cloud (same directory as script)
 _here = os.path.dirname(os.path.abspath(__file__))
-DB = os.path.join(_here, '..', 'data', 'sprint_data.db')
+DB    = os.path.join(_here, '..', 'data', 'sprint_data.db')
 os.makedirs(os.path.dirname(DB), exist_ok=True)
 
-# ── Auto-seed on first boot ────────────────────────────────────────────────────
 def _bootstrap():
     conn = sqlite3.connect(DB)
     conn.execute('''CREATE TABLE IF NOT EXISTS runs (
@@ -24,13 +33,12 @@ def _bootstrap():
         split_30_60 REAL, total REAL, top_speed REAL
     )''')
     conn.commit()
-    count = conn.execute('SELECT COUNT(*) FROM runs').fetchone()[0]
-    if count == 0:
+    if conn.execute('SELECT COUNT(*) FROM runs').fetchone()[0] == 0:
         athletes = [
-            ("Franklin",  1.92, 2.48, 3.20), ("Marcus",   1.88, 2.42, 3.12),
-            ("Jordan",    1.95, 2.55, 3.30), ("Darius",   1.90, 2.46, 3.18),
-            ("Tyler",     1.97, 2.58, 3.35), ("Zion",     1.86, 2.39, 3.08),
-            ("Cameron",   1.93, 2.50, 3.22), ("Elijah",   1.89, 2.44, 3.15),
+            ("Franklin", 1.92, 2.48, 3.20), ("Marcus",  1.88, 2.42, 3.12),
+            ("Jordan",   1.95, 2.55, 3.30), ("Darius",  1.90, 2.46, 3.18),
+            ("Tyler",    1.97, 2.58, 3.35), ("Zion",    1.86, 2.39, 3.08),
+            ("Cameron",  1.93, 2.50, 3.22), ("Elijah",  1.89, 2.44, 3.15),
         ]
         base = datetime.datetime.now() - datetime.timedelta(days=30)
         for name, b1, b2, b3 in athletes:
@@ -65,14 +73,18 @@ COLORS = {
     'green':        '#1DDB8B',
     'red':          '#FF4D6A',
 }
-
 SPLIT_COLORS = [COLORS['blue'], COLORS['lavender'], COLORS['pink']]
-SCALE = [[0, COLORS['blue']], [0.5, COLORS['lavender']], [1.0, COLORS['pink']]]
+SCALE        = [[0, COLORS['blue']], [0.5, COLORS['lavender']], [1.0, COLORS['pink']]]
+
+# ── Fonts — loaded via <link> before CSS block ─────────────────────────────────
+st.markdown("""
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+""", unsafe_allow_html=True)
 
 # ── CSS ────────────────────────────────────────────────────────────────────────
 st.markdown("""<style>
-@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=JetBrains+Mono:wght@400;500&display=swap');
-
 * { box-sizing: border-box; }
 
 [data-testid="stAppViewContainer"],
@@ -82,13 +94,17 @@ st.markdown("""<style>
 [data-testid="stMainBlockContainer"],
 [data-testid="block-container"] {
     background-color: #0A0A0F !important;
-    padding-top: 1.5rem !important;
+    padding-top: 1rem !important;
+    padding-left: 2rem !important;
+    padding-right: 2rem !important;
     max-width: 1400px !important;
 }
 
 [data-testid="stSidebar"] {
     background-color: #0D0D14 !important;
     border-right: 1px solid #1E1E2E !important;
+    min-width: 240px !important;
+    max-width: 280px !important;
 }
 [data-testid="stSidebar"] * {
     font-family: 'DM Sans', sans-serif !important;
@@ -109,7 +125,7 @@ st.markdown("""<style>
     margin-bottom: 4px !important;
     display: block !important;
     font-family: 'DM Sans', sans-serif !important;
-    font-size: 0.8rem !important;
+    font-size: 0.78rem !important;
     letter-spacing: 0.1em !important;
     text-transform: uppercase !important;
     color: #8A8A9A !important;
@@ -137,52 +153,39 @@ st.markdown("""<style>
     outline: none !important;
 }
 [data-testid="stTextInput"] label {
-    font-family: 'DM Sans', sans-serif !important;
     font-size: 0.7rem !important;
     letter-spacing: 0.12em !important;
     text-transform: uppercase !important;
     color: #555566 !important;
 }
 
-[data-testid="metric-container"] {
-    background: #12121A !important;
-    border: 1px solid #1E1E2E !important;
-    border-top: 3px solid #89C4E1 !important;
-    border-radius: 12px !important;
-    padding: 20px 18px !important;
-    box-shadow: 0 0 24px rgba(137,196,225,0.06) !important;
-    transition: transform 0.2s ease, box-shadow 0.2s ease !important;
-}
-[data-testid="metric-container"]:hover {
-    transform: translateY(-2px) !important;
-    box-shadow: 0 0 32px rgba(137,196,225,0.14) !important;
-}
-[data-testid="metric-container"]:nth-child(even) {
-    border-top-color: #FF3D8A !important;
-    box-shadow: 0 0 24px rgba(255,61,138,0.06) !important;
-}
-[data-testid="metric-container"]:nth-child(even):hover {
-    box-shadow: 0 0 32px rgba(255,61,138,0.14) !important;
-}
-
 [data-testid="stMetricValue"] {
     font-family: 'JetBrains Mono', monospace !important;
-    font-size: 2.2rem !important;
+    font-size: 1.8rem !important;
     font-weight: 500 !important;
     color: #F0F0F0 !important;
     line-height: 1.1 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
 }
 [data-testid="stMetricLabel"] {
     font-family: 'DM Sans', sans-serif !important;
-    font-size: 0.68rem !important;
+    font-size: 0.65rem !important;
     letter-spacing: 0.14em !important;
     text-transform: uppercase !important;
     color: #555566 !important;
 }
+[data-testid="stMetricDeltaIcon-Up"],
+[data-testid="stMetricDeltaIcon-Down"] { display: none !important; }
 [data-testid="stMetricDelta"] svg { display: none !important; }
+[data-testid="stMetricDelta"] {
+    font-family: 'JetBrains Mono', monospace !important;
+    font-size: 0.75rem !important;
+}
 [data-testid="stMetricDelta"] > div {
     font-family: 'JetBrains Mono', monospace !important;
-    font-size: 0.78rem !important;
+    font-size: 0.75rem !important;
     font-weight: 500 !important;
 }
 [data-testid="stMetricDelta"][data-direction="positive"] > div { color: #1DDB8B !important; }
@@ -233,8 +236,15 @@ hr {
     border: none !important;
     height: 1px !important;
     background: linear-gradient(90deg, transparent 0%, #89C4E1 30%, #FF3D8A 70%, transparent 100%) !important;
-    margin: 28px 0 !important;
+    margin: 24px 0 !important;
     opacity: 0.6 !important;
+}
+
+[data-testid="stPlotlyChart"] > div {
+    background: #12121A !important;
+    border-radius: 10px !important;
+    padding: 8px !important;
+    border: 1px solid #1E1E2E !important;
 }
 
 [data-testid="stDataFrame"] {
@@ -242,13 +252,20 @@ hr {
     border-radius: 10px !important;
     overflow: hidden !important;
 }
+iframe[title="streamlit_dataframe"],
+[data-testid="stDataFrame"] iframe {
+    background: #12121A !important;
+    color-scheme: dark !important;
+}
+.stDataFrame [data-testid="stDataFrameResizable"] {
+    background: #12121A !important;
+}
 iframe { background: #12121A !important; }
 
 [data-testid="stDownloadButton"] button {
     background: transparent !important;
     border: 1px solid #89C4E1 !important;
     color: #89C4E1 !important;
-    font-family: 'DM Sans', sans-serif !important;
     font-size: 0.78rem !important;
     letter-spacing: 0.1em !important;
     text-transform: uppercase !important;
@@ -265,7 +282,6 @@ iframe { background: #12121A !important; }
     background: linear-gradient(135deg, #89C4E1, #FF3D8A) !important;
     border: none !important;
     color: #0A0A0F !important;
-    font-family: 'DM Sans', sans-serif !important;
     font-size: 0.78rem !important;
     font-weight: 600 !important;
     letter-spacing: 0.1em !important;
@@ -316,19 +332,16 @@ def style_chart(fig, height=380):
         height=height,
         hovermode='x unified',
         hoverlabel=dict(
-            bgcolor='#1A1A26',
-            bordercolor='#2A2A3E',
+            bgcolor='#1A1A26', bordercolor='#2A2A3E',
             font=dict(family='DM Sans', color='#F0F0F0', size=12),
         ),
         xaxis=dict(
-            gridcolor='#1E1E2E', linecolor='#1E1E2E',
-            tickcolor='#555566',
+            gridcolor='#1E1E2E', linecolor='#1E1E2E', tickcolor='#555566',
             tickfont=dict(family='JetBrains Mono', size=11, color='#555566'),
             showgrid=True, zeroline=False,
         ),
         yaxis=dict(
-            gridcolor='#1E1E2E', linecolor='#1E1E2E',
-            tickcolor='#555566',
+            gridcolor='#1E1E2E', linecolor='#1E1E2E', tickcolor='#555566',
             tickfont=dict(family='JetBrains Mono', size=11, color='#555566'),
             showgrid=True, zeroline=False,
         ),
@@ -336,7 +349,7 @@ def style_chart(fig, height=380):
             bgcolor='#0A0A0F', bordercolor='#1E1E2E', borderwidth=1,
             font=dict(family='DM Sans', size=11, color='#8A8A9A'),
         ),
-        margin=dict(l=16, r=16, t=36, b=16),
+        margin=dict(l=16, r=16, t=48, b=16),
     )
     fig.update_traces(marker=dict(line=dict(width=0)))
     return fig
@@ -350,7 +363,7 @@ def view_header(title, subtitle=None):
     st.markdown(f"""
     <div style="border-top:3px solid transparent;
                 border-image:linear-gradient(90deg,#89C4E1,#FF3D8A) 1;
-                padding:16px 0 12px;margin-bottom:24px;
+                padding:12px 0 10px;margin-bottom:20px;
                 display:flex;align-items:flex-end;justify-content:space-between;">
         <div>
             <h1 style="margin:0;padding:0;">{title}</h1>
@@ -365,7 +378,7 @@ def view_header(title, subtitle=None):
 def section_header(label, accent='blue'):
     color = '#89C4E1' if accent == 'blue' else '#FF3D8A'
     st.markdown(f"""
-    <div style="display:flex;align-items:center;gap:12px;margin:28px 0 14px;">
+    <div style="display:flex;align-items:center;gap:12px;margin:24px 0 12px;">
         <div style="width:3px;height:20px;background:{color};border-radius:2px;flex-shrink:0;"></div>
         <span style="font-family:Bebas Neue,sans-serif;font-size:1.3rem;
                      letter-spacing:0.08em;color:{color};">{label}</span>
@@ -399,14 +412,42 @@ def metric_card(col, icon, label, value, delta=None, accent='blue'):
     col.markdown(f"""
     <div style="background:#12121A;border:1px solid #1E1E2E;
                 border-top:3px solid {border_color};border-radius:12px;
-                padding:18px 16px;box-shadow:0 0 24px {glow};">
-        <div style="font-family:DM Sans,sans-serif;font-size:0.65rem;letter-spacing:0.14em;
-                    text-transform:uppercase;color:#555566;margin-bottom:8px;">
+                padding:16px 14px;box-shadow:0 0 24px {glow};height:100%;">
+        <div style="font-family:DM Sans,sans-serif;font-size:0.62rem;letter-spacing:0.14em;
+                    text-transform:uppercase;color:#555566;margin-bottom:6px;">
             {icon}&nbsp; {label}
         </div>
-        <div style="font-family:JetBrains Mono,monospace;font-size:2rem;
-                    color:#F0F0F0;line-height:1.1;">{value}</div>
+        <div style="font-family:JetBrains Mono,monospace;font-size:1.8rem;
+                    color:#F0F0F0;line-height:1.1;white-space:nowrap;
+                    overflow:hidden;text-overflow:ellipsis;">{value}</div>
         {delta_html}
+    </div>""", unsafe_allow_html=True)
+
+
+def empty_state(message="NO DATA FOR THIS VIEW", sub="Log some runs to unlock this analysis."):
+    st.markdown(f"""
+    <div style="background:#12121A;border:1px solid #1E1E2E;border-radius:12px;
+                padding:60px 40px;text-align:center;margin:16px 0;">
+        <div style="font-family:Bebas Neue,sans-serif;font-size:2.2rem;
+                    letter-spacing:0.06em;color:#1E1E2E;">{message}</div>
+        <div style="font-family:DM Sans,sans-serif;font-size:0.8rem;
+                    color:#555566;margin-top:10px;letter-spacing:0.06em;">{sub}</div>
+    </div>""", unsafe_allow_html=True)
+
+
+def render_footer():
+    st.markdown("""
+    <div style="margin-top:60px;padding:20px 0;border-top:1px solid #1E1E2E;
+                display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-family:Bebas Neue,sans-serif;font-size:1rem;
+                     letter-spacing:0.1em;color:#1E1E2E;">DRIVE PHASE</span>
+        <span style="font-family:DM Sans,sans-serif;font-size:0.7rem;
+                     color:#2A2A3E;letter-spacing:0.08em;">
+            built by athletes · powered by data
+        </span>
+        <span style="font-family:JetBrains Mono,monospace;font-size:0.7rem;color:#2A2A3E;">
+            v1.0
+        </span>
     </div>""", unsafe_allow_html=True)
 
 
@@ -452,22 +493,22 @@ def load_leaderboard():
 # ── Sidebar ────────────────────────────────────────────────────────────────────
 with st.sidebar:
     st.markdown("""
-    <div style="padding:8px 0 20px;">
+    <div style="padding:8px 0 16px;">
         <div style="font-family:Bebas Neue,sans-serif;font-size:2rem;
-                    letter-spacing:0.1em;color:#F0F0F0;">⚡ SPRINT LAB</div>
+                    letter-spacing:0.1em;color:#F0F0F0;">🔥 DRIVE PHASE</div>
         <div style="font-family:DM Sans,sans-serif;font-size:0.65rem;
                     letter-spacing:0.18em;text-transform:uppercase;
-                    color:#555566;margin-top:2px;">track · analyze · dominate</div>
+                    color:#555566;margin-top:2px;">acceleration starts here</div>
     </div>
     <hr style="border:none;height:1px;background:linear-gradient(90deg,#89C4E1,#FF3D8A);
-               margin:0 0 20px;opacity:0.4;">
+               margin:0 0 16px;opacity:0.4;">
     """, unsafe_allow_html=True)
 
     athlete = st.text_input("Athlete", value="Franklin",
                              label_visibility="collapsed",
                              placeholder="Athlete name")
 
-    st.markdown('<div style="height:12px"></div>', unsafe_allow_html=True)
+    st.markdown('<div style="height:8px"></div>', unsafe_allow_html=True)
 
     view_raw = st.radio("", [
         "🏅  LEADERBOARD",
@@ -480,7 +521,7 @@ with st.sidebar:
 
     view = view_raw.split("  ")[1]
 
-    st.markdown('<div style="height:32px"></div>', unsafe_allow_html=True)
+    st.markdown('<div style="height:24px"></div>', unsafe_allow_html=True)
     sidebar_stats = st.empty()
 
     if st.button("↺  REFRESH", use_container_width=True):
@@ -491,7 +532,7 @@ with st.sidebar:
 # ── LEADERBOARD ────────────────────────────────────────────────────────────────
 if view == "LEADERBOARD":
     lb = load_leaderboard()
-    view_header("LEADERBOARD", f"{len(lb)} athletes ranked · auto-updates every 5s")
+    view_header("DRIVE PHASE", f"{len(lb)} athletes ranked · auto-updates every 5s")
 
     if lb.empty:
         st.markdown("""
@@ -506,10 +547,11 @@ if view == "LEADERBOARD":
                 Get on the track and break some beams.
             </div>
         </div>""", unsafe_allow_html=True)
+        render_footer()
         st.stop()
 
-    MEDALS       = {1: "🥇", 2: "🥈", 3: "🥉"}
-    PODIUM_COLS  = {1: COLORS['pink'], 2: COLORS['blue'], 3: COLORS['lavender']}
+    MEDALS      = {1: "🥇", 2: "🥈", 3: "🥉"}
+    PODIUM_COLS = {1: COLORS['pink'], 2: COLORS['blue'], 3: COLORS['lavender']}
 
     section_header("PODIUM", accent='pink')
     cols = st.columns(3)
@@ -582,6 +624,7 @@ if view == "LEADERBOARD":
     style_chart(fig2, height=340)
     fig2.update_layout(bargap=0.35)
     st.plotly_chart(fig2, use_container_width=True)
+    render_footer()
     st.stop()
 
 
@@ -591,30 +634,22 @@ df = load_athlete(athlete)
 if not df.empty:
     days = (df['date'].max() - df['date'].min()).days
     sidebar_stats.markdown(f"""
-    <div style="background:#12121A;border:1px solid #1E1E2E;
-                border-radius:10px;padding:16px;">
-        <div style="font-family:DM Sans,sans-serif;font-size:0.65rem;letter-spacing:0.12em;
-                    text-transform:uppercase;color:#555566;margin-bottom:12px;">
-            Session Stats
+    <div style="background:#0D0D14;border:1px solid #1E1E2E;border-radius:10px;padding:14px 16px;">
+        <div style="font-family:DM Sans,sans-serif;font-size:0.62rem;letter-spacing:0.14em;
+                    text-transform:uppercase;color:#2A2A3E;margin-bottom:10px;">
+            Season snapshot
         </div>
-        <div style="display:flex;flex-direction:column;gap:8px;">
-            <div style="display:flex;justify-content:space-between;align-items:center;">
-                <span style="font-family:DM Sans,sans-serif;font-size:0.75rem;color:#555566;">Total runs</span>
-                <span style="font-family:JetBrains Mono,monospace;font-size:0.85rem;color:#89C4E1;">{len(df)}</span>
-            </div>
-            <div style="display:flex;justify-content:space-between;align-items:center;">
-                <span style="font-family:DM Sans,sans-serif;font-size:0.75rem;color:#555566;">Days training</span>
-                <span style="font-family:JetBrains Mono,monospace;font-size:0.85rem;color:#89C4E1;">{days}</span>
-            </div>
-            <div style="display:flex;justify-content:space-between;align-items:center;">
-                <span style="font-family:DM Sans,sans-serif;font-size:0.75rem;color:#555566;">Best total</span>
-                <span style="font-family:JetBrains Mono,monospace;font-size:0.85rem;color:#FF3D8A;">{df['total'].min():.2f}s</span>
-            </div>
-            <div style="display:flex;justify-content:space-between;align-items:center;">
-                <span style="font-family:DM Sans,sans-serif;font-size:0.75rem;color:#555566;">Top speed</span>
-                <span style="font-family:JetBrains Mono,monospace;font-size:0.85rem;color:#FF3D8A;">{df['top_speed'].max():.1f} mph</span>
-            </div>
-        </div>
+        {''.join([f"""
+        <div style="display:flex;justify-content:space-between;align-items:center;
+                    padding:5px 0;border-bottom:1px solid #1E1E2E;">
+            <span style="font-family:DM Sans,sans-serif;font-size:0.72rem;color:#555566;">{label}</span>
+            <span style="font-family:JetBrains Mono,monospace;font-size:0.8rem;color:{color};">{value}</span>
+        </div>""" for label, value, color in [
+            ('Runs logged', str(len(df)),                          '#89C4E1'),
+            ('Days active', str(days),                             '#89C4E1'),
+            ('Best total',  f"{df['total'].min():.2f}s",           '#FF3D8A'),
+            ('Top speed',   f"{df['top_speed'].max():.1f} mph",    '#FF3D8A'),
+        ]])}
     </div>""", unsafe_allow_html=True)
 
 if df.empty:
@@ -630,55 +665,70 @@ if df.empty:
             Get on the track and break some beams.
         </div>
     </div>""", unsafe_allow_html=True)
+    render_footer()
     st.stop()
 
 best   = df.loc[df['total'].idxmin()]
 latest = df.iloc[0]
 
-# ── Page header + metrics ──────────────────────────────────────────────────────
-view_header("SPRINT LAB",
-            f"{len(df)} runs logged · season {df['date'].dt.year.iloc[0]}")
+# ── Page header ────────────────────────────────────────────────────────────────
+view_header("DRIVE PHASE",
+            f"{len(df)} runs logged · {df['date'].dt.year.iloc[0]} season")
 
-c1, c2, c3, c4, c5, c6 = st.columns(6)
-metric_card(c1, '📊', 'Total Runs',    str(len(df)),                          accent='blue')
-metric_card(c2, '⏱',  'Latest Total',  f"{latest['total']:.2f}s",             accent='pink')
+# ── Metric strip — 2 rows of 3 ────────────────────────────────────────────────
+c1, c2, c3 = st.columns(3)
+metric_card(c1, '📊', 'Total Runs',    str(len(df)),                       accent='blue')
+metric_card(c2, '⏱',  'Latest Total',  f"{latest['total']:.2f}s",          accent='pink')
 metric_card(c3, '🏆', 'Personal Best', f"{best['total']:.2f}s",
-            delta=latest['total'] - best['total'],                             accent='blue')
-metric_card(c4, '🚀', 'Best 0–10m',   f"{df['split_0_10'].min():.2f}s",      accent='pink')
-metric_card(c5, '⚡', 'Best 10–30m',  f"{df['split_10_30'].min():.2f}s",     accent='blue')
-metric_card(c6, '💨', 'Top Speed',    f"{df['top_speed'].max():.1f} mph",     accent='pink')
+            delta=latest['total'] - best['total'],                          accent='blue')
+st.markdown('<div style="height:8px"></div>', unsafe_allow_html=True)
+c4, c5, c6 = st.columns(3)
+metric_card(c4, '🚀', 'Best 0–10m',  f"{df['split_0_10'].min():.2f}s",    accent='pink')
+metric_card(c5, '⚡', 'Best 10–30m', f"{df['split_10_30'].min():.2f}s",   accent='blue')
+metric_card(c6, '💨', 'Top Speed',   f"{df['top_speed'].max():.1f} mph",   accent='pink')
 
 gradient_divider()
 
 # ── SEASON ARC ─────────────────────────────────────────────────────────────────
 if view == "SEASON ARC":
-    section_header("SPLIT TRENDS — FULL SEASON", accent='blue')
-    df_asc = df[::-1]
-    fig = go.Figure()
-    for col, label, color in zip(
-        ['split_0_10', 'split_10_30', 'split_30_60'],
-        ['0–10m', '10–30m', '30–60m'],
-        SPLIT_COLORS
-    ):
-        fig.add_trace(go.Scatter(
-            x=df_asc['run_number'], y=df_asc[col],
-            name=label, mode='lines+markers',
-            line=dict(color=color, width=2),
-            marker=dict(size=5, color=color),
-        ))
-    style_chart(fig, height=380)
-    fig.update_layout(xaxis_title="Run number", yaxis_title="Split time (s)")
-    st.plotly_chart(fig, use_container_width=True)
+    if len(df) < 2:
+        empty_state("NOT ENOUGH DATA", "You need at least 2 runs to see season trends.")
+    else:
+        section_header("SPLIT TRENDS — FULL SEASON", accent='blue')
+        df_asc = df[::-1]
+        fig = go.Figure()
+        for i, (col, label, color) in enumerate(zip(
+            ['split_0_10', 'split_10_30', 'split_30_60'],
+            ['0–10m', '10–30m', '30–60m'],
+            SPLIT_COLORS
+        )):
+            trace_kwargs = dict(
+                x=df_asc['run_number'], y=df_asc[col],
+                name=label, mode='lines+markers',
+                line=dict(color=color, width=2.5),
+                marker=dict(size=5, color=color),
+            )
+            if i == 0:
+                trace_kwargs['fill']      = 'tozeroy'
+                trace_kwargs['fillcolor'] = 'rgba(137,196,225,0.05)'
+            fig.add_trace(go.Scatter(**trace_kwargs))
+        style_chart(fig, height=380)
+        fig.update_layout(
+            xaxis_title="Run number",
+            yaxis_title="Split time (s)",
+            title=dict(text='SPLIT TRENDS', font=dict(family='Bebas Neue', size=18, color='#555566'), x=0.01),
+        )
+        st.plotly_chart(fig, use_container_width=True)
 
-    section_header("WEEKLY AVERAGE TOTAL TIME", accent='pink')
-    df['week'] = df['date'].dt.to_period('W').astype(str)
-    weekly = df.groupby('week')['total'].mean().reset_index()
-    fig2 = px.bar(weekly, x='week', y='total',
-                  color='total', color_continuous_scale=SCALE,
-                  labels={'total': 'Avg total (s)', 'week': 'Week'})
-    style_chart(fig2, height=300)
-    fig2.update_layout(showlegend=False, coloraxis_showscale=False)
-    st.plotly_chart(fig2, use_container_width=True)
+        section_header("WEEKLY AVERAGE TOTAL TIME", accent='pink')
+        df['week'] = df['date'].dt.to_period('W').astype(str)
+        weekly = df.groupby('week')['total'].mean().reset_index()
+        fig2 = px.bar(weekly, x='week', y='total',
+                      color='total', color_continuous_scale=SCALE,
+                      labels={'total': 'Avg total (s)', 'week': 'Week'})
+        style_chart(fig2, height=300)
+        fig2.update_layout(showlegend=False, coloraxis_showscale=False)
+        st.plotly_chart(fig2, use_container_width=True)
 
 # ── SESSION BREAKDOWN ─────────────────────────────────────────────────────────
 elif view == "SESSION BREAKDOWN":
@@ -686,7 +736,16 @@ elif view == "SESSION BREAKDOWN":
     today = df[df['date'].dt.date == df['date'].dt.date.iloc[0]]
 
     if len(today) < 2:
-        info_card("Only one run in this session. Run multiple reps to see the fatigue chart.", accent='blue')
+        st.markdown("""
+        <div style="background:#12121A;border:1px solid #1E1E2E;border-radius:10px;
+                    padding:40px;text-align:center;">
+            <div style="font-family:Bebas Neue,sans-serif;font-size:1.6rem;
+                        color:#1E1E2E;letter-spacing:0.06em;">SINGLE REP SESSION</div>
+            <div style="font-family:DM Sans,sans-serif;font-size:0.8rem;
+                        color:#555566;margin-top:8px;">
+                Run multiple reps to unlock fatigue analysis
+            </div>
+        </div>""", unsafe_allow_html=True)
     else:
         today_asc = today[::-1].reset_index(drop=True)
         today_asc['rep'] = [f"Rep {i+1}" for i in range(len(today_asc))]
@@ -705,46 +764,49 @@ elif view == "SESSION BREAKDOWN":
 
 # ── HALL OF RECORDS ───────────────────────────────────────────────────────────
 elif view == "HALL OF RECORDS":
-    section_header("PERSONAL BEST PROGRESSION", accent='blue')
-    df_asc = df[::-1].copy()
-    df_asc['pb_total'] = df_asc['total'].cummin()
-    df_asc['pb_0_10']  = df_asc['split_0_10'].cummin()
-    df_asc['pb_10_30'] = df_asc['split_10_30'].cummin()
+    if len(df) < 2:
+        empty_state("NOT ENOUGH DATA", "You need at least 2 runs to track personal best progression.")
+    else:
+        section_header("PERSONAL BEST PROGRESSION", accent='blue')
+        df_asc = df[::-1].copy()
+        df_asc['pb_total'] = df_asc['total'].cummin()
+        df_asc['pb_0_10']  = df_asc['split_0_10'].cummin()
+        df_asc['pb_10_30'] = df_asc['split_10_30'].cummin()
 
-    fig = go.Figure()
-    for col, label, color in [
-        ('pb_total', 'Total PB',  COLORS['pink']),
-        ('pb_0_10',  '0–10m PB',  COLORS['blue']),
-        ('pb_10_30', '10–30m PB', COLORS['lavender']),
-    ]:
-        fig.add_trace(go.Scatter(
-            x=df_asc['run_number'], y=df_asc[col],
-            name=label, mode='lines',
-            line=dict(width=2.5, color=color),
-        ))
-    style_chart(fig, height=380)
-    fig.update_layout(xaxis_title='Run number', yaxis_title='Time (s)')
-    st.plotly_chart(fig, use_container_width=True)
+        fig = go.Figure()
+        for col, label, color in [
+            ('pb_total', 'Total PB',  COLORS['pink']),
+            ('pb_0_10',  '0–10m PB',  COLORS['blue']),
+            ('pb_10_30', '10–30m PB', COLORS['lavender']),
+        ]:
+            fig.add_trace(go.Scatter(
+                x=df_asc['run_number'], y=df_asc[col],
+                name=label, mode='lines',
+                line=dict(shape='hv', width=2.5, color=color),
+            ))
+        style_chart(fig, height=380)
+        fig.update_layout(xaxis_title='Run number', yaxis_title='Time (s)')
+        st.plotly_chart(fig, use_container_width=True)
 
-    section_header("CURRENT PERSONAL BESTS", accent='pink')
-    pb_data = {
-        "Split":  ["0–10m", "10–30m", "30–60m", "Total", "Top speed"],
-        "Best":   [
-            f"{df['split_0_10'].min():.3f}s",
-            f"{df['split_10_30'].min():.3f}s",
-            f"{df['split_30_60'].min():.3f}s",
-            f"{df['total'].min():.3f}s",
-            f"{df['top_speed'].max():.1f} mph",
-        ],
-        "Run #":  [
-            int(df.loc[df['split_0_10'].idxmin(), 'run_number']),
-            int(df.loc[df['split_10_30'].idxmin(), 'run_number']),
-            int(df.loc[df['split_30_60'].idxmin(), 'run_number']),
-            int(df.loc[df['total'].idxmin(), 'run_number']),
-            int(df.loc[df['top_speed'].idxmax(), 'run_number']),
-        ],
-    }
-    st.dataframe(pd.DataFrame(pb_data), use_container_width=True, hide_index=True)
+        section_header("CURRENT PERSONAL BESTS", accent='pink')
+        pb_data = {
+            "Split": ["0–10m", "10–30m", "30–60m", "Total", "Top speed"],
+            "Best":  [
+                f"{df['split_0_10'].min():.3f}s",
+                f"{df['split_10_30'].min():.3f}s",
+                f"{df['split_30_60'].min():.3f}s",
+                f"{df['total'].min():.3f}s",
+                f"{df['top_speed'].max():.1f} mph",
+            ],
+            "Run #": [
+                int(df.loc[df['split_0_10'].idxmin(), 'run_number']),
+                int(df.loc[df['split_10_30'].idxmin(), 'run_number']),
+                int(df.loc[df['split_30_60'].idxmin(), 'run_number']),
+                int(df.loc[df['total'].idxmin(), 'run_number']),
+                int(df.loc[df['top_speed'].idxmax(), 'run_number']),
+            ],
+        }
+        st.dataframe(pd.DataFrame(pb_data), use_container_width=True, hide_index=True)
 
 # ── SPEED PROFILE ─────────────────────────────────────────────────────────────
 elif view == "SPEED PROFILE":
@@ -756,6 +818,16 @@ elif view == "SPEED PROFILE":
         return [0, 10, 30, 60], velocities
 
     fig = go.Figure()
+    fig.add_hrect(
+        y0=18, y1=24,
+        fillcolor='rgba(137,196,225,0.04)',
+        line_color='#89C4E1', line_width=0.5,
+        annotation_text='ELITE ZONE',
+        annotation_position='top left',
+        annotation_font_size=10,
+        annotation_font_color='#555566',
+        annotation_font_family='DM Sans',
+    )
     for row, label, color, dash, width in [
         (latest, 'Latest run',    COLORS['blue'],  'solid', 2.5),
         (best,   'Personal best', COLORS['white'], 'dot',   1.5),
@@ -779,4 +851,6 @@ elif view == "DATA VAULT":
     display.columns = ['Run', 'Date', '0–10m', '10–30m', '30–60m', 'Total', 'Top Speed (mph)']
     st.dataframe(display, use_container_width=True, hide_index=True)
     st.download_button("↓  EXPORT CSV", display.to_csv(index=False),
-                       "sprint_data.csv", "text/csv")
+                       "drive_phase_data.csv", "text/csv")
+
+render_footer()
