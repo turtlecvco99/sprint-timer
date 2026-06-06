@@ -133,11 +133,36 @@ html, body, [data-testid="stApp"],
 footer { visibility:hidden; }
 [data-testid="stToolbar"] { display:none; }
 
-/* ── Hide sidebar collapse/expand toggle button ── */
-[data-testid="stSidebarCollapsedControl"] { display:none !important; }
-[data-testid="stSidebarCollapseButton"]   { display:none !important; }
-[data-testid="collapsedControl"]          { display:none !important; }
-button[kind="headerNoPadding"]            { display:none !important; }
+/* ── Force sidebar to always stay expanded — never collapse ── */
+section[data-testid="stSidebar"] {
+    transform: none !important;
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    min-width: 260px !important;
+    width: 260px !important;
+    left: 0 !important;
+    position: relative !important;
+}
+section[data-testid="stSidebar"][aria-expanded="false"] {
+    transform: none !important;
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    width: 260px !important;
+    min-width: 260px !important;
+    left: 0 !important;
+}
+/* Hide only the collapse button inside the sidebar */
+[data-testid="stSidebarCollapseButton"],
+[data-testid="stSidebarCollapseButton"] button {
+    display: none !important;
+}
+/* Keep the expand button visible so sidebar can always be restored */
+[data-testid="stSidebarCollapsedControl"],
+[data-testid="collapsedControl"] {
+    display: none !important;
+}
 
 /* ── Sidebar ── */
 [data-testid="stSidebar"],
