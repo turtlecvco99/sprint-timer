@@ -69,14 +69,30 @@ def load_athlete_profile(name):
         return {}
 
 
-def save_athlete_profile(name, school, events, age, height, weight, bio):
+def save_athlete_profile(name, school, events, age, height, weight, bio,
+                         hometown='', coach='', grad_year='', position='',
+                         goal_total=0.0, goal_0_10=0.0, goal_10_30=0.0,
+                         goal_30_60=0.0, profile_color='#89C4E1'):
     conn = get_conn()
-    conn.execute('''INSERT INTO athletes (name,school,events,age,height,weight,bio,created_at)
-        VALUES (?,?,?,?,?,?,?,?)
+    conn.execute('''
+        INSERT INTO athletes
+            (name,school,events,age,height,weight,bio,hometown,coach,
+             grad_year,position,goal_total,goal_0_10,goal_10_30,
+             goal_30_60,profile_color,created_at)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
         ON CONFLICT(name) DO UPDATE SET
-        school=excluded.school, events=excluded.events, age=excluded.age,
-        height=excluded.height, weight=excluded.weight, bio=excluded.bio''',
-        (name, school, events, age, height, weight, bio, datetime.now().isoformat()))
+            school=excluded.school, events=excluded.events,
+            age=excluded.age, height=excluded.height,
+            weight=excluded.weight, bio=excluded.bio,
+            hometown=excluded.hometown, coach=excluded.coach,
+            grad_year=excluded.grad_year, position=excluded.position,
+            goal_total=excluded.goal_total, goal_0_10=excluded.goal_0_10,
+            goal_10_30=excluded.goal_10_30, goal_30_60=excluded.goal_30_60,
+            profile_color=excluded.profile_color
+    ''', (name, school, events, age, height, weight, bio, hometown,
+          coach, grad_year, position, goal_total, goal_0_10,
+          goal_10_30, goal_30_60, profile_color,
+          datetime.now().isoformat()))
     conn.commit()
     conn.close()
 

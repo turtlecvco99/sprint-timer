@@ -39,10 +39,42 @@ def _bootstrap():
         split_0_10 REAL, split_10_30 REAL,
         split_30_60 REAL, total REAL, top_speed REAL)''')
     conn.execute('''CREATE TABLE IF NOT EXISTS athletes (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT UNIQUE, jersey TEXT, position TEXT,
-        age INTEGER, height TEXT, weight TEXT,
-        school TEXT, events TEXT, bio TEXT, created_at TEXT)''')
+        id           INTEGER PRIMARY KEY AUTOINCREMENT,
+        name         TEXT UNIQUE,
+        jersey       TEXT DEFAULT '',
+        position     TEXT DEFAULT '',
+        age          INTEGER DEFAULT 0,
+        height       TEXT DEFAULT '',
+        weight       TEXT DEFAULT '',
+        school       TEXT DEFAULT '',
+        events       TEXT DEFAULT '',
+        coach        TEXT DEFAULT '',
+        hometown     TEXT DEFAULT '',
+        grad_year    TEXT DEFAULT '',
+        bio          TEXT DEFAULT '',
+        goal_total   REAL DEFAULT 0.0,
+        goal_0_10    REAL DEFAULT 0.0,
+        goal_10_30   REAL DEFAULT 0.0,
+        goal_30_60   REAL DEFAULT 0.0,
+        profile_color TEXT DEFAULT '#89C4E1',
+        created_at   TEXT
+    )''')
+    # Migrate existing DBs — add columns that may not exist yet
+    for col_def in [
+        ('hometown',      "TEXT DEFAULT ''"),
+        ('coach',         "TEXT DEFAULT ''"),
+        ('grad_year',     "TEXT DEFAULT ''"),
+        ('position',      "TEXT DEFAULT ''"),
+        ('goal_total',    "REAL DEFAULT 0.0"),
+        ('goal_0_10',     "REAL DEFAULT 0.0"),
+        ('goal_10_30',    "REAL DEFAULT 0.0"),
+        ('goal_30_60',    "REAL DEFAULT 0.0"),
+        ('profile_color', "TEXT DEFAULT '#89C4E1'"),
+    ]:
+        try:
+            conn.execute(f"ALTER TABLE athletes ADD COLUMN {col_def[0]} {col_def[1]}")
+        except Exception:
+            pass
     conn.commit()
     if conn.execute('SELECT COUNT(*) FROM runs').fetchone()[0] == 0:
         base = datetime.datetime.now() - datetime.timedelta(days=30)
@@ -273,6 +305,97 @@ hr {
     0%,100% { opacity:1; box-shadow:0 0 8px rgba(29,219,139,0.8); }
     50%      { opacity:0.4; box-shadow:0 0 4px rgba(29,219,139,0.3); }
 }
+
+/* ── Animation library ── */
+@keyframes fadeInUp {
+    from { opacity:0; transform:translateY(20px); }
+    to   { opacity:1; transform:translateY(0); }
+}
+@keyframes fadeInLeft {
+    from { opacity:0; transform:translateX(-20px); }
+    to   { opacity:1; transform:translateX(0); }
+}
+@keyframes fadeInRight {
+    from { opacity:0; transform:translateX(20px); }
+    to   { opacity:1; transform:translateX(0); }
+}
+@keyframes scaleIn {
+    from { opacity:0; transform:scale(0.94); }
+    to   { opacity:1; transform:scale(1); }
+}
+@keyframes gradientShift {
+    0%   { background-position:0% 50%; }
+    50%  { background-position:100% 50%; }
+    100% { background-position:0% 50%; }
+}
+@keyframes borderGlow {
+    0%,100% { box-shadow:0 0 8px rgba(137,196,225,0.2); }
+    50%      { box-shadow:0 0 24px rgba(137,196,225,0.5); }
+}
+@keyframes shimmer {
+    0%   { background-position:-200% center; }
+    100% { background-position:200% center; }
+}
+
+/* ── Apply to main content blocks ── */
+[data-testid="stMainBlockContainer"] > div > div {
+    animation: fadeInUp 0.4s ease both;
+}
+[data-testid="stHorizontalBlock"] > div:nth-child(1) { animation: fadeInLeft 0.35s ease both; }
+[data-testid="stHorizontalBlock"] > div:nth-child(2) { animation: fadeInUp 0.4s ease 0.05s both; }
+[data-testid="stHorizontalBlock"] > div:nth-child(3) { animation: fadeInRight 0.35s ease 0.1s both; }
+[data-testid="stHorizontalBlock"] > div:nth-child(4) { animation: fadeInRight 0.35s ease 0.15s both; }
+
+/* ── Staggered metric card animations ── */
+.dp-metric-1 { animation: scaleIn 0.3s ease 0.05s both; }
+.dp-metric-2 { animation: scaleIn 0.3s ease 0.10s both; }
+.dp-metric-3 { animation: scaleIn 0.3s ease 0.15s both; }
+.dp-metric-4 { animation: scaleIn 0.3s ease 0.20s both; }
+
+/* ── Card hover lifts ── */
+.dp-card { transition: transform 0.2s ease, box-shadow 0.2s ease !important; }
+.dp-card:hover {
+    transform: translateY(-3px) !important;
+    box-shadow: 0 8px 32px rgba(137,196,225,0.12) !important;
+}
+
+/* ── Animated gradient title ── */
+.dp-gradient-title {
+    background: linear-gradient(135deg,#89C4E1,#B39DDB,#FF3D8A,#89C4E1);
+    background-size: 300% 300%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: gradientShift 6s ease infinite;
+}
+
+/* ── Alert animation ── */
+[data-testid="stAlert"] { animation: fadeInUp 0.25s ease both; }
+[data-testid="stExpander"] { animation: fadeInUp 0.3s ease both; }
+
+/* ── Selectbox dark ── */
+[data-testid="stSelectbox"] > div > div {
+    background: #12121A !important;
+    border: 1px solid #1E1E2E !important;
+    color: #F0F0F0 !important;
+    border-radius: 8px !important;
+}
+
+/* ── Number input dark ── */
+[data-testid="stNumberInput"] input {
+    background: #12121A !important;
+    border: 1px solid #1E1E2E !important;
+    color: #F0F0F0 !important;
+    font-family: 'JetBrains Mono', monospace !important;
+}
+
+/* ── Date input dark ── */
+[data-testid="stDateInput"] input {
+    background: #12121A !important;
+    border-bottom: 2px solid #89C4E1 !important;
+    color: #F0F0F0 !important;
+    border-radius: 0 !important;
+}
 </style>""", unsafe_allow_html=True)
 
 
@@ -466,27 +589,83 @@ all_athletes = get_all_athletes()
 
 if st.session_state.current_user is None:
     st.markdown("""
-    <div style="display:flex;flex-direction:column;align-items:center;
-                justify-content:center;min-height:75vh;text-align:center;">
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:5rem;
-                    letter-spacing:0.06em;line-height:1;margin-bottom:8px;
-                    background:linear-gradient(135deg,#89C4E1,#FF3D8A);
-                    -webkit-background-clip:text;-webkit-text-fill-color:transparent;
-                    background-clip:text;">DRIVE PHASE</div>
-        <div style="font-family:'DM Sans',sans-serif;font-size:0.8rem;
+    <style>
+    @keyframes titleEntrance {
+        0%   { opacity:0; transform:translateY(-30px) scale(0.95); }
+        60%  { opacity:1; transform:translateY(4px) scale(1.01); }
+        100% { opacity:1; transform:translateY(0) scale(1); }
+    }
+    @keyframes subtitleEntrance {
+        from { opacity:0; letter-spacing:0.4em; }
+        to   { opacity:1; letter-spacing:0.2em; }
+    }
+    @keyframes cardEntrance {
+        from { opacity:0; transform:translateY(30px); }
+        to   { opacity:1; transform:translateY(0); }
+    }
+    </style>
+    <div style="display:flex;flex-direction:column;align-items:center;padding:80px 40px 40px;">
+        <div class="dp-gradient-title" style="font-family:'Bebas Neue',sans-serif;font-size:5.5rem;
+                    letter-spacing:0.06em;line-height:0.9;margin-bottom:12px;text-align:center;
+                    animation:titleEntrance 0.8s ease both;">
+            DRIVE<br>PHASE
+        </div>
+        <div style="font-family:'DM Sans',sans-serif;font-size:0.75rem;
                     letter-spacing:0.2em;text-transform:uppercase;
-                    color:#555566;margin-bottom:48px;">acceleration starts here</div>
-        <div style="font-family:'DM Sans',sans-serif;font-size:0.85rem;
-                    letter-spacing:0.1em;text-transform:uppercase;
-                    color:#8A8A9A;margin-bottom:20px;">Who are you?</div>
+                    color:#555566;margin-bottom:64px;
+                    animation:subtitleEntrance 1s ease 0.4s both;">
+            acceleration starts here
+        </div>
+        <div style="font-family:'DM Sans',sans-serif;font-size:0.72rem;
+                    letter-spacing:0.16em;text-transform:uppercase;
+                    color:#444455;margin-bottom:24px;
+                    animation:fadeInUp 0.5s ease 0.6s both;">
+            Select your profile to continue
+        </div>
     </div>
     """, unsafe_allow_html=True)
 
     if all_athletes:
-        cols = st.columns(min(4, len(all_athletes)))
+        stats      = get_all_athletes_with_stats()
+        stats_dict = {row['name']: row for _, row in stats.iterrows()}
+        n_cols     = min(4, len(all_athletes))
+        cols       = st.columns(n_cols)
         for i, name in enumerate(all_athletes):
-            with cols[i % min(4, len(all_athletes))]:
-                if st.button(name.upper(), key=f"identity_{name}", use_container_width=True):
+            s    = stats_dict.get(name, {})
+            best = s.get('best', 0)
+            runs = int(s.get('runs', 0))
+            with cols[i % n_cols]:
+                st.markdown(f"""
+                <div style="background:#12121A;border:1px solid #1E1E2E;
+                            border-radius:14px;padding:0 0 4px;overflow:hidden;
+                            animation:cardEntrance 0.5s ease {0.7+i*0.08:.2f}s both;
+                            transition:all 0.25s ease;"
+                     onmouseover="this.style.borderColor='#89C4E1';this.style.transform='translateY(-4px)';this.style.boxShadow='0 12px 40px rgba(137,196,225,0.15)'"
+                     onmouseout="this.style.borderColor='#1E1E2E';this.style.transform='translateY(0)';this.style.boxShadow='none'">
+                    <div style="height:4px;background:linear-gradient(90deg,#89C4E1,#FF3D8A);"></div>
+                    <div style="padding:20px 16px;text-align:center;">
+                        <div style="width:52px;height:52px;border-radius:50%;
+                                    background:linear-gradient(135deg,#89C4E1,#FF3D8A);
+                                    display:flex;align-items:center;justify-content:center;
+                                    margin:0 auto 14px;font-family:'Bebas Neue';
+                                    font-size:1.6rem;color:#0A0A0F;">
+                            {name[0].upper()}
+                        </div>
+                        <div style="font-family:'Bebas Neue';font-size:1.3rem;
+                                    letter-spacing:0.08em;color:#F0F0F0;margin-bottom:8px;">
+                            {name.upper()}
+                        </div>
+                        <div style="font-family:'JetBrains Mono';font-size:0.8rem;
+                                    color:#89C4E1;margin-bottom:4px;">
+                            {f'{best:.2f}s PB' if best else '—'}
+                        </div>
+                        <div style="font-family:'DM Sans';font-size:0.68rem;color:#2A2A3E;">
+                            {runs} run{'s' if runs != 1 else ''} logged
+                        </div>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+                if st.button(f"ENTER AS {name.upper()}", key=f"id_{name}", use_container_width=True):
                     st.session_state.current_user = name
                     st.rerun()
     else:
@@ -643,6 +822,78 @@ if page == "MY DASHBOARD":
         </div>
     </div>
     """, unsafe_allow_html=True)
+
+    # ── Training streak ──
+    from datetime import date, timedelta
+    df_me_dates = sorted(df_me['date'].dt.date.unique(), reverse=True)
+    streak = 0
+    check  = date.today()
+    for d in df_me_dates:
+        if d >= check - timedelta(days=1):
+            streak += 1
+            check = d
+        else:
+            break
+    if streak > 0:
+        fire = '🔥' * min(streak, 5)
+        st.markdown(f"""
+        <div style="background:linear-gradient(135deg,#12121A,#1A1A26);
+                    border:1px solid #FFD700;border-radius:14px;
+                    padding:20px 24px;margin-bottom:16px;
+                    display:flex;align-items:center;justify-content:space-between;
+                    animation:fadeInUp 0.4s ease both;
+                    box-shadow:0 0 30px rgba(255,215,0,0.06);">
+            <div>
+                <div style="font-family:'DM Sans';font-size:0.65rem;letter-spacing:0.14em;
+                            text-transform:uppercase;color:#555566;margin-bottom:4px;">
+                    Training streak
+                </div>
+                <div style="font-family:'JetBrains Mono';font-size:2.4rem;
+                            color:#FFD700;line-height:1;">
+                    {streak}<span style="font-size:1rem;color:#555566;margin-left:4px;">days</span>
+                </div>
+            </div>
+            <div style="font-size:2.4rem;">{fire}</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    # ── Season insight ──
+    if len(df_me) >= 10:
+        first_half  = df_me.tail(len(df_me)//2)['total'].mean()
+        second_half = df_me.head(len(df_me)//2)['total'].mean()
+        improvement = first_half - second_half
+        std_0_10   = df_me['split_0_10'].std()
+        std_10_30  = df_me['split_10_30'].std()
+        std_30_60  = df_me['split_30_60'].std()
+        mx_std = max(std_0_10, std_10_30, std_30_60)
+        if mx_std == std_10_30:
+            weakest = 'drive phase (10–30m)'
+        elif mx_std == std_30_60:
+            weakest = 'max velocity (30–60m)'
+        else:
+            weakest = 'acceleration (0–10m)'
+        if improvement > 0:
+            insight_text = f"You're {improvement:.3f}s faster in the second half of your season. Your most variable split is {weakest} — this is where focused training will yield the biggest gains."
+        else:
+            insight_text = f"Your times have increased slightly (+{abs(improvement):.3f}s) this season. Focus on recovery and consistency in {weakest}."
+        st.markdown(f"""
+        <div style="background:linear-gradient(135deg,#0D1A12,#12121A);
+                    border:1px solid #1DDB8B44;border-left:3px solid #1DDB8B;
+                    border-radius:0 12px 12px 0;padding:16px 20px;
+                    margin-bottom:16px;animation:fadeInLeft 0.4s ease 0.2s both;">
+            <div style="display:flex;align-items:flex-start;gap:12px;">
+                <span style="font-size:1.4rem;flex-shrink:0;">💡</span>
+                <div>
+                    <div style="font-family:'DM Sans';font-size:0.65rem;letter-spacing:0.12em;
+                                text-transform:uppercase;color:#1DDB8B;margin-bottom:6px;">
+                        Season insight
+                    </div>
+                    <div style="font-family:'DM Sans';font-size:0.84rem;color:#8A8A9A;
+                                line-height:1.6;">{insight_text}</div>
+                </div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
 
     # ── Latest run vs PB ──
     section_header("LATEST RUN VS PERSONAL BEST", accent='blue')
@@ -810,125 +1061,249 @@ elif page == "LEADERBOARD":
 # PAGE: MY PROFILE
 # ══════════════════════════════════════════════════════════════════════════════
 elif page == "MY PROFILE":
-    view_header("MY PROFILE", f"{current_user}'s performance card")
+    profile      = load_athlete_profile(current_user)
     athlete_data = load_athlete_runs(current_user)
-    profile = load_athlete_profile(current_user)
 
     if athlete_data.empty:
+        view_header("MY PROFILE", f"{current_user.lower()}'s athlete card")
         empty_state("NO RUNS YET")
         render_footer()
         st.stop()
 
-    best = athlete_data.nsmallest(1, 'total').iloc[0]
+    best     = athlete_data.nsmallest(1, 'total').iloc[0]
+    all_df   = load_all_runs()
+    rankings = all_df.groupby('athlete')['total'].min().sort_values().reset_index()
+    my_rank  = int(rankings[rankings['athlete'] == current_user].index[0]) + 1
+    accent   = profile.get('profile_color', '#89C4E1') or '#89C4E1'
+
+    view_header("MY PROFILE", f"{current_user.lower()}'s athlete card")
+
+    # ── Hero card ──
+    tags = ''
+    if profile.get('school'):
+        tags += f'<span style="font-family:DM Sans;font-size:0.68rem;background:{accent}18;border:1px solid {accent}44;color:{accent};border-radius:999px;padding:3px 10px;letter-spacing:0.08em;">{profile["school"]}</span> '
+    if profile.get('events'):
+        tags += f'<span style="font-family:DM Sans;font-size:0.68rem;background:#FF3D8A18;border:1px solid #FF3D8A44;color:#FF3D8A;border-radius:999px;padding:3px 10px;letter-spacing:0.08em;">{profile["events"]}</span> '
+    if profile.get('grad_year'):
+        tags += f'<span style="font-family:DM Sans;font-size:0.68rem;background:#1E1E2E;color:#555566;border-radius:999px;padding:3px 10px;">Class of {profile["grad_year"]}</span> '
+    if profile.get('age'):
+        tags += f'<span style="font-family:DM Sans;font-size:0.68rem;background:#1E1E2E;color:#555566;border-radius:999px;padding:3px 10px;">Age {profile["age"]}</span>'
+    bio_html = f'<div style="font-family:DM Sans;font-size:0.82rem;color:#8A8A9A;margin-top:12px;line-height:1.6;max-width:500px;">{profile["bio"]}</div>' if profile.get('bio') else ''
+
     st.markdown(f"""
     <div style="background:linear-gradient(135deg,#12121A 0%,#1A1A26 100%);
-                border:1px solid #1E1E2E;border-radius:16px;padding:28px 32px;
-                margin-bottom:16px;display:flex;align-items:center;gap:32px;flex-wrap:wrap;">
-        <div style="width:72px;height:72px;border-radius:50%;
-                    background:linear-gradient(135deg,#89C4E1,#FF3D8A);
-                    display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-            <span style="font-family:'Bebas Neue',sans-serif;font-size:2.2rem;color:#0A0A0F;">
-                {current_user[0].upper()}</span>
-        </div>
-        <div style="flex:1;min-width:160px;">
-            <div style="font-family:'Bebas Neue',sans-serif;font-size:2.4rem;
-                        letter-spacing:0.08em;color:#F0F0F0;line-height:1;">{current_user.upper()}</div>
-            <div style="font-family:'DM Sans',sans-serif;font-size:0.75rem;color:#555566;margin-top:4px;">
-                {profile.get('school','—')} · {profile.get('events','—')} · Age {profile.get('age','—')}
+                border:1px solid {accent};border-radius:20px;overflow:hidden;
+                margin-bottom:28px;animation:scaleIn 0.4s ease both;
+                box-shadow:0 0 60px {accent}18;">
+        <div style="height:6px;background:linear-gradient(90deg,{accent},#FF3D8A);"></div>
+        <div style="padding:32px;">
+            <div style="display:flex;align-items:center;gap:28px;flex-wrap:wrap;">
+                <div style="width:96px;height:96px;border-radius:50%;flex-shrink:0;
+                            background:linear-gradient(135deg,{accent},#FF3D8A);
+                            display:flex;align-items:center;justify-content:center;
+                            box-shadow:0 0 30px {accent}40;
+                            font-family:'Bebas Neue';font-size:3rem;color:#0A0A0F;">
+                    {current_user[0].upper()}
+                </div>
+                <div style="flex:1;min-width:200px;">
+                    <div style="font-family:'Bebas Neue';font-size:2.8rem;
+                                letter-spacing:0.06em;color:#F0F0F0;line-height:0.95;margin-bottom:8px;">
+                        {current_user.upper()}
+                    </div>
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">{tags}</div>
+                    {bio_html}
+                </div>
+                <div style="display:flex;flex-direction:column;gap:10px;flex-shrink:0;">
+                    <div style="text-align:center;background:#0A0A0F;border-radius:12px;
+                                padding:14px 20px;border:1px solid #1E1E2E;">
+                        <div style="font-family:'JetBrains Mono';font-size:2rem;color:{accent};line-height:1;">
+                            #{my_rank}</div>
+                        <div style="font-family:'DM Sans';font-size:0.6rem;letter-spacing:0.12em;
+                                    text-transform:uppercase;color:#555566;margin-top:4px;">Team rank</div>
+                    </div>
+                    <div style="text-align:center;background:#0A0A0F;border-radius:12px;
+                                padding:14px 20px;border:1px solid #1E1E2E;">
+                        <div style="font-family:'JetBrains Mono';font-size:2rem;color:#FF3D8A;line-height:1;">
+                            {best['total']:.2f}s</div>
+                        <div style="font-family:'DM Sans';font-size:0.6rem;letter-spacing:0.12em;
+                                    text-transform:uppercase;color:#555566;margin-top:4px;">Personal best</div>
+                    </div>
+                </div>
             </div>
         </div>
-        <div style="display:flex;gap:32px;flex-wrap:wrap;">
-            <div style="text-align:center;">
-                <div style="font-family:'JetBrains Mono',monospace;font-size:1.8rem;color:#89C4E1;">{best['total']:.2f}s</div>
-                <div style="font-family:'DM Sans',sans-serif;font-size:0.62rem;letter-spacing:0.12em;text-transform:uppercase;color:#555566;">Personal Best</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # ── Goal progress bars ──
+    goals = [
+        ('Total time goal',  float(profile.get('goal_total') or 0), float(best['total']),              accent),
+        ('0–10m goal',       float(profile.get('goal_0_10')  or 0), float(athlete_data['split_0_10'].min()),  '#89C4E1'),
+        ('10–30m goal',      float(profile.get('goal_10_30') or 0), float(athlete_data['split_10_30'].min()), '#B39DDB'),
+        ('30–60m goal',      float(profile.get('goal_30_60') or 0), float(athlete_data['split_30_60'].min()), '#FF3D8A'),
+    ]
+    active_goals = [(lbl, g, cur, c) for lbl, g, cur, c in goals if g > 0]
+    if active_goals:
+        section_header("SEASON GOALS", accent='blue')
+        for label, goal, current_val, color in active_goals:
+            progress     = min(100, max(0, ((goal - current_val) / (goal * 0.1)) * 100 + 50))
+            hit          = current_val <= goal
+            status_color = '#1DDB8B' if hit else color
+            status_text  = '✓ ACHIEVED' if hit else f'{current_val:.3f}s → {goal:.3f}s target'
+            st.markdown(f"""
+            <div style="background:#12121A;border:1px solid #1E1E2E;border-radius:12px;
+                        padding:16px 20px;margin-bottom:8px;animation:fadeInLeft 0.3s ease both;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                    <span style="font-family:'DM Sans';font-size:0.75rem;letter-spacing:0.08em;
+                                 text-transform:uppercase;color:#8A8A9A;">{label}</span>
+                    <span style="font-family:'JetBrains Mono';font-size:0.78rem;color:{status_color};">{status_text}</span>
+                </div>
+                <div style="background:#0A0A0F;border-radius:999px;height:6px;overflow:hidden;">
+                    <div style="height:100%;width:{min(100,progress):.0f}%;
+                                background:linear-gradient(90deg,{color},{color}88);
+                                border-radius:999px;box-shadow:0 0 8px {color}60;"></div>
+                </div>
             </div>
-            <div style="text-align:center;">
-                <div style="font-family:'JetBrains Mono',monospace;font-size:1.8rem;color:#FF3D8A;">{athlete_data['top_speed'].max():.1f}</div>
-                <div style="font-family:'DM Sans',sans-serif;font-size:0.62rem;letter-spacing:0.12em;text-transform:uppercase;color:#555566;">Top Speed mph</div>
+            """, unsafe_allow_html=True)
+
+    # ── Personal records board ──
+    section_header("PERSONAL RECORDS", accent='pink')
+    pr_data = [
+        ('⚡', '0–10m',     athlete_data['split_0_10'].min(),  '1st 10 meters — reaction and first step',   '#89C4E1'),
+        ('🔥', '10–30m',    athlete_data['split_10_30'].min(), 'Drive phase — peak acceleration window',    '#B39DDB'),
+        ('💨', '30–60m',    athlete_data['split_30_60'].min(), 'Max velocity — highest speed window',       '#FF3D8A'),
+        ('🏁', 'Total',     athlete_data['total'].min(),        '60m combined — full sprint',                '#F0F0F0'),
+        ('🚀', 'Top speed', athlete_data['top_speed'].max(),    'Peak speed recorded (mph)',                 '#FFD700'),
+    ]
+    pc1, pc2 = st.columns(2)
+    for i, (icon, label, val, desc, lcolor) in enumerate(pr_data):
+        col  = pc1 if i % 2 == 0 else pc2
+        unit = ' mph' if 'speed' in label.lower() else 's'
+        col.markdown(f"""
+        <div style="background:#12121A;border:1px solid #1E1E2E;
+                    border-left:3px solid {lcolor};border-radius:0 12px 12px 0;
+                    padding:16px 20px;margin-bottom:8px;
+                    display:flex;align-items:center;gap:16px;
+                    animation:fadeInUp 0.3s ease {0.05*i:.2f}s both;
+                    transition:transform 0.2s ease;"
+             onmouseover="this.style.transform='translateX(4px)'"
+             onmouseout="this.style.transform='translateX(0)'">
+            <span style="font-size:1.6rem;">{icon}</span>
+            <div style="flex:1;">
+                <div style="font-family:'DM Sans';font-size:0.65rem;letter-spacing:0.1em;
+                            text-transform:uppercase;color:#555566;">{label}</div>
+                <div style="font-family:'DM Sans';font-size:0.72rem;color:#2A2A3E;margin-top:2px;">{desc}</div>
             </div>
-            <div style="text-align:center;">
-                <div style="font-family:'JetBrains Mono',monospace;font-size:1.8rem;color:#B39DDB;">{len(athlete_data)}</div>
-                <div style="font-family:'DM Sans',sans-serif;font-size:0.62rem;letter-spacing:0.12em;text-transform:uppercase;color:#555566;">Total Runs</div>
-            </div>
+            <div style="font-family:'JetBrains Mono';font-size:1.6rem;color:#F0F0F0;">{val:.3f}{unit}</div>
         </div>
-    </div>""", unsafe_allow_html=True)
+        """, unsafe_allow_html=True)
 
-    section_header("SPLIT PERSONAL BESTS", accent='blue')
-    s1, s2, s3, s4 = st.columns(4)
-    metric_card(s1,'🚀','0–10m PB',  f"{athlete_data['split_0_10'].min():.3f}s",  accent='blue')
-    metric_card(s2,'⚡','10–30m PB', f"{athlete_data['split_10_30'].min():.3f}s", accent='pink')
-    metric_card(s3,'💨','30–60m PB', f"{athlete_data['split_30_60'].min():.3f}s", accent='blue')
-    metric_card(s4,'🏁','Total PB',  f"{athlete_data['total'].min():.3f}s",        accent='pink')
+    # ── Athlete info grid ──
+    info_items = [
+        ('Height',   profile.get('height','')),
+        ('Weight',   profile.get('weight','')),
+        ('Coach',    profile.get('coach','')),
+        ('Hometown', profile.get('hometown','')),
+        ('School',   profile.get('school','')),
+        ('Events',   profile.get('events','')),
+    ]
+    visible_info = [(l, v) for l, v in info_items if v]
+    if visible_info:
+        section_header("ATHLETE INFO", accent='blue')
+        ic = st.columns(3)
+        for i, (label, val) in enumerate(visible_info):
+            ic[i % 3].markdown(f"""
+            <div style="background:#12121A;border:1px solid #1E1E2E;border-radius:10px;
+                        padding:14px 16px;margin-bottom:8px;
+                        animation:scaleIn 0.3s ease {0.04*i:.2f}s both;">
+                <div style="font-family:'DM Sans';font-size:0.6rem;letter-spacing:0.14em;
+                            text-transform:uppercase;color:#2A2A3E;margin-bottom:6px;">{label}</div>
+                <div style="font-family:'DM Sans';font-size:0.9rem;color:#F0F0F0;">{val}</div>
+            </div>
+            """, unsafe_allow_html=True)
 
-    section_header("TOTAL TIME OVER SEASON", accent='blue')
-    df_asc = athlete_data[::-1].reset_index(drop=True)
-    df_asc['run_num'] = range(1, len(df_asc)+1)
-    df_asc['pb_line'] = df_asc['total'].cummin()
-    fig = go.Figure()
-    fig.add_trace(go.Scatter(x=df_asc['run_num'], y=df_asc['total'],
-        mode='lines+markers', name='Run time',
-        line=dict(color='#89C4E1', width=2), marker=dict(size=5),
-        fill='tozeroy', fillcolor='rgba(137,196,225,0.04)'))
-    fig.add_trace(go.Scatter(x=df_asc['run_num'], y=df_asc['pb_line'],
-        mode='lines', name='Personal best',
-        line=dict(color='#FF3D8A', width=1.5, dash='dot')))
-    style_chart(fig, height=300)
-    fig.update_layout(yaxis=dict(range=smart_yrange(df_asc['total'])))
-    st.plotly_chart(fig, use_container_width=True, config=CHART_CFG)
-
+    # ── Split radar ──
     section_header("SPLIT PROFILE vs FIELD AVERAGE", accent='pink')
     all_runs = load_all_runs()
     cats = ['0-10m', '10-30m', '30-60m']
-    field_avg = {
-        '0-10m':  all_runs['split_0_10'].mean(),
-        '10-30m': all_runs['split_10_30'].mean(),
-        '30-60m': all_runs['split_30_60'].mean(),
-    }
-    athlete_avg = {
-        '0-10m':  athlete_data['split_0_10'].mean(),
-        '10-30m': athlete_data['split_10_30'].mean(),
-        '30-60m': athlete_data['split_30_60'].mean(),
-    }
+    field_avg   = {'0-10m': all_runs['split_0_10'].mean(), '10-30m': all_runs['split_10_30'].mean(), '30-60m': all_runs['split_30_60'].mean()}
+    athlete_avg = {'0-10m': athlete_data['split_0_10'].mean(), '10-30m': athlete_data['split_10_30'].mean(), '30-60m': athlete_data['split_30_60'].mean()}
     max_val = max(list(field_avg.values()) + list(athlete_avg.values()))
     def invert(d):
         return {k: max_val - v + max_val*0.1 for k, v in d.items()}
-    field_inv  = invert(field_avg)
-    ath_inv    = invert(athlete_avg)
-    fig2 = go.Figure()
-    fig2.add_trace(go.Scatterpolar(
-        r=[field_inv[c] for c in cats]+[field_inv[cats[0]]], theta=cats+[cats[0]],
-        fill='toself', name='Field avg',
-        line=dict(color='#444455', width=1.5), fillcolor='rgba(68,68,85,0.3)'))
-    fig2.add_trace(go.Scatterpolar(
-        r=[ath_inv[c] for c in cats]+[ath_inv[cats[0]]], theta=cats+[cats[0]],
-        fill='toself', name=current_user,
-        line=dict(color='#89C4E1', width=2.5), fillcolor='rgba(137,196,225,0.15)'))
-    fig2.update_layout(
+    field_inv = invert(field_avg)
+    ath_inv   = invert(athlete_avg)
+    fig_r = go.Figure()
+    fig_r.add_trace(go.Scatterpolar(r=[field_inv[c] for c in cats]+[field_inv[cats[0]]], theta=cats+[cats[0]],
+        fill='toself', name='Field avg', line=dict(color='#444455', width=1.5), fillcolor='rgba(68,68,85,0.3)'))
+    fig_r.add_trace(go.Scatterpolar(r=[ath_inv[c] for c in cats]+[ath_inv[cats[0]]], theta=cats+[cats[0]],
+        fill='toself', name=current_user, line=dict(color=accent, width=2.5), fillcolor=f'{accent}26'))
+    fig_r.update_layout(
         polar=dict(bgcolor='#12121A',
             radialaxis=dict(visible=True, showticklabels=False, gridcolor='#1E1E2E', linecolor='#1E1E2E'),
-            angularaxis=dict(gridcolor='#1E1E2E', linecolor='#1E1E2E',
-                             tickfont=dict(family='DM Sans', color='#8A8A9A'))),
+            angularaxis=dict(gridcolor='#1E1E2E', linecolor='#1E1E2E', tickfont=dict(family='DM Sans', color='#8A8A9A'))),
         paper_bgcolor='#12121A', plot_bgcolor='#12121A', height=320,
-        legend=dict(bgcolor='#0A0A0F', bordercolor='#1E1E2E', borderwidth=1,
-                    font=dict(family='DM Sans', color='#8A8A9A')),
+        legend=dict(bgcolor='#0A0A0F', bordercolor='#1E1E2E', borderwidth=1, font=dict(family='DM Sans', color='#8A8A9A')),
         margin=dict(l=40,r=40,t=40,b=40))
-    st.plotly_chart(fig2, use_container_width=True, config=CHART_CFG)
-    info_card("Larger area = faster splits. Bigger shape means better performance in that phase of the sprint.", accent='blue')
+    st.plotly_chart(fig_r, use_container_width=True, config=CHART_CFG)
+    info_card("Larger area = faster splits. Bigger shape means better performance.", accent='blue')
 
-    section_header("EDIT PROFILE", accent='pink')
-    with st.expander("Update athlete information", expanded=False):
-        c1, c2 = st.columns(2)
-        school = c1.text_input("School / Team", value=str(profile.get('school','') or ''))
-        events = c2.text_input("Events", value=str(profile.get('events','') or ''))
-        c3, c4, c5 = st.columns(3)
-        age    = c3.number_input("Age", min_value=10, max_value=40, value=int(profile.get('age') or 18))
-        height = c4.text_input("Height", value=str(profile.get('height','') or ''))
-        weight = c5.text_input("Weight", value=str(profile.get('weight','') or ''))
-        bio    = st.text_area("Bio / Notes", value=str(profile.get('bio','') or ''),
-                               placeholder="Training notes, goals, injury history...")
-        if st.button("SAVE PROFILE", use_container_width=True):
-            save_athlete_profile(current_user, school, events, age, height, weight, bio)
-            st.success("Profile updated.")
+    # ── Edit profile form ──
+    section_header("EDIT MY PROFILE", accent='pink')
+    with st.expander("✏️  Update profile information", expanded=False):
+        st.markdown('<div style="height:8px"></div>', unsafe_allow_html=True)
+        st.markdown('<div style="font-family:\'Bebas Neue\';font-size:1rem;letter-spacing:0.1em;color:#555566;margin-bottom:12px;">IDENTITY</div>', unsafe_allow_html=True)
+        ci1, ci2, ci3 = st.columns(3)
+        school   = ci1.text_input("School / Team",  value=str(profile.get('school','') or ''))
+        hometown = ci2.text_input("Hometown",        value=str(profile.get('hometown','') or ''))
+        coach    = ci3.text_input("Coach",           value=str(profile.get('coach','') or ''))
+        ci4, ci5, ci6, ci7 = st.columns(4)
+        age       = ci4.number_input("Age",      10, 40, int(profile.get('age') or 18))
+        height    = ci5.text_input("Height",         value=str(profile.get('height','') or ''))
+        weight    = ci6.text_input("Weight",         value=str(profile.get('weight','') or ''))
+        grad_year = ci7.text_input("Grad year",      value=str(profile.get('grad_year','') or ''))
+        ci8, ci9 = st.columns(2)
+        events   = ci8.text_input("Events (e.g. 100m, 200m, 4x1)", value=str(profile.get('events','') or ''))
+        position = ci9.text_input("Position / role",               value=str(profile.get('position','') or ''))
+        bio      = st.text_area("Bio", value=str(profile.get('bio','') or ''),
+                                placeholder="Training philosophy, goals, personal notes...", height=100)
+
+        st.markdown('<div style="font-family:\'Bebas Neue\';font-size:1rem;letter-spacing:0.1em;color:#555566;margin:16px 0 12px;">SEASON GOALS</div>', unsafe_allow_html=True)
+        st.markdown('<div style="font-family:\'DM Sans\';font-size:0.75rem;color:#555566;margin-bottom:12px;">Set target times — progress bars track how close you are</div>', unsafe_allow_html=True)
+        cg1, cg2, cg3, cg4 = st.columns(4)
+        goal_total = cg1.number_input("Total goal (s)", 0.0, 15.0, float(profile.get('goal_total') or 0.0), step=0.01, format="%.3f")
+        goal_0_10  = cg2.number_input("0–10m goal (s)",  0.0, 5.0,  float(profile.get('goal_0_10')  or 0.0), step=0.001, format="%.3f")
+        goal_10_30 = cg3.number_input("10–30m goal (s)", 0.0, 5.0,  float(profile.get('goal_10_30') or 0.0), step=0.001, format="%.3f")
+        goal_30_60 = cg4.number_input("30–60m goal (s)", 0.0, 5.0,  float(profile.get('goal_30_60') or 0.0), step=0.001, format="%.3f")
+
+        st.markdown('<div style="font-family:\'Bebas Neue\';font-size:1rem;letter-spacing:0.1em;color:#555566;margin:16px 0 12px;">PROFILE COLOR</div>', unsafe_allow_html=True)
+        color_options = {
+            'Powder Blue': '#89C4E1', 'Hot Pink': '#FF3D8A', 'Lavender': '#B39DDB',
+            'Mint': '#1DDB8B', 'Gold': '#FFD700', 'Coral': '#FF6B6B',
+        }
+        selected_color = profile.get('profile_color','#89C4E1') or '#89C4E1'
+        cc = st.columns(len(color_options))
+        for i, (cname, cval) in enumerate(color_options.items()):
+            is_active = selected_color == cval
+            cc[i].markdown(f"""
+            <div style="background:{cval}22;border:2px solid {'#F0F0F0' if is_active else cval+'55'};
+                        border-radius:8px;padding:8px 4px;text-align:center;cursor:pointer;
+                        transition:all 0.2s ease;">
+                <div style="width:20px;height:20px;border-radius:50%;background:{cval};
+                            margin:0 auto 6px;{'box-shadow:0 0 10px '+cval if is_active else ''}"></div>
+                <div style="font-family:'DM Sans';font-size:0.6rem;color:{cval};letter-spacing:0.06em;">
+                    {cname.split()[0].upper()}</div>
+            </div>""", unsafe_allow_html=True)
+            if cc[i].button("●", key=f"color_{cname}", use_container_width=True):
+                selected_color = cval
+
+        if st.button("💾  SAVE MY PROFILE", use_container_width=True):
+            save_athlete_profile(current_user, school, events, age, height, weight, bio,
+                                  hometown=hometown, coach=coach, grad_year=grad_year,
+                                  position=position, goal_total=goal_total,
+                                  goal_0_10=goal_0_10, goal_10_30=goal_10_30,
+                                  goal_30_60=goal_30_60, profile_color=selected_color)
+            st.success("Profile saved.")
+            st.rerun()
 
     render_footer()
     st.stop()
@@ -979,6 +1354,27 @@ elif page == "MY PROGRESS":
             </div>
         </div>""", unsafe_allow_html=True)
 
+    section_header("PERSONAL BEST TIMELINE", accent='pink')
+    df_p['running_pb'] = df_p['total'].expanding().min()
+    pb_runs = df_p[df_p['total'] == df_p['running_pb']]
+    fig_pb = go.Figure()
+    fig_pb.add_trace(go.Scatter(x=df_p['run_num'], y=df_p['total'],
+        mode='lines+markers', name='Run time',
+        line=dict(color='#1E1E2E', width=1), marker=dict(size=4, color='#2A2A3E')))
+    fig_pb.add_trace(go.Scatter(x=df_p['run_num'], y=df_p['running_pb'],
+        mode='lines', name='Personal best',
+        line=dict(color='#FF3D8A', width=2.5, shape='hv'),
+        fill='tozeroy', fillcolor='rgba(255,61,138,0.03)'))
+    fig_pb.add_trace(go.Scatter(x=pb_runs['run_num'], y=pb_runs['total'],
+        mode='markers+text', name='New PB',
+        marker=dict(size=12, color='#FFD700', symbol='star', line=dict(color='#0A0A0F', width=1)),
+        text=[f"{v:.2f}s" for v in pb_runs['total']],
+        textposition='top center',
+        textfont=dict(family='JetBrains Mono', size=10, color='#FFD700')))
+    style_chart(fig_pb, height=300)
+    fig_pb.update_layout(yaxis=dict(range=smart_yrange(df_p['total'])))
+    st.plotly_chart(fig_pb, use_container_width=True, config=CHART_CFG)
+
     section_header("ROLLING AVERAGE (5-RUN WINDOW)", accent='blue')
     df_p['rolling_avg'] = df_p['total'].rolling(5, min_periods=1).mean()
     fig = go.Figure()
@@ -986,7 +1382,7 @@ elif page == "MY PROGRESS":
         name='Individual runs', marker=dict(color='#1E1E2E', size=6, line=dict(color='#89C4E1', width=1.5))))
     fig.add_trace(go.Scatter(x=df_p['run_num'], y=df_p['rolling_avg'], mode='lines',
         name='5-run avg', line=dict(color='#89C4E1', width=2.5)))
-    fig.add_trace(go.Scatter(x=df_p['run_num'], y=df_p['total'].expanding().min(),
+    fig.add_trace(go.Scatter(x=df_p['run_num'], y=df_p['running_pb'],
         mode='lines', name='Personal best', line=dict(color='#FF3D8A', width=1.5, dash='dot')))
     style_chart(fig, height=320)
     fig.update_layout(yaxis=dict(range=smart_yrange(df_p['total'])))
@@ -1002,6 +1398,25 @@ elif page == "MY PROGRESS":
             name=label, line=dict(color=color, width=2), marker=dict(size=4)))
     style_chart(fig2, height=300)
     st.plotly_chart(fig2, use_container_width=True, config=CHART_CFG)
+
+    section_header("TRAINING VOLUME", accent='blue')
+    df_p_orig = load_athlete_runs(current_user)
+    df_p_orig['week'] = df_p_orig['date'].dt.isocalendar().week.astype(str)
+    df_p_orig['day']  = df_p_orig['date'].dt.day_name()
+    volume    = df_p_orig.groupby(['week','day']).size().reset_index(name='runs')
+    day_order = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday']
+    fig_vol = go.Figure(go.Heatmap(
+        x=volume['day'], y=volume['week'], z=volume['runs'],
+        colorscale=[[0,'#0A0A0F'],[0.5,'#89C4E133'],[1,'#89C4E1']],
+        showscale=False, hoverongaps=False, xgap=3, ygap=3,
+    ))
+    style_chart(fig_vol, height=200)
+    fig_vol.update_layout(
+        xaxis=dict(categoryorder='array', categoryarray=day_order),
+        margin=dict(l=16,r=16,t=16,b=16)
+    )
+    st.plotly_chart(fig_vol, use_container_width=True, config=CHART_CFG)
+    info_card("Green cells = training days. Aim for consistent distribution across the week.", accent='blue')
 
     section_header("RECENT RUNS", accent='blue')
     recent = df_p.tail(10)[::-1]
