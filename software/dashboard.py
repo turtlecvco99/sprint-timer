@@ -95,6 +95,23 @@ st.markdown("""
 st.markdown("""<style>
 * { box-sizing: border-box; }
 
+/* ── Force dark backgrounds and light text globally ── */
+html, body, #root, [data-testid="stApp"],
+[data-testid="stAppViewContainer"], .main,
+[data-testid="stMainBlockContainer"],
+[data-testid="block-container"] {
+    background-color: #0A0A0F !important;
+    color: #F0F0F0 !important;
+}
+[data-testid="stMainBlockContainer"],
+[data-testid="block-container"] {
+    padding-top: 1.5rem !important;
+    padding-left: 2rem !important;
+    padding-right: 2rem !important;
+    max-width: 1400px !important;
+}
+
+/* ── Kill Streamlit chrome ── */
 [data-testid="stHeader"] {
     background: #0A0A0F !important;
     height: 0px !important; min-height: 0px !important;
@@ -103,21 +120,14 @@ st.markdown("""<style>
 [data-testid="stDecoration"] { display: none !important; height: 0 !important; }
 [data-testid="stAppViewContainer"] > section:first-child { padding-top: 0 !important; }
 
-html, body, #root, [data-testid="stApp"],
-[data-testid="stAppViewContainer"], .main {
-    background-color: #0A0A0F !important;
-}
-[data-testid="stMainBlockContainer"],
-[data-testid="block-container"] {
-    background-color: #0A0A0F !important;
-    padding-top: 1.5rem !important;
-    padding-left: 2rem !important;
-    padding-right: 2rem !important;
-    max-width: 1400px !important;
-}
-
-[data-testid="stSidebar"] {
+/* ── Sidebar ── */
+[data-testid="stSidebar"],
+[data-testid="stSidebarContent"],
+section[data-testid="stSidebar"] > div {
     background: #0D0D14 !important;
+    background-color: #0D0D14 !important;
+}
+[data-testid="stSidebar"] {
     border-right: 1px solid #1E1E2E !important;
     min-width: 240px !important;
     max-width: 280px !important;
@@ -125,32 +135,42 @@ html, body, #root, [data-testid="stApp"],
 [data-testid="stSidebar"] > div:first-child {
     padding: 20px 16px !important;
 }
-[data-testid="stSidebar"] p,
-[data-testid="stSidebar"] span,
-[data-testid="stSidebar"] div,
-[data-testid="stSidebar"] label {
-    color: #8A8A9A !important;
+
+/* All sidebar text — force visible */
+[data-testid="stSidebar"] *,
+section[data-testid="stSidebar"] * {
+    color: #F0F0F0 !important;
     font-family: 'DM Sans', sans-serif !important;
 }
-[data-testid="stSidebar"] [data-testid="stMarkdownContainer"] p {
-    color: #F0F0F0 !important;
-}
-[data-testid="stSidebar"] [data-testid="stRadio"] label {
+
+/* Radio nav items */
+[data-testid="stSidebar"] [data-testid="stRadio"] label,
+[data-testid="stSidebar"] .stRadio label {
     background: #12121A !important;
     border: 1px solid #1E1E2E !important;
     border-radius: 8px !important;
     padding: 10px 14px !important;
     margin-bottom: 4px !important;
     display: block !important;
-    font-family: 'DM Sans', sans-serif !important;
     font-size: 0.78rem !important;
-    letter-spacing: 0.1em !important;
+    letter-spacing: 0.08em !important;
     text-transform: uppercase !important;
     color: #8A8A9A !important;
     cursor: pointer !important;
+    transition: all 0.15s ease !important;
 }
-[data-testid="stSidebar"] [data-testid="stRadio"] label:hover {
+[data-testid="stSidebar"] [data-testid="stRadio"] label *,
+[data-testid="stSidebar"] .stRadio label * {
+    color: #8A8A9A !important;
+}
+[data-testid="stSidebar"] [data-testid="stRadio"] label:hover,
+[data-testid="stSidebar"] .stRadio label:hover {
     border-color: #89C4E1 !important;
+    color: #89C4E1 !important;
+    background: rgba(137,196,225,0.06) !important;
+}
+[data-testid="stSidebar"] [data-testid="stRadio"] label:hover *,
+[data-testid="stSidebar"] .stRadio label:hover * {
     color: #89C4E1 !important;
 }
 
