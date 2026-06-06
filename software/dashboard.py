@@ -133,6 +133,12 @@ html, body, [data-testid="stApp"],
 footer { visibility:hidden; }
 [data-testid="stToolbar"] { display:none; }
 
+/* ── Hide sidebar collapse/expand toggle button ── */
+[data-testid="stSidebarCollapsedControl"] { display:none !important; }
+[data-testid="stSidebarCollapseButton"]   { display:none !important; }
+[data-testid="collapsedControl"]          { display:none !important; }
+button[kind="headerNoPadding"]            { display:none !important; }
+
 /* ── Sidebar ── */
 [data-testid="stSidebar"],
 [data-testid="stSidebar"] > div,
