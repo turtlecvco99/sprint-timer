@@ -437,6 +437,66 @@ hr {
     color: #F0F0F0 !important;
     border-radius: 0 !important;
 }
+
+/* ── Selectbox fully dark ── */
+[data-testid="stSelectbox"] div[data-baseweb="select"] > div {
+    background-color: #12121A !important;
+    border-color: #1E1E2E !important;
+    color: #F0F0F0 !important;
+}
+[data-testid="stSelectbox"] svg { fill: #555566 !important; }
+
+/* ── File uploader dark ── */
+[data-testid="stFileUploader"] {
+    background: #12121A !important;
+    border: 1px dashed #1E1E2E !important;
+    border-radius: 10px !important;
+    padding: 12px !important;
+}
+[data-testid="stFileUploader"] label {
+    color: #555566 !important;
+    font-family: 'DM Sans', sans-serif !important;
+    font-size: 0.78rem !important;
+}
+
+/* ── Expander header hover ── */
+[data-testid="stExpander"] summary:hover { color: #89C4E1 !important; }
+
+/* ── Table row hover ── */
+tr:hover { background: #1A1A26 !important; }
+
+/* ── Number input +/- buttons styled ── */
+[data-testid="stNumberInput"] > div {
+    background: #12121A !important;
+    border: 1px solid #1E1E2E !important;
+    border-radius: 8px !important;
+}
+[data-testid="stNumberInput"] button {
+    background: #1E1E2E !important;
+    border: none !important;
+    color: #8A8A9A !important;
+}
+[data-testid="stNumberInput"] button:hover {
+    background: #89C4E1 !important;
+    color: #0A0A0F !important;
+}
+
+/* ── Success alert styled ── */
+[data-testid="stAlert"][kind="success"] {
+    background: #0D1A0D !important;
+    border: 1px solid rgba(29,219,139,0.3) !important;
+    border-left: 3px solid #1DDB8B !important;
+    border-radius: 0 8px 8px 0 !important;
+    color: #1DDB8B !important;
+}
+
+/* ── Error alert styled ── */
+[data-testid="stAlert"][kind="error"] {
+    background: #1A0D0D !important;
+    border: 1px solid rgba(255,77,106,0.3) !important;
+    border-left: 3px solid #FF4D6A !important;
+    border-radius: 0 8px 8px 0 !important;
+}
 </style>""", unsafe_allow_html=True)
 
 
@@ -490,6 +550,54 @@ def view_header(title, subtitle=None):
             {datetime.datetime.now().strftime('%a %b %d · %H:%M')}
         </span>
     </div>""", unsafe_allow_html=True)
+
+
+def page_header(title, subtitle, icon, accent='blue'):
+    color = '#89C4E1' if accent == 'blue' else '#FF3D8A'
+    st.markdown(f"""
+    <div style="padding:20px 0 24px;border-bottom:1px solid #1E1E2E;margin-bottom:28px;">
+        <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px;">
+            <div style="width:40px;height:40px;border-radius:10px;
+                        background:rgba(137,196,225,0.08);border:1px solid rgba(137,196,225,0.2);
+                        display:flex;align-items:center;justify-content:center;
+                        font-size:1.3rem;flex-shrink:0;">{icon}</div>
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:2.8rem;
+                        letter-spacing:0.06em;line-height:1;
+                        background:linear-gradient(135deg,{color},#FF3D8A);
+                        -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+                        background-clip:text;">{title}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;margin-left:54px;">
+            <div style="width:5px;height:5px;border-radius:50%;background:#1DDB8B;
+                        box-shadow:0 0 6px rgba(29,219,139,0.8);flex-shrink:0;"></div>
+            <span style="font-family:'DM Sans';font-size:0.7rem;letter-spacing:0.14em;
+                         text-transform:uppercase;color:#555566;">{subtitle}</span>
+            <span style="margin-left:auto;font-family:'JetBrains Mono';
+                         font-size:0.68rem;color:#2A2A3E;">
+                {__import__('datetime').datetime.now().strftime('%a %b %d · %H:%M')}
+            </span>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+
+def stat_card(col, label, value, unit='', accent='#89C4E1', sublabel='', size='normal'):
+    font_size = '2rem' if size == 'normal' else '1.4rem' if size == 'small' else '2.6rem'
+    sub_html = f'<div style="font-family:DM Sans;font-size:0.68rem;color:#2A2A3E;margin-top:4px;">{sublabel}</div>' if sublabel else ''
+    col.markdown(f"""
+    <div style="background:#12121A;border:1px solid #1E1E2E;
+                border-top:3px solid {accent};border-radius:12px;
+                padding:16px 14px;height:100%;
+                box-shadow:0 0 20px rgba(137,196,225,0.04);">
+        <div style="font-family:'DM Sans';font-size:0.6rem;letter-spacing:0.14em;
+                    text-transform:uppercase;color:#555566;margin-bottom:8px;">{label}</div>
+        <div style="font-family:'JetBrains Mono';font-size:{font_size};
+                    color:#F0F0F0;line-height:1;">
+            {value}<span style="font-size:0.85rem;color:#555566;margin-left:3px;">{unit}</span>
+        </div>
+        {sub_html}
+    </div>
+    """, unsafe_allow_html=True)
 
 
 def section_header(label, accent='blue'):
@@ -550,15 +658,19 @@ def podium_card(col, rank, name, total, runs, top_speed):
     </div>""", unsafe_allow_html=True)
 
 
-def render_rankings_table(lb_df):
+def render_rankings_table(lb_df, current_user=''):
     MEDALS = {1:'🥇',2:'🥈',3:'🥉'}
     RANK_COLORS = {1:'#FFD700',2:'#C0C0C0',3:'#CD7F32'}
     rows = ''
     for _, row in lb_df.iterrows():
         rank = int(row['rank']); rc = RANK_COLORS.get(rank,'#555566')
-        rows += f"""<tr style="border-bottom:1px solid #1A1A26;">
+        is_me = row['athlete'] == current_user
+        you_badge = '<span style="font-family:DM Sans;font-size:0.55rem;background:#89C4E1;color:#0A0A0F;border-radius:999px;padding:2px 7px;margin-left:8px;font-weight:600;vertical-align:middle;">YOU</span>' if is_me else ''
+        name_color = '#F0F0F0' if is_me else '#8A8A9A'
+        row_bg = 'background:#1A1A2A;' if is_me else ''
+        rows += f"""<tr style="border-bottom:1px solid #1A1A26;{row_bg}">
             <td style="padding:12px 16px;font-family:'JetBrains Mono',monospace;color:{rc};font-size:0.85rem;">{MEDALS.get(rank,f'#{rank}')}</td>
-            <td style="padding:12px 16px;font-family:'DM Sans',sans-serif;color:#F0F0F0;font-size:0.9rem;font-weight:500;">{row['athlete']}</td>
+            <td style="padding:12px 16px;font-family:'DM Sans',sans-serif;color:{name_color};font-size:0.9rem;font-weight:500;">{row['athlete']}{you_badge}</td>
             <td style="padding:12px 16px;font-family:'JetBrains Mono',monospace;color:#89C4E1;font-size:0.85rem;">{row['best_total']:.3f}s</td>
             <td style="padding:12px 16px;font-family:'JetBrains Mono',monospace;color:#8A8A9A;font-size:0.85rem;">{row['best_0_10']:.3f}s</td>
             <td style="padding:12px 16px;font-family:'JetBrains Mono',monospace;color:#8A8A9A;font-size:0.85rem;">{row['best_10_30']:.3f}s</td>
@@ -566,6 +678,26 @@ def render_rankings_table(lb_df):
             <td style="padding:12px 16px;font-family:'JetBrains Mono',monospace;color:#8A8A9A;font-size:0.85rem;">{row['top_speed']:.1f}</td>
             <td style="padding:12px 16px;font-family:'JetBrains Mono',monospace;color:#555566;font-size:0.85rem;">{row['runs']}</td>
             <td style="padding:12px 16px;font-family:'DM Sans',sans-serif;color:#555566;font-size:0.78rem;">{row['last_run']}</td>
+        </tr>"""
+    # Field averages footer row
+    all_runs_df = load_all_runs()
+    if not all_runs_df.empty:
+        avg_best    = all_runs_df.groupby('athlete')['total'].min().mean()
+        avg_0_10    = all_runs_df.groupby('athlete')['split_0_10'].min().mean()
+        avg_10_30   = all_runs_df.groupby('athlete')['split_10_30'].min().mean()
+        avg_30_60   = all_runs_df.groupby('athlete')['split_30_60'].min().mean()
+        avg_speed   = all_runs_df['top_speed'].mean()
+        avg_runs_ct = int(all_runs_df.groupby('athlete').size().mean())
+        rows += f"""<tr style="border-top:2px solid #2A2A3E;background:#0D0D14;">
+            <td style="padding:12px 16px;font-family:'DM Sans',monospace;color:#2A2A3E;font-size:0.75rem;font-style:italic;">AVG</td>
+            <td style="padding:12px 16px;font-family:'DM Sans',sans-serif;color:#2A2A3E;font-size:0.8rem;font-style:italic;">Field average</td>
+            <td style="padding:12px 16px;font-family:'JetBrains Mono',monospace;color:#2A2A3E;font-size:0.82rem;">{avg_best:.3f}s</td>
+            <td style="padding:12px 16px;font-family:'JetBrains Mono',monospace;color:#2A2A3E;font-size:0.82rem;">{avg_0_10:.3f}s</td>
+            <td style="padding:12px 16px;font-family:'JetBrains Mono',monospace;color:#2A2A3E;font-size:0.82rem;">{avg_10_30:.3f}s</td>
+            <td style="padding:12px 16px;font-family:'JetBrains Mono',monospace;color:#2A2A3E;font-size:0.82rem;">{avg_30_60:.3f}s</td>
+            <td style="padding:12px 16px;font-family:'JetBrains Mono',monospace;color:#2A2A3E;font-size:0.82rem;">{avg_speed:.1f}</td>
+            <td style="padding:12px 16px;font-family:'JetBrains Mono',monospace;color:#2A2A3E;font-size:0.82rem;">{avg_runs_ct}</td>
+            <td style="padding:12px 16px;font-family:'DM Sans',sans-serif;color:#2A2A3E;font-size:0.78rem;">—</td>
         </tr>"""
     th = "padding:12px 16px;font-family:'DM Sans',sans-serif;font-size:0.65rem;letter-spacing:0.14em;text-transform:uppercase;color:#555566;text-align:left;font-weight:500;"
     st.markdown(f"""
@@ -582,15 +714,16 @@ def render_rankings_table(lb_df):
     </div>""", unsafe_allow_html=True)
 
 
-def empty_state(msg="NO DATA", sub="Log some runs to unlock this."):
+def empty_state(icon='📭', title="NO DATA", subtitle="Log some runs to unlock this."):
     st.markdown(f"""
-    <div style="background:#12121A;border:1px solid #1E1E2E;border-radius:12px;
-                padding:60px 40px;text-align:center;margin:16px 0;">
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:2.2rem;
-                    letter-spacing:0.06em;color:#2A2A3E;">{msg}</div>
-        <div style="font-family:'DM Sans',sans-serif;font-size:0.8rem;
-                    color:#555566;margin-top:10px;">{sub}</div>
-    </div>""", unsafe_allow_html=True)
+    <div style="background:#12121A;border:1px solid #1E1E2E;border-radius:14px;
+                padding:48px 32px;text-align:center;margin:8px 0;">
+        <div style="font-size:2.5rem;margin-bottom:12px;opacity:0.4;">{icon}</div>
+        <div style="font-family:'Bebas Neue';font-size:1.4rem;letter-spacing:0.08em;
+                    color:#2A2A3E;margin-bottom:6px;">{title}</div>
+        <div style="font-family:'DM Sans';font-size:0.78rem;color:#2A2A3E;">{subtitle}</div>
+    </div>
+    """, unsafe_allow_html=True)
 
 
 def render_footer():
@@ -818,8 +951,8 @@ page = st.session_state.page
 if page == "MY DASHBOARD":
     df_me = load_athlete_runs(current_user)
     if df_me.empty:
-        view_header("MY DASHBOARD", f"welcome back, {current_user.lower()}")
-        empty_state("NO RUNS YET", "Head to Settings to log your first run.")
+        page_header("MY DASHBOARD", f"welcome back, {current_user.lower()}", "⚡", "blue")
+        empty_state("🏃", "NO RUNS YET", "Head to Settings to log your first run.")
         render_footer()
         st.stop()
 
@@ -832,7 +965,7 @@ if page == "MY DASHBOARD":
     my_rank = int(rankings[rankings['athlete'] == current_user].index[0]) + 1
     total_athletes = len(rankings)
 
-    view_header("MY DASHBOARD", f"welcome back, {current_user.lower()}")
+    page_header("MY DASHBOARD", f"welcome back, {current_user.lower()}", "⚡", "blue")
 
     # ── Streak calc ──
     from datetime import date, timedelta
@@ -888,6 +1021,95 @@ if page == "MY DASHBOARD":
         </div>
     </div>
     """, unsafe_allow_html=True)
+
+    # ── TODAY'S SESSION ──
+    from datetime import date as _date, timedelta as _timedelta
+    last_session_date = df_me['date'].dt.date.iloc[0]
+    last_session_runs = df_me[df_me['date'].dt.date == last_session_date]
+    is_today = last_session_date == _date.today()
+    session_label = "TODAY'S SESSION" if is_today else f"LAST SESSION — {last_session_date.strftime('%b %d')}"
+    session_color = '#1DDB8B' if is_today else '#555566'
+    pulse_anim = 'animation:dp-pulse 2s infinite;' if is_today else ''
+    reps = last_session_runs[::-1].reset_index(drop=True)
+    rep_html = ''
+    pb_val_sess = df_me['total'].min()
+    for i, row in reps.iterrows():
+        is_pb_r = abs(row['total'] - pb_val_sess) < 0.001
+        pb_tag = '<span style="font-family:DM Sans;font-size:0.55rem;background:#FFD70022;color:#FFD700;border:1px solid #FFD70044;border-radius:999px;padding:1px 6px;margin-left:6px;">PB</span>' if is_pb_r else ''
+        rep_html += f"""
+        <div style="display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid #1A1A26;">
+            <span style="font-family:'JetBrains Mono';font-size:0.72rem;color:#2A2A3E;width:30px;">#{i+1}</span>
+            <span style="font-family:'JetBrains Mono';font-size:0.85rem;color:#89C4E1;width:60px;">{row['split_0_10']:.3f}s</span>
+            <span style="font-family:'JetBrains Mono';font-size:0.85rem;color:#B39DDB;width:60px;">{row['split_10_30']:.3f}s</span>
+            <span style="font-family:'JetBrains Mono';font-size:0.85rem;color:#FF3D8A;width:60px;">{row['split_30_60']:.3f}s</span>
+            <span style="font-family:'JetBrains Mono';font-size:1rem;color:#F0F0F0;flex:1;font-weight:500;">{row['total']:.3f}s{pb_tag}</span>
+            <span style="font-family:'JetBrains Mono';font-size:0.72rem;color:#555566;">{row['top_speed']:.1f} mph</span>
+        </div>"""
+    split_header_cols = [('#', 30), ('0–10m', 60), ('10–30m', 60), ('30–60m', 60), ('Total', 80), ('Speed', 60)]
+    split_header = ''.join([
+        f'<span style="font-family:DM Sans;font-size:0.6rem;letter-spacing:0.1em;text-transform:uppercase;color:#555566;width:{w}px;display:inline-block;">{t}</span>'
+        for t, w in split_header_cols
+    ])
+    st.markdown(f"""
+    <div style="background:#12121A;border:1px solid #1E1E2E;border-radius:14px;
+                padding:20px 20px 8px;margin-bottom:16px;">
+        <div style="font-family:'Bebas Neue';font-size:1.1rem;letter-spacing:0.1em;
+                    color:#F0F0F0;margin-bottom:14px;">
+            <span style="display:inline-block;width:7px;height:7px;border-radius:50%;
+                         background:{session_color};box-shadow:0 0 6px {session_color};
+                         margin-right:8px;vertical-align:middle;{pulse_anim}"></span>
+            {session_label}
+            <span style="font-family:'DM Sans';font-size:0.68rem;color:#555566;margin-left:8px;font-weight:normal;">
+                {len(reps)} {'run' if len(reps)==1 else 'reps'}
+            </span>
+        </div>
+        <div style="display:flex;gap:12px;padding:0 0 8px;border-bottom:1px solid #1E1E2E;margin-bottom:4px;">{split_header}</div>
+        {rep_html}
+    </div>
+    """, unsafe_allow_html=True)
+
+    # ── TIME TO BEAT ──
+    my_idx = int(rankings[rankings['athlete'] == current_user].index[0])
+    if my_idx > 0:
+        athlete_above = rankings.iloc[my_idx - 1]
+        gap = float(best['total']) - float(athlete_above['total'])
+        st.markdown(f"""
+        <div style="background:linear-gradient(135deg,#0D0D14,#12121A);
+                    border:1px solid rgba(255,61,138,0.27);border-radius:12px;
+                    padding:16px 20px;margin-bottom:16px;
+                    display:flex;align-items:center;gap:20px;">
+            <div style="font-size:1.8rem;">🎯</div>
+            <div style="flex:1;">
+                <div style="font-family:'DM Sans';font-size:0.62rem;letter-spacing:0.14em;
+                            text-transform:uppercase;color:#555566;margin-bottom:4px;">Time to beat</div>
+                <div style="font-family:'DM Sans';font-size:0.82rem;color:#8A8A9A;">
+                    You're <span style="color:#FF3D8A;font-family:JetBrains Mono;">+{gap:.3f}s</span> behind
+                    <span style="color:#F0F0F0;">{athlete_above['athlete']}</span>
+                    (#{my_idx})
+                </div>
+            </div>
+            <div style="text-align:right;">
+                <div style="font-family:'JetBrains Mono';font-size:1.6rem;color:#FF3D8A;">{float(athlete_above['total']):.2f}s</div>
+                <div style="font-family:'DM Sans';font-size:0.62rem;color:#555566;">their best</div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+    else:
+        st.markdown(f"""
+        <div style="background:linear-gradient(135deg,#0D1A0D,#12121A);
+                    border:1px solid rgba(29,219,139,0.27);border-radius:12px;
+                    padding:16px 20px;margin-bottom:16px;
+                    display:flex;align-items:center;gap:20px;">
+            <div style="font-size:1.8rem;">👑</div>
+            <div>
+                <div style="font-family:'Bebas Neue';font-size:1.2rem;
+                            letter-spacing:0.08em;color:#1DDB8B;">You're leading the pack</div>
+                <div style="font-family:'DM Sans';font-size:0.8rem;color:#555566;">
+                    {current_user} holds the fastest time on the team
+                </div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
 
     # ── Season insight (compute before columns) ──
     insight_text = None
@@ -1007,10 +1229,10 @@ if page == "MY DASHBOARD":
 # ══════════════════════════════════════════════════════════════════════════════
 elif page == "LEADERBOARD":
     lb = load_leaderboard()
-    view_header("LEADERBOARD", f"{len(lb)} athletes ranked")
+    page_header("LEADERBOARD", f"{len(get_all_athletes())} athletes ranked · season 2026", "🏆", "pink")
 
     if lb.empty:
-        empty_state("NO RUNS LOGGED YET", "Get on the track and break some beams.")
+        empty_state("🏟️", "NO RUNS LOGGED YET", "Get on the track and break some beams.")
         render_footer()
         st.stop()
 
@@ -1022,7 +1244,7 @@ elif page == "LEADERBOARD":
     if len(top3) > 2: podium_card(p3,3,top3[2]['athlete'],top3[2]['best_total'],top3[2]['runs'],top3[2]['top_speed'])
 
     section_header("FULL RANKINGS", accent='pink')
-    render_rankings_table(lb)
+    render_rankings_table(lb, current_user)
 
     section_header("BEST TOTAL TIME", accent='blue')
     lb_s = lb.sort_values('best_total')
@@ -1060,6 +1282,32 @@ elif page == "LEADERBOARD":
         margin=dict(l=16, r=16, t=48, b=40),
     )
     st.plotly_chart(fig2, use_container_width=True, config=CHART_CFG)
+
+    section_header("TOP SPEED BY ATHLETE", accent='pink')
+    speed_df = load_all_runs().groupby('athlete')['top_speed'].max().reset_index()
+    speed_df = speed_df.sort_values('top_speed', ascending=False).reset_index(drop=True)
+    spd_colors = ['#FFD700' if r['athlete'] == current_user else '#FF3D8A'
+                  for _, r in speed_df.iterrows()]
+    fig_spd = go.Figure(go.Bar(
+        x=speed_df['athlete'],
+        y=speed_df['top_speed'],
+        marker=dict(color=spd_colors, line=dict(width=0)),
+        text=[f"{v:.1f}" for v in speed_df['top_speed']],
+        textposition='outside',
+        textfont=dict(family='JetBrains Mono', size=11, color='#8A8A9A'),
+        cliponaxis=False
+    ))
+    style_chart(fig_spd, height=280)
+    fig_spd.update_layout(
+        yaxis=dict(
+            range=[speed_df['top_speed'].min()*0.97, speed_df['top_speed'].max()*1.04],
+            visible=False
+        ),
+        xaxis=dict(tickfont=dict(family='DM Sans', size=12, color='#8A8A9A')),
+        bargap=0.35,
+    )
+    st.plotly_chart(fig_spd, use_container_width=True, config=CHART_CFG)
+
     render_footer()
     st.stop()
 
@@ -1072,8 +1320,8 @@ elif page == "MY PROFILE":
     athlete_data = load_athlete_runs(current_user)
 
     if athlete_data.empty:
-        view_header("MY PROFILE", f"{current_user.lower()}'s athlete card")
-        empty_state("NO RUNS YET")
+        page_header("MY PROFILE", f"{current_user.lower()}'s athlete card", "👤", "blue")
+        empty_state("🏃", "NO RUNS YET")
         render_footer()
         st.stop()
 
@@ -1083,7 +1331,7 @@ elif page == "MY PROFILE":
     my_rank  = int(rankings[rankings['athlete'] == current_user].index[0]) + 1
     accent   = profile.get('profile_color', '#89C4E1') or '#89C4E1'
 
-    view_header("MY PROFILE", f"{current_user.lower()}'s athlete card")
+    page_header("MY PROFILE", f"{current_user.lower()}'s athlete card", "👤", "blue")
 
     # ── Build profile tags as plain variables (no nested f-string quotes) ──
     accent_rgb = {'#89C4E1':'137,196,225','#FF3D8A':'255,61,138','#B39DDB':'179,157,219',
@@ -1154,6 +1402,39 @@ elif page == "MY PROFILE":
     </div>
     """
     st.markdown(hero_html, unsafe_allow_html=True)
+
+    # ── Season summary stats row ──
+    df_me_p = athlete_data
+    total_runs_p = len(df_me_p)
+    days_active_p = df_me_p['date'].dt.date.nunique()
+    avg_total_p = df_me_p['total'].mean()
+    best_total_p = df_me_p['total'].min()
+    improvement_p = df_me_p.tail(5)['total'].mean() - df_me_p.head(5)['total'].mean() if len(df_me_p) >= 10 else 0.0
+    consistency_p = max(0, 100 - (df_me_p['total'].std() / df_me_p['total'].mean() * 100)) if len(df_me_p) > 1 else 100.0
+    impr_color = '#1DDB8B' if improvement_p < 0 else '#FF4D6A'
+    summary_items = [
+        ('Runs logged',   str(total_runs_p),          '',   '#89C4E1'),
+        ('Days active',   str(days_active_p),          '',   '#B39DDB'),
+        ('Avg total',     f'{avg_total_p:.2f}',        's',  '#8A8A9A'),
+        ('Personal best', f'{best_total_p:.2f}',       's',  '#FF3D8A'),
+        ('Season delta',  f'{improvement_p:+.3f}',     's',  impr_color),
+        ('Consistency',   f'{consistency_p:.0f}',      '%',  '#FFD700'),
+    ]
+    border_style = 'border-right:1px solid #1E1E2E;'
+    items_html = ''.join([f"""
+    <div style="flex:1;text-align:center;padding:14px 8px;{border_style if i < len(summary_items)-1 else ''}">
+        <div style="font-family:'JetBrains Mono';font-size:1.4rem;color:{color};line-height:1;">
+            {val}<span style="font-size:0.8rem;color:#555566;">{unit}</span>
+        </div>
+        <div style="font-family:'DM Sans';font-size:0.58rem;letter-spacing:0.1em;
+                    text-transform:uppercase;color:#555566;margin-top:5px;">{label}</div>
+    </div>""" for i, (label, val, unit, color) in enumerate(summary_items)])
+    st.markdown(f"""
+    <div style="background:#12121A;border:1px solid #1E1E2E;border-radius:12px;
+                display:flex;margin-bottom:20px;overflow:hidden;">
+        {items_html}
+    </div>
+    """, unsafe_allow_html=True)
 
     # ── Goal progress bars ──
     has_goals = any([
@@ -1243,6 +1524,44 @@ elif page == "MY PROFILE":
         </div>
         <div style="font-family:'JetBrains Mono';font-size:1.5rem;color:#FFD700;flex-shrink:0;">
             {top_spd:.2f} mph</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # ── Best run breakdown ──
+    section_header("PERSONAL BEST RUN BREAKDOWN", accent='blue')
+    best_run = athlete_data.nsmallest(1, 'total').iloc[0]
+    total_time_br = float(best_run['total'])
+    pct_0_10_br  = float(best_run['split_0_10'])  / total_time_br * 100
+    pct_10_30_br = float(best_run['split_10_30']) / total_time_br * 100
+    pct_30_60_br = float(best_run['split_30_60']) / total_time_br * 100
+    br_date = best_run['date']
+    br_date_str = br_date.strftime('%b %d, %Y') if hasattr(br_date, 'strftime') else str(br_date)[:10]
+    st.markdown(f"""
+    <div style="background:#12121A;border:1px solid #1E1E2E;border-radius:14px;
+                padding:20px 24px;margin-bottom:16px;">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:16px;">
+            <div style="font-family:'JetBrains Mono';font-size:2.4rem;color:#F0F0F0;">{total_time_br:.3f}s</div>
+            <div style="font-family:'DM Sans';font-size:0.7rem;color:#555566;">{br_date_str}</div>
+        </div>
+        <div style="display:flex;border-radius:6px;overflow:hidden;height:10px;margin-bottom:16px;gap:2px;">
+            <div style="width:{pct_0_10_br:.1f}%;background:#89C4E1;border-radius:4px;"></div>
+            <div style="width:{pct_10_30_br:.1f}%;background:#B39DDB;border-radius:4px;"></div>
+            <div style="width:{pct_30_60_br:.1f}%;background:#FF3D8A;border-radius:4px;"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
+            <div style="text-align:center;">
+                <div style="font-family:'JetBrains Mono';font-size:1.3rem;color:#89C4E1;">{float(best_run['split_0_10']):.3f}s</div>
+                <div style="font-family:'DM Sans';font-size:0.6rem;letter-spacing:0.1em;text-transform:uppercase;color:#555566;margin-top:3px;">0–10m · {pct_0_10_br:.0f}%</div>
+            </div>
+            <div style="text-align:center;border-left:1px solid #1E1E2E;border-right:1px solid #1E1E2E;">
+                <div style="font-family:'JetBrains Mono';font-size:1.3rem;color:#B39DDB;">{float(best_run['split_10_30']):.3f}s</div>
+                <div style="font-family:'DM Sans';font-size:0.6rem;letter-spacing:0.1em;text-transform:uppercase;color:#555566;margin-top:3px;">10–30m · {pct_10_30_br:.0f}%</div>
+            </div>
+            <div style="text-align:center;">
+                <div style="font-family:'JetBrains Mono';font-size:1.3rem;color:#FF3D8A;">{float(best_run['split_30_60']):.3f}s</div>
+                <div style="font-family:'DM Sans';font-size:0.6rem;letter-spacing:0.1em;text-transform:uppercase;color:#555566;margin-top:3px;">30–60m · {pct_30_60_br:.0f}%</div>
+            </div>
+        </div>
     </div>
     """, unsafe_allow_html=True)
 
@@ -1336,10 +1655,10 @@ elif page == "MY PROFILE":
 # PAGE: MY PROGRESS
 # ══════════════════════════════════════════════════════════════════════════════
 elif page == "MY PROGRESS":
-    view_header("MY PROGRESS", f"{current_user}'s season arc")
+    page_header("MY PROGRESS", f"{current_user.lower()}'s season arc", "📈", "pink")
     df_p = load_athlete_runs(current_user)
     if df_p.empty:
-        empty_state("NO RUNS YET")
+        empty_state("🏃", "NO RUNS YET")
         render_footer()
         st.stop()
 
@@ -1376,6 +1695,48 @@ elif page == "MY PROGRESS":
                             text-transform:uppercase;color:#555566;margin-top:4px;">Peak top speed</div>
             </div>
         </div>""", unsafe_allow_html=True)
+
+    section_header("PHASE ANALYSIS", accent='pink')
+    all_runs_pa = load_all_runs()
+    my_avgs_pa = {
+        '0–10m':  df_p['split_0_10'].mean(),
+        '10–30m': df_p['split_10_30'].mean(),
+        '30–60m': df_p['split_30_60'].mean(),
+    }
+    field_avgs_pa = {
+        '0–10m':  all_runs_pa['split_0_10'].mean(),
+        '10–30m': all_runs_pa['split_10_30'].mean(),
+        '30–60m': all_runs_pa['split_30_60'].mean(),
+    }
+    phase_html = ''
+    for phase_label, my_val, f_val, p_color in [
+        ('0–10m  · Reaction + first step', my_avgs_pa['0–10m'],  field_avgs_pa['0–10m'],  '#89C4E1'),
+        ('10–30m · Drive phase',           my_avgs_pa['10–30m'], field_avgs_pa['10–30m'], '#B39DDB'),
+        ('30–60m · Max velocity',          my_avgs_pa['30–60m'], field_avgs_pa['30–60m'], '#FF3D8A'),
+    ]:
+        diff      = my_val - f_val
+        diff_pct  = abs(diff / f_val * 100) if f_val else 0
+        is_ahead  = diff < -0.005
+        is_behind = diff > 0.005
+        bar_color = '#1DDB8B' if is_ahead else '#FF4D6A' if is_behind else '#555566'
+        status    = f'▲ {diff_pct:.1f}% ahead of field' if is_ahead else f'▼ {diff_pct:.1f}% behind field' if is_behind else 'At field average'
+        bar_fill  = min(100, diff_pct * 10)
+        phase_html += f"""
+        <div style="background:#12121A;border:1px solid #1E1E2E;border-radius:10px;
+                    padding:14px 18px;margin-bottom:8px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                <span style="font-family:'DM Sans';font-size:0.75rem;color:#8A8A9A;">{phase_label}</span>
+                <span style="font-family:'JetBrains Mono';font-size:0.75rem;color:{bar_color};">{status}</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;">
+                <span style="font-family:'JetBrains Mono';font-size:0.85rem;color:#F0F0F0;width:52px;">{my_val:.3f}s</span>
+                <div style="flex:1;background:#0A0A0F;border-radius:999px;height:5px;">
+                    <div style="height:100%;width:{bar_fill:.0f}%;background:{bar_color};border-radius:999px;max-width:100%;"></div>
+                </div>
+                <span style="font-family:'JetBrains Mono';font-size:0.72rem;color:#555566;width:52px;text-align:right;">avg {f_val:.3f}s</span>
+            </div>
+        </div>"""
+    st.markdown(phase_html, unsafe_allow_html=True)
 
     section_header("PERSONAL BEST TIMELINE", accent='pink')
     df_p['running_pb'] = df_p['total'].expanding().min()
@@ -1453,6 +1814,34 @@ elif page == "MY PROGRESS":
     )
     st.plotly_chart(fig_wk, use_container_width=True, config=CHART_CFG)
 
+    section_header("TOP 5 RUNS", accent='blue')
+    top5 = df_p.nsmallest(5, 'total').reset_index(drop=True)
+    t5_rows = ''
+    for i, row in top5.iterrows():
+        t5_rows += f"""
+        <tr style="border-bottom:1px solid #1A1A26;">
+            <td style="padding:10px 14px;font-family:JetBrains Mono;color:#FFD700;font-size:0.8rem;">#{i+1}</td>
+            <td style="padding:10px 14px;font-family:DM Sans;color:#555566;font-size:0.75rem;">{str(row['date'])[:10]}</td>
+            <td style="padding:10px 14px;font-family:JetBrains Mono;color:#89C4E1;font-size:0.82rem;">{float(row['split_0_10']):.3f}s</td>
+            <td style="padding:10px 14px;font-family:JetBrains Mono;color:#B39DDB;font-size:0.82rem;">{float(row['split_10_30']):.3f}s</td>
+            <td style="padding:10px 14px;font-family:JetBrains Mono;color:#FF3D8A;font-size:0.82rem;">{float(row['split_30_60']):.3f}s</td>
+            <td style="padding:10px 14px;font-family:JetBrains Mono;color:#F0F0F0;font-size:0.9rem;font-weight:500;">{float(row['total']):.3f}s</td>
+            <td style="padding:10px 14px;font-family:JetBrains Mono;color:#555566;font-size:0.78rem;">{float(row['top_speed']):.1f} mph</td>
+        </tr>"""
+    th5 = "padding:10px 14px;font-family:DM Sans;font-size:0.6rem;letter-spacing:0.12em;text-transform:uppercase;color:#2A2A3E;text-align:left;font-weight:500;"
+    st.markdown(f"""
+    <div style="border:1px solid #1E1E2E;border-radius:12px;overflow:hidden;margin-bottom:16px;">
+        <table style="width:100%;border-collapse:collapse;background:#12121A;">
+            <thead>
+                <tr style="background:#0D0D14;border-bottom:2px solid #1E1E2E;">
+                    {''.join([f'<th style="{th5}">{h}</th>' for h in ['#','Date','0–10m','10–30m','30–60m','Total','Speed']])}
+                </tr>
+            </thead>
+            <tbody>{t5_rows}</tbody>
+        </table>
+    </div>
+    """, unsafe_allow_html=True)
+
     section_header("RECENT RUNS", accent='blue')
     recent = df_p.tail(10)[::-1]
     pb = df_p['total'].min()
@@ -1487,10 +1876,10 @@ elif page == "MY PROGRESS":
 # PAGE: COMPARE
 # ══════════════════════════════════════════════════════════════════════════════
 elif page == "COMPARE":
-    view_header("HEAD TO HEAD", "measure yourself against the field")
+    page_header("HEAD TO HEAD", "measure yourself against the field", "⚔️", "blue")
     all_ath = get_all_athletes()
     if len(all_ath) < 2:
-        empty_state("NEED AT LEAST 2 ATHLETES")
+        empty_state("⚔️", "NEED AT LEAST 2 ATHLETES", "Add more athletes in Settings.")
         render_footer()
         st.stop()
 
@@ -1615,6 +2004,46 @@ elif page == "COMPARE":
                     font=dict(color='#8A8A9A', family='DM Sans')),
         margin=dict(l=40,r=40,t=40,b=40))
     st.plotly_chart(fig2, use_container_width=True, config=CHART_CFG)
+
+    section_header("SPLIT DELTA BREAKDOWN", accent='blue')
+    compare_deltas = [
+        ('0–10m',     float(da['split_0_10'].mean()),  float(db_['split_0_10'].mean()),  False),
+        ('10–30m',    float(da['split_10_30'].mean()), float(db_['split_10_30'].mean()), False),
+        ('30–60m',    float(da['split_30_60'].mean()), float(db_['split_30_60'].mean()), False),
+        ('Total avg', float(da['total'].mean()),        float(db_['total'].mean()),       False),
+        ('Top speed', float(da['top_speed'].max()),     float(db_['top_speed'].max()),    True),
+    ]
+    delta_rows = ''
+    for label, val_a, val_b, is_speed in compare_deltas:
+        a_wins = (val_a > val_b) if is_speed else (val_a < val_b)
+        delta  = val_a - val_b
+        sign   = '+' if delta > 0 else ''
+        dcol   = '#1DDB8B' if (delta < 0 and not is_speed) or (delta > 0 and is_speed) else '#FF4D6A'
+        unit_s = ' mph' if is_speed else 's'
+        delta_rows += f"""
+        <tr style="border-bottom:1px solid #1A1A26;">
+            <td style="padding:10px 14px;font-family:DM Sans;color:#8A8A9A;font-size:0.8rem;">{label}</td>
+            <td style="padding:10px 14px;font-family:JetBrains Mono;color:{'#89C4E1' if a_wins else '#555566'};font-size:0.85rem;text-align:right;">{val_a:.3f}{unit_s}</td>
+            <td style="padding:10px 14px;font-family:JetBrains Mono;color:{dcol};font-size:0.82rem;text-align:center;">{sign}{delta:.3f}{'s' if not is_speed else ''}</td>
+            <td style="padding:10px 14px;font-family:JetBrains Mono;color:{'#FF3D8A' if not a_wins else '#555566'};font-size:0.85rem;text-align:left;">{val_b:.3f}{unit_s}</td>
+        </tr>"""
+    th_d = "padding:10px 14px;font-family:DM Sans;font-size:0.6rem;letter-spacing:0.12em;text-transform:uppercase;color:#2A2A3E;font-weight:500;"
+    st.markdown(f"""
+    <div style="border:1px solid #1E1E2E;border-radius:12px;overflow:hidden;margin-bottom:16px;">
+        <table style="width:100%;border-collapse:collapse;background:#12121A;">
+            <thead>
+                <tr style="background:#0D0D14;border-bottom:2px solid #1E1E2E;">
+                    <th style="{th_d};text-align:left;">Split</th>
+                    <th style="{th_d};text-align:right;color:#89C4E1;">{athlete_a}</th>
+                    <th style="{th_d};text-align:center;">Δ</th>
+                    <th style="{th_d};text-align:left;color:#FF3D8A;">{athlete_b}</th>
+                </tr>
+            </thead>
+            <tbody>{delta_rows}</tbody>
+        </table>
+    </div>
+    """, unsafe_allow_html=True)
+
     render_footer()
     st.stop()
 
@@ -1623,7 +2052,7 @@ elif page == "COMPARE":
 # PAGE: SETTINGS
 # ══════════════════════════════════════════════════════════════════════════════
 elif page == "SETTINGS":
-    view_header("SETTINGS", "manage athletes and sessions")
+    page_header("SETTINGS", "manage athletes and sessions", "⚙️", "pink")
 
     section_header("ADD NEW ATHLETE", accent='blue')
     with st.form("add_athlete"):
@@ -1675,7 +2104,77 @@ elif page == "SETTINGS":
             </table>
         </div>""", unsafe_allow_html=True)
     else:
-        empty_state("NO ATHLETES YET", "Use the form above to add your first athlete.")
+        empty_state("👥", "NO ATHLETES YET", "Use the form above to add your first athlete.")
+
+    section_header("IMPORT RUNS FROM CSV", accent='blue')
+    st.markdown("""
+    <div style="background:#12121A;border:1px solid #1E1E2E;border-radius:10px;
+                padding:16px 18px;margin-bottom:12px;">
+        <div style="font-family:'DM Sans';font-size:0.75rem;color:#8A8A9A;margin-bottom:8px;line-height:1.6;">
+            Upload a CSV with columns:
+            <span style="font-family:JetBrains Mono;color:#89C4E1;font-size:0.72rem;">
+                athlete, date, split_0_10, split_10_30, split_30_60
+            </span>
+            — total and top_speed will be auto-calculated.
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+    uploaded = st.file_uploader("Upload CSV", type=['csv'], label_visibility="collapsed")
+    if uploaded is not None:
+        import io as _io
+        df_import = pd.read_csv(_io.BytesIO(uploaded.read()))
+        required_cols = ['athlete', 'date', 'split_0_10', 'split_10_30', 'split_30_60']
+        if all(c in df_import.columns for c in required_cols):
+            df_import['total']     = df_import['split_0_10'] + df_import['split_10_30'] + df_import['split_30_60']
+            df_import['top_speed'] = (30 / df_import['split_30_60'] * 2.237).round(2)
+            st.markdown(f"""
+            <div style="background:#0D1A0D;border:1px solid rgba(29,219,139,0.27);border-radius:8px;
+                        padding:12px 16px;margin-bottom:8px;">
+                <span style="font-family:DM Sans;font-size:0.8rem;color:#1DDB8B;">
+                    ✓ {len(df_import)} runs ready to import for {df_import['athlete'].nunique()} athlete(s)
+                </span>
+            </div>
+            """, unsafe_allow_html=True)
+            if st.button("CONFIRM IMPORT", use_container_width=True):
+                import sqlite3 as _sq
+                conn_imp = _sq.connect(DB)
+                for _, row_imp in df_import.iterrows():
+                    conn_imp.execute(
+                        'INSERT INTO runs (date,athlete,split_0_10,split_10_30,split_30_60,total,top_speed) VALUES (?,?,?,?,?,?,?)',
+                        (str(row_imp['date']), row_imp['athlete'], row_imp['split_0_10'],
+                         row_imp['split_10_30'], row_imp['split_30_60'], row_imp['total'], row_imp['top_speed']))
+                conn_imp.commit(); conn_imp.close()
+                st.cache_data.clear()
+                st.success(f"Imported {len(df_import)} runs.")
+                st.rerun()
+        else:
+            missing_cols = [c for c in required_cols if c not in df_import.columns]
+            st.error(f"Missing columns: {', '.join(missing_cols)}")
+
+    section_header("DANGER ZONE", accent='pink')
+    with st.expander("⚠️  Delete athlete data", expanded=False):
+        del_athletes_list = get_all_athletes()
+        if del_athletes_list:
+            del_athlete = st.selectbox("Select athlete to clear runs", del_athletes_list, key="del_select")
+            st.markdown(f"""
+            <div style="background:#1A0D0D;border:1px solid rgba(255,77,106,0.27);border-radius:8px;
+                        padding:12px 16px;margin-bottom:12px;">
+                <span style="font-family:DM Sans;font-size:0.78rem;color:#FF4D6A;">
+                    ⚠️ This will permanently delete all runs for {del_athlete}. This cannot be undone.
+                </span>
+            </div>
+            """, unsafe_allow_html=True)
+            del_confirm = st.text_input("Type DELETE to confirm", key="del_confirm")
+            if st.button("DELETE RUNS", use_container_width=True) and del_confirm == "DELETE":
+                import sqlite3 as _sq2
+                conn_del = _sq2.connect(DB)
+                conn_del.execute("DELETE FROM runs WHERE athlete=?", (del_athlete,))
+                conn_del.commit(); conn_del.close()
+                st.cache_data.clear()
+                st.success(f"All runs deleted for {del_athlete}.")
+                st.rerun()
+        else:
+            st.markdown('<div style="color:#555566;font-size:0.8rem;">No athletes yet.</div>', unsafe_allow_html=True)
 
     render_footer()
     st.stop()
