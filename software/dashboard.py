@@ -11,6 +11,7 @@ from db import (
     load_athlete_profile, save_athlete_profile, log_run_to_db,
     get_all_athletes_with_stats, add_athlete_to_db, get_global_stats, DB,
     register_athlete, verify_login, athlete_has_password, name_has_runs,
+    get_user_role,
 )
 
 st.set_page_config(
@@ -33,6 +34,10 @@ if 'auth_error' not in st.session_state:
     st.session_state.auth_error = ''
 if 'auth_success' not in st.session_state:
     st.session_state.auth_success = ''
+if 'user_role' not in st.session_state:
+    st.session_state.user_role = ''
+if 'public_view' not in st.session_state:
+    st.session_state.public_view = False
 
 _here = os.path.dirname(os.path.abspath(__file__))
 os.makedirs(os.path.join(_here, '..', 'data'), exist_ok=True)
@@ -79,6 +84,7 @@ def _bootstrap():
         ('profile_color', "TEXT DEFAULT '#89C4E1'"),
         ('password_hash', "TEXT DEFAULT NULL"),
         ('salt',          "TEXT DEFAULT NULL"),
+        ('role',          "TEXT DEFAULT 'athlete'"),
     ]:
         try:
             conn.execute(f"ALTER TABLE athletes ADD COLUMN {col_def[0]} {col_def[1]}")
@@ -797,8 +803,99 @@ def quick_stat(label, value, color):
 # ══════════════════════════════════════════════════════════════════════════════
 all_athletes = get_all_athletes()
 
+# ── PUBLIC LEADERBOARD (no login) ────────────────────────────────────────────
+if st.session_state.public_view and st.session_state.current_user is None:
+    st.markdown("""<style>
+    [data-testid="stMainBlockContainer"] { max-width:1100px !important; margin:0 auto !important; }
+    [data-testid="stSidebar"] { display:none !important; }
+    </style>""", unsafe_allow_html=True)
+
+    # Top bar
+    st.markdown(f"""
+    <div style="display:flex;align-items:center;justify-content:space-between;
+                padding:16px 0 20px;border-bottom:1px solid #1E1E2E;margin-bottom:28px;">
+        <div style="display:flex;align-items:center;gap:12px;">
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;
+                        letter-spacing:0.1em;
+                        background:linear-gradient(135deg,#89C4E1,#FF3D8A);
+                        -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+                        background-clip:text;">DRIVE PHASE</div>
+            <span style="font-family:'DM Sans';font-size:0.65rem;letter-spacing:0.16em;
+                         text-transform:uppercase;color:#2A2A3E;">· Public Leaderboard</span>
+        </div>
+        <span style="font-family:'JetBrains Mono';font-size:0.68rem;color:#2A2A3E;">
+            {datetime.datetime.now().strftime('%a %b %d · %H:%M')}
+        </span>
+    </div>
+    """, unsafe_allow_html=True)
+
+    lb_pub = load_leaderboard()
+    if lb_pub.empty:
+        empty_state("🏟️", "NO DATA YET", "Check back once athletes have logged runs.")
+    else:
+        # Global stats strip
+        gs = get_global_stats()
+        st.markdown(f"""
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:28px;">
+            <div style="background:#12121A;border:1px solid #1E1E2E;border-top:3px solid #89C4E1;
+                        border-radius:12px;padding:16px 14px;text-align:center;">
+                <div style="font-family:'JetBrains Mono';font-size:2rem;color:#89C4E1;">{gs['athlete_count']}</div>
+                <div style="font-family:'DM Sans';font-size:0.6rem;letter-spacing:0.12em;text-transform:uppercase;color:#555566;margin-top:4px;">Athletes</div>
+            </div>
+            <div style="background:#12121A;border:1px solid #1E1E2E;border-top:3px solid #B39DDB;
+                        border-radius:12px;padding:16px 14px;text-align:center;">
+                <div style="font-family:'JetBrains Mono';font-size:2rem;color:#B39DDB;">{gs['total_runs']}</div>
+                <div style="font-family:'DM Sans';font-size:0.6rem;letter-spacing:0.12em;text-transform:uppercase;color:#555566;margin-top:4px;">Total Runs</div>
+            </div>
+            <div style="background:#12121A;border:1px solid #1E1E2E;border-top:3px solid #FF3D8A;
+                        border-radius:12px;padding:16px 14px;text-align:center;">
+                <div style="font-family:'JetBrains Mono';font-size:2rem;color:#FF3D8A;">{gs['fastest_total']:.2f}s</div>
+                <div style="font-family:'DM Sans';font-size:0.6rem;letter-spacing:0.12em;text-transform:uppercase;color:#555566;margin-top:4px;">Fastest Time</div>
+            </div>
+            <div style="background:#12121A;border:1px solid #1E1E2E;border-top:3px solid #FFD700;
+                        border-radius:12px;padding:16px 14px;text-align:center;">
+                <div style="font-family:'JetBrains Mono';font-size:2rem;color:#FFD700;">{gs['top_speed_ever']:.1f}</div>
+                <div style="font-family:'DM Sans';font-size:0.6rem;letter-spacing:0.12em;text-transform:uppercase;color:#555566;margin-top:4px;">Top Speed (mph)</div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        section_header("FULL RANKINGS", accent='blue')
+        render_rankings_table(lb_pub)
+
+        section_header("BEST TOTAL TIME", accent='pink')
+        lb_s_pub = lb_pub.sort_values('best_total')
+        fig_pub = go.Figure(go.Bar(
+            x=lb_s_pub['athlete'], y=lb_s_pub['best_total'],
+            marker=dict(color=lb_s_pub['best_total'], colorscale=SCALE, showscale=False,
+                        line=dict(color='#0A0A0F', width=1)),
+            text=[f"{v:.2f}s" for v in lb_s_pub['best_total']],
+            textposition='outside', textfont=dict(family='JetBrains Mono', size=11, color='#F0F0F0'),
+            cliponaxis=False,
+        ))
+        style_chart(fig_pub, height=300)
+        fig_pub.update_layout(
+            bargap=0.35,
+            yaxis=dict(visible=False, range=[lb_s_pub['best_total'].min()*0.97, lb_s_pub['best_total'].max()*1.04]),
+            xaxis=dict(tickfont=dict(family='DM Sans', size=12, color='#8A8A9A')),
+        )
+        st.plotly_chart(fig_pub, use_container_width=True, config=CHART_CFG)
+
+    st.markdown('<div style="height:20px;"></div>', unsafe_allow_html=True)
+    col_login, col_mid, col_right = st.columns([1, 2, 1])
+    with col_mid:
+        if st.button("🔐  LOG IN TO YOUR ACCOUNT", use_container_width=True):
+            st.session_state.public_view = False
+            st.rerun()
+    st.markdown("""
+    <div style="text-align:center;padding:16px 0;font-family:'JetBrains Mono';
+                font-size:0.65rem;color:#1E1E2E;">DRIVE PHASE · v3.1</div>
+    """, unsafe_allow_html=True)
+    st.stop()
+
+
+# ── AUTH SCREEN ───────────────────────────────────────────────────────────────
 if st.session_state.current_user is None:
-    # ── Full-page auth screen ──
     st.markdown("""<style>
     @keyframes titleEntrance {
         0%   { opacity:0; transform:translateY(-40px) scale(0.95); }
@@ -813,14 +910,11 @@ if st.session_state.current_user is None:
         0%,100% { box-shadow: 0 0 20px rgba(137,196,225,0.15); }
         50%      { box-shadow: 0 0 40px rgba(137,196,225,0.35); }
     }
-    @keyframes lineSweep {
-        from { background-position: -200% center; }
-        to   { background-position: 200% center; }
-    }
     @keyframes dotPulse {
-        0%,100% { opacity:1; transform:scale(1);   box-shadow:0 0 8px rgba(29,219,139,0.8); }
-        50%     { opacity:0.5; transform:scale(0.7); box-shadow:0 0 3px rgba(29,219,139,0.3); }
+        0%,100% { opacity:1; transform:scale(1);    box-shadow:0 0 8px rgba(29,219,139,0.8); }
+        50%      { opacity:0.5; transform:scale(0.7); box-shadow:0 0 3px rgba(29,219,139,0.3); }
     }
+    [data-testid="stSidebar"] { display:none !important; }
     [data-testid="stMainBlockContainer"] {
         max-width: 480px !important;
         margin: 0 auto !important;
@@ -828,7 +922,6 @@ if st.session_state.current_user is None:
     }
     </style>""", unsafe_allow_html=True)
 
-    # ── Brand header ──
     st.markdown("""
     <div style="text-align:center;padding:40px 0 32px;">
         <div style="font-family:'Bebas Neue',sans-serif;font-size:5rem;
@@ -851,26 +944,27 @@ if st.session_state.current_user is None:
     </div>
     """, unsafe_allow_html=True)
 
-    # ── Auth card ──
-    mode = st.session_state.auth_mode
+    # Public leaderboard bypass
+    if st.button("🏆  VIEW PUBLIC LEADERBOARD  →", use_container_width=True, key="pub_lb_btn"):
+        st.session_state.public_view = True
+        st.rerun()
 
-    # Tab switcher
+    st.markdown('<div style="height:8px;"></div>', unsafe_allow_html=True)
+
+    mode = st.session_state.auth_mode
     tab_login_style  = f"flex:1;text-align:center;padding:12px;font-family:'DM Sans',sans-serif;font-size:0.72rem;letter-spacing:0.14em;text-transform:uppercase;cursor:pointer;border-bottom:2px solid {'#89C4E1' if mode=='login' else 'transparent'};color:{'#89C4E1' if mode=='login' else '#555566'};transition:all 0.2s ease;"
     tab_signup_style = f"flex:1;text-align:center;padding:12px;font-family:'DM Sans',sans-serif;font-size:0.72rem;letter-spacing:0.14em;text-transform:uppercase;cursor:pointer;border-bottom:2px solid {'#FF3D8A' if mode=='signup' else 'transparent'};color:{'#FF3D8A' if mode=='signup' else '#555566'};transition:all 0.2s ease;"
 
     st.markdown(f"""
     <div style="background:#12121A;border:1px solid #1E1E2E;border-radius:18px;
-                overflow:hidden;animation:formSlideUp 0.5s ease 0.3s both;
-                animation:glowPulse 4s ease infinite, formSlideUp 0.5s ease 0.3s both;">
+                overflow:hidden;animation:formSlideUp 0.5s ease 0.3s both;">
         <div style="display:flex;border-bottom:1px solid #1E1E2E;">
             <div style="{tab_login_style}">LOG IN</div>
             <div style="{tab_signup_style}">SIGN UP</div>
         </div>
-        <div style="padding:28px 28px 8px;">
     </div>
     """, unsafe_allow_html=True)
 
-    # Real tab toggle buttons (hidden but functional)
     tc1, tc2 = st.columns(2)
     with tc1:
         if st.button("LOG IN", key="tab_login", use_container_width=True,
@@ -887,7 +981,6 @@ if st.session_state.current_user is None:
 
     st.markdown('<div style="height:8px;"></div>', unsafe_allow_html=True)
 
-    # ── Error / success messages ──
     if st.session_state.auth_error:
         st.markdown(f"""
         <div style="background:#1A0D0D;border:1px solid rgba(255,77,106,0.3);
@@ -914,7 +1007,7 @@ if st.session_state.current_user is None:
             st.markdown('<div style="font-family:\'DM Sans\';font-size:0.6rem;letter-spacing:0.14em;text-transform:uppercase;color:#555566;margin-bottom:2px;">Password</div>', unsafe_allow_html=True)
             login_pass = st.text_input("Password", type="password", placeholder="••••••••", label_visibility="collapsed")
             st.markdown('<div style="height:12px;"></div>', unsafe_allow_html=True)
-            submitted = st.form_submit_button("LOG IN →", use_container_width=True)
+            submitted = st.form_submit_button("LOG IN  →", use_container_width=True)
             if submitted:
                 name_clean = login_name.strip()
                 if not name_clean or not login_pass:
@@ -925,29 +1018,32 @@ if st.session_state.current_user is None:
                     st.rerun()
                 elif verify_login(name_clean, login_pass):
                     st.session_state.current_user = name_clean
+                    st.session_state.user_role = get_user_role(name_clean)
                     st.session_state.auth_error = ''
                     st.session_state.auth_success = ''
                     st.rerun()
                 else:
                     st.session_state.auth_error = "Incorrect password. Try again."
                     st.rerun()
-
-    else:  # signup
+    else:
         with st.form("signup_form", clear_on_submit=False):
-            st.markdown('<div style="font-family:\'DM Sans\';font-size:0.6rem;letter-spacing:0.14em;text-transform:uppercase;color:#555566;margin-bottom:2px;">Choose a Name</div>', unsafe_allow_html=True)
+            st.markdown('<div style="font-family:\'DM Sans\';font-size:0.6rem;letter-spacing:0.14em;text-transform:uppercase;color:#555566;margin-bottom:2px;">Your Name</div>', unsafe_allow_html=True)
             signup_name = st.text_input("Name", placeholder="e.g. Franklin", label_visibility="collapsed", key="su_name")
             st.markdown('<div style="font-family:\'DM Sans\';font-size:0.6rem;letter-spacing:0.14em;text-transform:uppercase;color:#555566;margin:8px 0 2px;">Password</div>', unsafe_allow_html=True)
             signup_pass = st.text_input("Password", type="password", placeholder="Min 6 characters", label_visibility="collapsed", key="su_pass")
             st.markdown('<div style="font-family:\'DM Sans\';font-size:0.6rem;letter-spacing:0.14em;text-transform:uppercase;color:#555566;margin:8px 0 2px;">Confirm Password</div>', unsafe_allow_html=True)
             signup_pass2 = st.text_input("Confirm", type="password", placeholder="••••••••", label_visibility="collapsed", key="su_pass2")
+            st.markdown('<div style="font-family:\'DM Sans\';font-size:0.6rem;letter-spacing:0.14em;text-transform:uppercase;color:#555566;margin:8px 0 2px;">Coach Code (optional)</div>', unsafe_allow_html=True)
+            coach_code = st.text_input("Coach Code", placeholder="Leave blank if you're an athlete", label_visibility="collapsed", key="su_code")
             st.markdown("""
             <div style="font-family:'DM Sans';font-size:0.68rem;color:#2A2A3E;
                         margin:10px 0 14px;line-height:1.5;">
                 Already have runs logged? Sign up with your exact athlete name to claim your history.
             </div>""", unsafe_allow_html=True)
-            submitted2 = st.form_submit_button("CREATE ACCOUNT →", use_container_width=True)
+            submitted2 = st.form_submit_button("CREATE ACCOUNT  →", use_container_width=True)
             if submitted2:
                 name_clean = signup_name.strip()
+                intended_role = 'coach' if coach_code.strip() == 'DRIVEPHASE' else 'athlete'
                 if not name_clean:
                     st.session_state.auth_error = "Name cannot be empty."
                     st.rerun()
@@ -957,14 +1053,22 @@ if st.session_state.current_user is None:
                 elif signup_pass != signup_pass2:
                     st.session_state.auth_error = "Passwords do not match."
                     st.rerun()
+                elif coach_code.strip() and coach_code.strip() != 'DRIVEPHASE':
+                    st.session_state.auth_error = "Invalid coach code."
+                    st.rerun()
                 elif athlete_has_password(name_clean):
                     st.session_state.auth_error = f"'{name_clean}' is already claimed. Log in instead."
                     st.rerun()
                 else:
-                    success = register_athlete(name_clean, signup_pass)
+                    success = register_athlete(name_clean, signup_pass, role=intended_role)
                     if success:
                         has_history = name_has_runs(name_clean)
-                        msg = f"Welcome to Drive Phase, {name_clean}! Your run history has been linked." if has_history else f"Account created, {name_clean}. Log in to get started."
+                        if intended_role == 'coach':
+                            msg = f"Coach account created for {name_clean}. Log in to manage the team."
+                        elif has_history:
+                            msg = f"Welcome, {name_clean}! Your run history has been linked."
+                        else:
+                            msg = f"Account created, {name_clean}. Log in to get started."
                         st.session_state.auth_success = msg
                         st.session_state.auth_error = ''
                         st.session_state.auth_mode = 'login'
@@ -985,18 +1089,23 @@ if st.session_state.current_user is None:
 
 current_user = st.session_state.current_user
 
+user_role = st.session_state.get('user_role', '') or get_user_role(current_user)
+if not st.session_state.get('user_role'):
+    st.session_state.user_role = user_role
+
 
 # ══════════════════════════════════════════════════════════════════════════════
 # SIDEBAR
 # ══════════════════════════════════════════════════════════════════════════════
-NAV_ITEMS = [
+_base_nav = [
     ("⚡", "MY DASHBOARD"),
     ("🏆", "LEADERBOARD"),
     ("👤", "MY PROFILE"),
     ("📈", "MY PROGRESS"),
     ("⚔️",  "COMPARE"),
-    ("⚙️",  "SETTINGS"),
 ]
+_coach_nav = [("⚙️", "SETTINGS")]
+NAV_ITEMS = _base_nav + (_coach_nav if st.session_state.get('user_role') == 'coach' else [])
 
 with st.sidebar:
     # Logo
@@ -1011,6 +1120,8 @@ with st.sidebar:
     </div>""", unsafe_allow_html=True)
 
     # Identity pill
+    role_label = '⚙️ Coach' if user_role == 'coach' else '🏃 Athlete'
+    role_color = '#FF3D8A' if user_role == 'coach' else '#89C4E1'
     st.markdown(f"""
     <div style="background:linear-gradient(135deg,#89C4E1,#FF3D8A);
                 border-radius:10px;padding:12px 14px;margin-bottom:14px;
@@ -1024,7 +1135,7 @@ with st.sidebar:
             <div style="font-family:'Bebas Neue';font-size:1rem;letter-spacing:0.08em;
                         color:#0A0A0F;line-height:1;">{current_user.upper()}</div>
             <div style="font-family:'DM Sans';font-size:0.6rem;color:#0A0A0F99;
-                        letter-spacing:0.1em;text-transform:uppercase;">Active athlete</div>
+                        letter-spacing:0.1em;text-transform:uppercase;">{role_label}</div>
         </div>
     </div>
     <div style="height:1px;background:linear-gradient(90deg,#89C4E1,#FF3D8A);
@@ -1066,6 +1177,8 @@ with st.sidebar:
     # Switch user
     if st.button("↩  LOG OUT", use_container_width=True, key="nav_switch"):
         st.session_state.current_user = None
+        st.session_state.user_role = ''
+        st.session_state.public_view = False
         st.session_state.auth_error = ''
         st.session_state.auth_success = ''
         st.rerun()
@@ -1358,6 +1471,18 @@ if page == "MY DASHBOARD":
 elif page == "LEADERBOARD":
     lb = load_leaderboard()
     page_header("LEADERBOARD", f"{len(get_all_athletes())} athletes ranked · season 2026", "🏆", "pink")
+
+    st.markdown("""
+    <div style="background:#12121A;border:1px solid #1E1E2E;border-left:3px solid #89C4E1;
+                border-radius:0 8px 8px 0;padding:10px 16px;margin-bottom:16px;
+                display:flex;align-items:center;gap:10px;">
+        <span style="font-size:1rem;">🌐</span>
+        <span style="font-family:'DM Sans';font-size:0.78rem;color:#555566;">
+            Share the public leaderboard — anyone can view rankings without logging in
+            by visiting the app URL and clicking <strong style="color:#89C4E1;">View Public Leaderboard</strong>.
+        </span>
+    </div>
+    """, unsafe_allow_html=True)
 
     if lb.empty:
         empty_state("🏟️", "NO RUNS LOGGED YET", "Get on the track and break some beams.")
@@ -2181,6 +2306,22 @@ elif page == "COMPARE":
 # ══════════════════════════════════════════════════════════════════════════════
 elif page == "SETTINGS":
     page_header("SETTINGS", "manage athletes and sessions", "⚙️", "pink")
+
+    if user_role != 'coach':
+        st.markdown("""
+        <div style="background:#12121A;border:1px solid #1E1E2E;border-left:3px solid #FF4D6A;
+                    border-radius:0 12px 12px 0;padding:24px 28px;margin:20px 0;text-align:center;">
+            <div style="font-size:2rem;margin-bottom:10px;">🔒</div>
+            <div style="font-family:'Bebas Neue';font-size:1.4rem;letter-spacing:0.08em;
+                        color:#FF4D6A;margin-bottom:8px;">Coach Access Only</div>
+            <div style="font-family:'DM Sans';font-size:0.82rem;color:#555566;line-height:1.6;">
+                Team management is handled by the coach account.<br>
+                To edit your profile, visit <span style="color:#89C4E1;">MY PROFILE</span>.
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+        render_footer()
+        st.stop()
 
     section_header("ADD NEW ATHLETE", accent='blue')
     with st.form("add_athlete"):

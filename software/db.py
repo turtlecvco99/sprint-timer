@@ -158,7 +158,7 @@ def _hash_password(password: str, salt: bytes = None):
     return salt.hex(), key.hex()
 
 
-def register_athlete(name: str, password: str) -> bool:
+def register_athlete(name: str, password: str, role: str = 'athlete') -> bool:
     """Create or claim an athlete account. Returns True on success, False if name already has a password."""
     conn = get_conn()
     existing = conn.execute('SELECT password_hash FROM athletes WHERE name=?', (name,)).fetchone()
@@ -168,8 +168,8 @@ def register_athlete(name: str, password: str) -> bool:
     salt_hex, key_hex = _hash_password(password)
     conn.execute('''INSERT OR IGNORE INTO athletes (name, created_at) VALUES (?, ?)''',
                  (name, datetime.now().isoformat()))
-    conn.execute('UPDATE athletes SET password_hash=?, salt=? WHERE name=?',
-                 (key_hex, salt_hex, name))
+    conn.execute('UPDATE athletes SET password_hash=?, salt=?, role=? WHERE name=?',
+                 (key_hex, salt_hex, role, name))
     conn.commit()
     conn.close()
     return True
@@ -196,6 +196,16 @@ def athlete_has_password(name: str) -> bool:
     row = conn.execute('SELECT password_hash FROM athletes WHERE name=?', (name,)).fetchone()
     conn.close()
     return bool(row and row[0])
+
+
+def get_user_role(name: str) -> str:
+    """Return 'coach', 'athlete', or '' if not found."""
+    conn = get_conn()
+    row = conn.execute('SELECT role FROM athletes WHERE name=?', (name,)).fetchone()
+    conn.close()
+    if not row or not row[0]:
+        return 'athlete'  # default
+    return row[0]
 
 
 def name_has_runs(name: str) -> bool:
