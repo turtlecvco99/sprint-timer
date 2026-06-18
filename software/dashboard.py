@@ -10,6 +10,7 @@ from db import (
     get_all_athletes, load_athlete_runs, load_all_runs, load_leaderboard,
     load_athlete_profile, save_athlete_profile, log_run_to_db,
     get_all_athletes_with_stats, add_athlete_to_db, get_global_stats, DB,
+    register_athlete, verify_login, athlete_has_password, name_has_runs,
 )
 
 st.set_page_config(
@@ -26,6 +27,12 @@ if 'page' not in st.session_state:
     st.session_state.page = "MY DASHBOARD"
 if 'current_user' not in st.session_state:
     st.session_state.current_user = None
+if 'auth_mode' not in st.session_state:
+    st.session_state.auth_mode = 'login'
+if 'auth_error' not in st.session_state:
+    st.session_state.auth_error = ''
+if 'auth_success' not in st.session_state:
+    st.session_state.auth_success = ''
 
 _here = os.path.dirname(os.path.abspath(__file__))
 os.makedirs(os.path.join(_here, '..', 'data'), exist_ok=True)
@@ -70,6 +77,8 @@ def _bootstrap():
         ('goal_10_30',    "REAL DEFAULT 0.0"),
         ('goal_30_60',    "REAL DEFAULT 0.0"),
         ('profile_color', "TEXT DEFAULT '#89C4E1'"),
+        ('password_hash', "TEXT DEFAULT NULL"),
+        ('salt',          "TEXT DEFAULT NULL"),
     ]:
         try:
             conn.execute(f"ALTER TABLE athletes ADD COLUMN {col_def[0]} {col_def[1]}")
@@ -497,6 +506,33 @@ tr:hover { background: #1A1A26 !important; }
     border-left: 3px solid #FF4D6A !important;
     border-radius: 0 8px 8px 0 !important;
 }
+
+/* ── Auth form submit buttons — full gradient ── */
+[data-testid="stForm"] [data-testid="stFormSubmitButton"] button {
+    background: linear-gradient(135deg, #89C4E1, #FF3D8A) !important;
+    border: none !important;
+    color: #0A0A0F !important;
+    font-family: 'DM Sans', sans-serif !important;
+    font-size: 0.78rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.12em !important;
+    text-transform: uppercase !important;
+    border-radius: 10px !important;
+    padding: 14px 24px !important;
+    transition: opacity 0.2s ease !important;
+    width: 100% !important;
+}
+[data-testid="stForm"] [data-testid="stFormSubmitButton"] button:hover {
+    opacity: 0.88 !important;
+}
+
+/* ── Auth tab toggle buttons ── */
+div[data-testid="stHorizontalBlock"]:has(button[kind="primary"]) button[kind="secondary"] {
+    background: transparent !important;
+    background-image: none !important;
+    border: 1px solid #1E1E2E !important;
+    color: #555566 !important;
+}
 </style>""", unsafe_allow_html=True)
 
 
@@ -762,99 +798,189 @@ def quick_stat(label, value, color):
 all_athletes = get_all_athletes()
 
 if st.session_state.current_user is None:
-    st.markdown("""
-    <style>
+    # ── Full-page auth screen ──
+    st.markdown("""<style>
     @keyframes titleEntrance {
-        0%   { opacity:0; transform:translateY(-30px) scale(0.95); }
+        0%   { opacity:0; transform:translateY(-40px) scale(0.95); }
         60%  { opacity:1; transform:translateY(4px) scale(1.01); }
         100% { opacity:1; transform:translateY(0) scale(1); }
     }
-    @keyframes subtitleEntrance {
-        from { opacity:0; letter-spacing:0.4em; }
-        to   { opacity:1; letter-spacing:0.2em; }
-    }
-    @keyframes cardEntrance {
-        from { opacity:0; transform:translateY(30px); }
+    @keyframes formSlideUp {
+        from { opacity:0; transform:translateY(32px); }
         to   { opacity:1; transform:translateY(0); }
     }
-    </style>
-    <div style="padding:60px 40px 20px;text-align:center;">
-        <div class="dp-gradient-title" style="font-family:'Bebas Neue',sans-serif;font-size:5.5rem;
-                    letter-spacing:0.06em;line-height:0.9;margin-bottom:12px;text-align:center;
-                    animation:titleEntrance 0.8s ease both;">
+    @keyframes glowPulse {
+        0%,100% { box-shadow: 0 0 20px rgba(137,196,225,0.15); }
+        50%      { box-shadow: 0 0 40px rgba(137,196,225,0.35); }
+    }
+    @keyframes lineSweep {
+        from { background-position: -200% center; }
+        to   { background-position: 200% center; }
+    }
+    @keyframes dotPulse {
+        0%,100% { opacity:1; transform:scale(1);   box-shadow:0 0 8px rgba(29,219,139,0.8); }
+        50%     { opacity:0.5; transform:scale(0.7); box-shadow:0 0 3px rgba(29,219,139,0.3); }
+    }
+    [data-testid="stMainBlockContainer"] {
+        max-width: 480px !important;
+        margin: 0 auto !important;
+        padding-top: 4rem !important;
+    }
+    </style>""", unsafe_allow_html=True)
+
+    # ── Brand header ──
+    st.markdown("""
+    <div style="text-align:center;padding:40px 0 32px;">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:5rem;
+                    letter-spacing:0.06em;line-height:0.9;
+                    background:linear-gradient(135deg,#89C4E1 0%,#B39DDB 40%,#FF3D8A 100%);
+                    background-size:300% 300%;
+                    -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+                    background-clip:text;
+                    animation:titleEntrance 0.9s ease both, gradientShift 6s ease infinite;">
             DRIVE<br>PHASE
         </div>
-        <div style="font-family:'DM Sans',sans-serif;font-size:0.75rem;
-                    letter-spacing:0.2em;text-transform:uppercase;
-                    color:#555566;margin-bottom:64px;
-                    animation:subtitleEntrance 1s ease 0.4s both;">
-            acceleration starts here
-        </div>
-        <div style="font-family:'DM Sans',sans-serif;font-size:0.72rem;
-                    letter-spacing:0.16em;text-transform:uppercase;
-                    color:#444455;margin-bottom:24px;
-                    animation:fadeInUp 0.5s ease 0.6s both;">
-            Select your profile to continue
+        <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-top:14px;">
+            <div style="width:5px;height:5px;border-radius:50%;background:#1DDB8B;
+                        animation:dotPulse 2s ease infinite;flex-shrink:0;"></div>
+            <span style="font-family:'DM Sans',sans-serif;font-size:0.7rem;
+                         letter-spacing:0.22em;text-transform:uppercase;color:#555566;">
+                acceleration starts here
+            </span>
         </div>
     </div>
     """, unsafe_allow_html=True)
 
-    if all_athletes:
-        stats      = get_all_athletes_with_stats()
-        stats_dict = {row['name']: row for _, row in stats.iterrows()}
+    # ── Auth card ──
+    mode = st.session_state.auth_mode
 
-        def render_identity_card(name, delay):
-            s    = stats_dict.get(name, {})
-            best = s.get('best', 0)
-            runs = int(s.get('runs', 0))
-            pb_text = f'{best:.2f}s PB' if best else '—'
-            run_text = f'{runs} run{"s" if runs != 1 else ""} logged'
-            st.markdown(f"""
-            <div style="background:#12121A;border:1px solid #1E1E2E;
-                        border-radius:14px;padding:0 0 4px;overflow:hidden;
-                        animation:cardEntrance 0.5s ease {delay:.2f}s both;
-                        transition:all 0.25s ease;"
-                 onmouseover="this.style.borderColor='#89C4E1';this.style.transform='translateY(-4px)';this.style.boxShadow='0 12px 40px rgba(137,196,225,0.15)'"
-                 onmouseout="this.style.borderColor='#1E1E2E';this.style.transform='translateY(0)';this.style.boxShadow='none'">
-                <div style="height:4px;background:linear-gradient(90deg,#89C4E1,#FF3D8A);"></div>
-                <div style="padding:20px 16px;text-align:center;">
-                    <div style="width:52px;height:52px;border-radius:50%;
-                                background:linear-gradient(135deg,#89C4E1,#FF3D8A);
-                                display:flex;align-items:center;justify-content:center;
-                                margin:0 auto 14px;font-family:'Bebas Neue';
-                                font-size:1.6rem;color:#0A0A0F;">
-                        {name[0].upper()}
-                    </div>
-                    <div style="font-family:'Bebas Neue';font-size:1.3rem;
-                                letter-spacing:0.08em;color:#F0F0F0;margin-bottom:8px;">
-                        {name.upper()}
-                    </div>
-                    <div style="font-family:'JetBrains Mono';font-size:0.8rem;
-                                color:#89C4E1;margin-bottom:4px;">{pb_text}</div>
-                    <div style="font-family:'DM Sans';font-size:0.68rem;color:#2A2A3E;">
-                        {run_text}
-                    </div>
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
-            if st.button(f"ENTER AS {name.upper()}", key=f"id_{name}", use_container_width=True):
-                st.session_state.current_user = name
-                st.rerun()
+    # Tab switcher
+    tab_login_style  = f"flex:1;text-align:center;padding:12px;font-family:'DM Sans',sans-serif;font-size:0.72rem;letter-spacing:0.14em;text-transform:uppercase;cursor:pointer;border-bottom:2px solid {'#89C4E1' if mode=='login' else 'transparent'};color:{'#89C4E1' if mode=='login' else '#555566'};transition:all 0.2s ease;"
+    tab_signup_style = f"flex:1;text-align:center;padding:12px;font-family:'DM Sans',sans-serif;font-size:0.72rem;letter-spacing:0.14em;text-transform:uppercase;cursor:pointer;border-bottom:2px solid {'#FF3D8A' if mode=='signup' else 'transparent'};color:{'#FF3D8A' if mode=='signup' else '#555566'};transition:all 0.2s ease;"
 
-        # Split into rows of 4 so second row is never cropped
-        rows = [all_athletes[i:i+4] for i in range(0, len(all_athletes), 4)]
-        for row_idx, row_athletes in enumerate(rows):
-            cols = st.columns(len(row_athletes))
-            for ci, name in enumerate(row_athletes):
-                delay = 0.7 + (row_idx * 4 + ci) * 0.08
-                with cols[ci]:
-                    render_identity_card(name, delay)
-            st.markdown('<div style="height:12px;"></div>', unsafe_allow_html=True)
-    else:
-        st.markdown("""
-        <div style="text-align:center;color:#555566;font-family:'DM Sans',sans-serif;font-size:0.85rem;">
-            No athletes yet. Add athletes in Settings first.
+    st.markdown(f"""
+    <div style="background:#12121A;border:1px solid #1E1E2E;border-radius:18px;
+                overflow:hidden;animation:formSlideUp 0.5s ease 0.3s both;
+                animation:glowPulse 4s ease infinite, formSlideUp 0.5s ease 0.3s both;">
+        <div style="display:flex;border-bottom:1px solid #1E1E2E;">
+            <div style="{tab_login_style}">LOG IN</div>
+            <div style="{tab_signup_style}">SIGN UP</div>
+        </div>
+        <div style="padding:28px 28px 8px;">
+    </div>
+    """, unsafe_allow_html=True)
+
+    # Real tab toggle buttons (hidden but functional)
+    tc1, tc2 = st.columns(2)
+    with tc1:
+        if st.button("LOG IN", key="tab_login", use_container_width=True,
+                     type="primary" if mode == "login" else "secondary"):
+            st.session_state.auth_mode = 'login'
+            st.session_state.auth_error = ''
+            st.rerun()
+    with tc2:
+        if st.button("SIGN UP", key="tab_signup", use_container_width=True,
+                     type="primary" if mode == "signup" else "secondary"):
+            st.session_state.auth_mode = 'signup'
+            st.session_state.auth_error = ''
+            st.rerun()
+
+    st.markdown('<div style="height:8px;"></div>', unsafe_allow_html=True)
+
+    # ── Error / success messages ──
+    if st.session_state.auth_error:
+        st.markdown(f"""
+        <div style="background:#1A0D0D;border:1px solid rgba(255,77,106,0.3);
+                    border-left:3px solid #FF4D6A;border-radius:0 8px 8px 0;
+                    padding:10px 14px;margin-bottom:12px;
+                    font-family:'DM Sans';font-size:0.8rem;color:#FF4D6A;">
+            {st.session_state.auth_error}
         </div>""", unsafe_allow_html=True)
+
+    if st.session_state.auth_success:
+        st.markdown(f"""
+        <div style="background:#0D1A0D;border:1px solid rgba(29,219,139,0.3);
+                    border-left:3px solid #1DDB8B;border-radius:0 8px 8px 0;
+                    padding:10px 14px;margin-bottom:12px;
+                    font-family:'DM Sans';font-size:0.8rem;color:#1DDB8B;">
+            {st.session_state.auth_success}
+        </div>""", unsafe_allow_html=True)
+
+    if mode == 'login':
+        with st.form("login_form", clear_on_submit=False):
+            st.markdown('<div style="font-family:\'DM Sans\';font-size:0.6rem;letter-spacing:0.14em;text-transform:uppercase;color:#555566;margin-bottom:2px;">Athlete Name</div>', unsafe_allow_html=True)
+            login_name = st.text_input("Name", placeholder="e.g. Franklin", label_visibility="collapsed")
+            st.markdown('<div style="height:6px;"></div>', unsafe_allow_html=True)
+            st.markdown('<div style="font-family:\'DM Sans\';font-size:0.6rem;letter-spacing:0.14em;text-transform:uppercase;color:#555566;margin-bottom:2px;">Password</div>', unsafe_allow_html=True)
+            login_pass = st.text_input("Password", type="password", placeholder="••••••••", label_visibility="collapsed")
+            st.markdown('<div style="height:12px;"></div>', unsafe_allow_html=True)
+            submitted = st.form_submit_button("LOG IN →", use_container_width=True)
+            if submitted:
+                name_clean = login_name.strip()
+                if not name_clean or not login_pass:
+                    st.session_state.auth_error = "Please enter your name and password."
+                    st.rerun()
+                elif not athlete_has_password(name_clean):
+                    st.session_state.auth_error = f"No account found for '{name_clean}'. Sign up first."
+                    st.rerun()
+                elif verify_login(name_clean, login_pass):
+                    st.session_state.current_user = name_clean
+                    st.session_state.auth_error = ''
+                    st.session_state.auth_success = ''
+                    st.rerun()
+                else:
+                    st.session_state.auth_error = "Incorrect password. Try again."
+                    st.rerun()
+
+    else:  # signup
+        with st.form("signup_form", clear_on_submit=False):
+            st.markdown('<div style="font-family:\'DM Sans\';font-size:0.6rem;letter-spacing:0.14em;text-transform:uppercase;color:#555566;margin-bottom:2px;">Choose a Name</div>', unsafe_allow_html=True)
+            signup_name = st.text_input("Name", placeholder="e.g. Franklin", label_visibility="collapsed", key="su_name")
+            st.markdown('<div style="font-family:\'DM Sans\';font-size:0.6rem;letter-spacing:0.14em;text-transform:uppercase;color:#555566;margin:8px 0 2px;">Password</div>', unsafe_allow_html=True)
+            signup_pass = st.text_input("Password", type="password", placeholder="Min 6 characters", label_visibility="collapsed", key="su_pass")
+            st.markdown('<div style="font-family:\'DM Sans\';font-size:0.6rem;letter-spacing:0.14em;text-transform:uppercase;color:#555566;margin:8px 0 2px;">Confirm Password</div>', unsafe_allow_html=True)
+            signup_pass2 = st.text_input("Confirm", type="password", placeholder="••••••••", label_visibility="collapsed", key="su_pass2")
+            st.markdown("""
+            <div style="font-family:'DM Sans';font-size:0.68rem;color:#2A2A3E;
+                        margin:10px 0 14px;line-height:1.5;">
+                Already have runs logged? Sign up with your exact athlete name to claim your history.
+            </div>""", unsafe_allow_html=True)
+            submitted2 = st.form_submit_button("CREATE ACCOUNT →", use_container_width=True)
+            if submitted2:
+                name_clean = signup_name.strip()
+                if not name_clean:
+                    st.session_state.auth_error = "Name cannot be empty."
+                    st.rerun()
+                elif len(signup_pass) < 6:
+                    st.session_state.auth_error = "Password must be at least 6 characters."
+                    st.rerun()
+                elif signup_pass != signup_pass2:
+                    st.session_state.auth_error = "Passwords do not match."
+                    st.rerun()
+                elif athlete_has_password(name_clean):
+                    st.session_state.auth_error = f"'{name_clean}' is already claimed. Log in instead."
+                    st.rerun()
+                else:
+                    success = register_athlete(name_clean, signup_pass)
+                    if success:
+                        has_history = name_has_runs(name_clean)
+                        msg = f"Welcome to Drive Phase, {name_clean}! Your run history has been linked." if has_history else f"Account created, {name_clean}. Log in to get started."
+                        st.session_state.auth_success = msg
+                        st.session_state.auth_error = ''
+                        st.session_state.auth_mode = 'login'
+                        st.rerun()
+                    else:
+                        st.session_state.auth_error = "Could not create account. Try a different name."
+                        st.rerun()
+
+    st.markdown('<div style="height:12px;"></div>', unsafe_allow_html=True)
+    st.markdown("""
+    <div style="text-align:center;padding:20px 0 8px;">
+        <span style="font-family:'JetBrains Mono';font-size:0.65rem;color:#1E1E2E;">
+            DRIVE PHASE · v3.1 · built for athletes
+        </span>
+    </div>
+    """, unsafe_allow_html=True)
     st.stop()
 
 current_user = st.session_state.current_user
@@ -938,8 +1064,10 @@ with st.sidebar:
     st.markdown('<div style="height:12px;"></div>', unsafe_allow_html=True)
 
     # Switch user
-    if st.button("↩  SWITCH ATHLETE", use_container_width=True, key="nav_switch"):
+    if st.button("↩  LOG OUT", use_container_width=True, key="nav_switch"):
         st.session_state.current_user = None
+        st.session_state.auth_error = ''
+        st.session_state.auth_success = ''
         st.rerun()
 
 page = st.session_state.page

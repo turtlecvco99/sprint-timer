@@ -2,6 +2,8 @@ import sqlite3
 import pandas as pd
 from datetime import datetime
 import os
+import hashlib as _hashlib
+import os as _os_auth
 
 _here = os.path.dirname(os.path.abspath(__file__))
 DB = os.path.join(_here, '..', 'data', 'sprint_data.db')
@@ -147,3 +149,58 @@ def get_global_stats():
     except Exception:
         conn.close()
         return {'athlete_count': 0, 'total_runs': 0, 'fastest_total': 0.0, 'top_speed_ever': 0.0}
+
+
+def _hash_password(password: str, salt: bytes = None):
+    if salt is None:
+        salt = _os_auth.urandom(32)
+    key = _hashlib.pbkdf2_hmac('sha256', password.encode('utf-8'), salt, 100_000)
+    return salt.hex(), key.hex()
+
+
+def register_athlete(name: str, password: str) -> bool:
+    """Create or claim an athlete account. Returns True on success, False if name already has a password."""
+    conn = get_conn()
+    existing = conn.execute('SELECT password_hash FROM athletes WHERE name=?', (name,)).fetchone()
+    if existing and existing[0]:
+        conn.close()
+        return False  # already claimed
+    salt_hex, key_hex = _hash_password(password)
+    conn.execute('''INSERT OR IGNORE INTO athletes (name, created_at) VALUES (?, ?)''',
+                 (name, datetime.now().isoformat()))
+    conn.execute('UPDATE athletes SET password_hash=?, salt=? WHERE name=?',
+                 (key_hex, salt_hex, name))
+    conn.commit()
+    conn.close()
+    return True
+
+
+def verify_login(name: str, password: str) -> bool:
+    """Returns True if name+password is valid."""
+    conn = get_conn()
+    row = conn.execute('SELECT password_hash, salt FROM athletes WHERE name=?', (name,)).fetchone()
+    conn.close()
+    if not row or not row[0] or not row[1]:
+        return False
+    try:
+        salt = bytes.fromhex(row[1])
+        _, expected = _hash_password(password, salt)
+        return expected == row[0]
+    except Exception:
+        return False
+
+
+def athlete_has_password(name: str) -> bool:
+    """Return True if this athlete has already set a password (account is claimed)."""
+    conn = get_conn()
+    row = conn.execute('SELECT password_hash FROM athletes WHERE name=?', (name,)).fetchone()
+    conn.close()
+    return bool(row and row[0])
+
+
+def name_has_runs(name: str) -> bool:
+    """Return True if there are runs logged for this name."""
+    conn = get_conn()
+    row = conn.execute('SELECT 1 FROM runs WHERE athlete=? LIMIT 1', (name,)).fetchone()
+    conn.close()
+    return bool(row)
