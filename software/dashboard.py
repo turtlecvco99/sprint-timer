@@ -10,8 +10,8 @@ from db import (
     get_all_athletes, load_athlete_runs, load_all_runs, load_leaderboard,
     load_athlete_profile, save_athlete_profile, log_run_to_db,
     get_all_athletes_with_stats, add_athlete_to_db, get_global_stats, DB,
-    register_athlete, verify_login, athlete_has_password, name_has_runs,
-    get_user_role,
+    register_user, verify_login, username_exists, get_name_by_username,
+    get_user_role, name_has_runs,
 )
 
 st.set_page_config(
@@ -38,6 +38,8 @@ if 'user_role' not in st.session_state:
     st.session_state.user_role = ''
 if 'public_view' not in st.session_state:
     st.session_state.public_view = False
+if 'auth_portal' not in st.session_state:
+    st.session_state.auth_portal = 'athlete'  # 'athlete' or 'coach'
 
 _here = os.path.dirname(os.path.abspath(__file__))
 os.makedirs(os.path.join(_here, '..', 'data'), exist_ok=True)
@@ -85,11 +87,13 @@ def _bootstrap():
         ('password_hash', "TEXT DEFAULT NULL"),
         ('salt',          "TEXT DEFAULT NULL"),
         ('role',          "TEXT DEFAULT 'athlete'"),
+        ('username',      "TEXT DEFAULT NULL"),
     ]:
         try:
             conn.execute(f"ALTER TABLE athletes ADD COLUMN {col_def[0]} {col_def[1]}")
         except Exception:
             pass
+    conn.execute("UPDATE athletes SET username = name WHERE username IS NULL AND password_hash IS NOT NULL")
     conn.commit()
     if conn.execute('SELECT COUNT(*) FROM runs').fetchone()[0] == 0:
         base = datetime.datetime.now() - datetime.timedelta(days=30)
@@ -896,96 +900,110 @@ if st.session_state.public_view and st.session_state.current_user is None:
 
 # ── AUTH SCREEN ───────────────────────────────────────────────────────────────
 if st.session_state.current_user is None:
-    st.markdown("""<style>
-    @keyframes titleEntrance {
-        0%   { opacity:0; transform:translateY(-40px) scale(0.95); }
-        60%  { opacity:1; transform:translateY(4px) scale(1.01); }
-        100% { opacity:1; transform:translateY(0) scale(1); }
-    }
-    @keyframes formSlideUp {
-        from { opacity:0; transform:translateY(32px); }
-        to   { opacity:1; transform:translateY(0); }
-    }
-    @keyframes glowPulse {
-        0%,100% { box-shadow: 0 0 20px rgba(137,196,225,0.15); }
-        50%      { box-shadow: 0 0 40px rgba(137,196,225,0.35); }
-    }
-    @keyframes dotPulse {
-        0%,100% { opacity:1; transform:scale(1);    box-shadow:0 0 8px rgba(29,219,139,0.8); }
-        50%      { opacity:0.5; transform:scale(0.7); box-shadow:0 0 3px rgba(29,219,139,0.3); }
-    }
-    [data-testid="stSidebar"] { display:none !important; }
-    [data-testid="stMainBlockContainer"] {
-        max-width: 480px !important;
+    portal = st.session_state.auth_portal   # 'athlete' or 'coach'
+    mode   = st.session_state.auth_mode     # 'login' or 'signup'
+
+    accent_col = '#89C4E1' if portal == 'athlete' else '#FF3D8A'
+    accent_rgb = '137,196,225' if portal == 'athlete' else '255,61,138'
+    accent_dim = f'rgba({accent_rgb},0.10)'
+    accent_bdr = f'rgba({accent_rgb},0.28)'
+
+    st.markdown(f"""<style>
+    @keyframes titleEntrance {{
+        0%   {{ opacity:0; transform:translateY(-40px) scale(0.95); }}
+        60%  {{ opacity:1; transform:translateY(4px) scale(1.01); }}
+        100% {{ opacity:1; transform:translateY(0) scale(1); }}
+    }}
+    @keyframes formSlideUp {{
+        from {{ opacity:0; transform:translateY(32px); }}
+        to   {{ opacity:1; transform:translateY(0); }}
+    }}
+    @keyframes dotPulse {{
+        0%,100% {{ opacity:1; transform:scale(1);    box-shadow:0 0 8px rgba(29,219,139,0.8); }}
+        50%      {{ opacity:0.5; transform:scale(0.7); box-shadow:0 0 3px rgba(29,219,139,0.3); }}
+    }}
+    [data-testid="stSidebar"] {{ display:none !important; }}
+    [data-testid="stMainBlockContainer"] {{
+        max-width: 500px !important;
         margin: 0 auto !important;
-        padding-top: 4rem !important;
-    }
+        padding-top: 3rem !important;
+    }}
     </style>""", unsafe_allow_html=True)
 
-    st.markdown("""
-    <div style="text-align:center;padding:40px 0 32px;">
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:5rem;
-                    letter-spacing:0.06em;line-height:0.9;
-                    background:linear-gradient(135deg,#89C4E1 0%,#B39DDB 40%,#FF3D8A 100%);
-                    background-size:300% 300%;
-                    -webkit-background-clip:text;-webkit-text-fill-color:transparent;
-                    background-clip:text;
-                    animation:titleEntrance 0.9s ease both, gradientShift 6s ease infinite;">
-            DRIVE<br>PHASE
-        </div>
-        <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-top:14px;">
-            <div style="width:5px;height:5px;border-radius:50%;background:#1DDB8B;
-                        animation:dotPulse 2s ease infinite;flex-shrink:0;"></div>
-            <span style="font-family:'DM Sans',sans-serif;font-size:0.7rem;
-                         letter-spacing:0.22em;text-transform:uppercase;color:#555566;">
-                acceleration starts here
-            </span>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+    # ── Brand header ──
+    portal_badge = (
+        '<div style="margin-top:10px;"><span style="font-family:\'DM Sans\';font-size:0.62rem;'
+        'letter-spacing:0.16em;text-transform:uppercase;background:rgba(255,61,138,0.12);'
+        'border:1px solid rgba(255,61,138,0.3);color:#FF3D8A;border-radius:999px;'
+        'padding:3px 12px;">COACH PORTAL</span></div>'
+    ) if portal == 'coach' else ''
 
-    # Public leaderboard bypass
-    if st.button("🏆  VIEW PUBLIC LEADERBOARD  →", use_container_width=True, key="pub_lb_btn"):
-        st.session_state.public_view = True
-        st.rerun()
-
-    st.markdown('<div style="height:8px;"></div>', unsafe_allow_html=True)
-
-    mode = st.session_state.auth_mode
-    tab_login_style  = f"flex:1;text-align:center;padding:12px;font-family:'DM Sans',sans-serif;font-size:0.72rem;letter-spacing:0.14em;text-transform:uppercase;cursor:pointer;border-bottom:2px solid {'#89C4E1' if mode=='login' else 'transparent'};color:{'#89C4E1' if mode=='login' else '#555566'};transition:all 0.2s ease;"
-    tab_signup_style = f"flex:1;text-align:center;padding:12px;font-family:'DM Sans',sans-serif;font-size:0.72rem;letter-spacing:0.14em;text-transform:uppercase;cursor:pointer;border-bottom:2px solid {'#FF3D8A' if mode=='signup' else 'transparent'};color:{'#FF3D8A' if mode=='signup' else '#555566'};transition:all 0.2s ease;"
+    subtitle = 'team management portal' if portal == 'coach' else 'acceleration starts here'
 
     st.markdown(f"""
-    <div style="background:#12121A;border:1px solid #1E1E2E;border-radius:18px;
-                overflow:hidden;animation:formSlideUp 0.5s ease 0.3s both;">
-        <div style="display:flex;border-bottom:1px solid #1E1E2E;">
-            <div style="{tab_login_style}">LOG IN</div>
-            <div style="{tab_signup_style}">SIGN UP</div>
+    <div style="text-align:center;padding:32px 0 24px;animation:titleEntrance 0.9s ease both;">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:4.6rem;
+                    letter-spacing:0.06em;line-height:0.9;
+                    background:linear-gradient(135deg,{accent_col} 0%,#B39DDB 40%,#FF3D8A 100%);
+                    background-size:300% 300%;
+                    -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+                    background-clip:text;animation:gradientShift 6s ease infinite;">
+            DRIVE<br>PHASE
+        </div>
+        {portal_badge}
+        <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-top:12px;">
+            <div style="width:5px;height:5px;border-radius:50%;background:#1DDB8B;
+                        animation:dotPulse 2s ease infinite;flex-shrink:0;"></div>
+            <span style="font-family:'DM Sans';font-size:0.68rem;letter-spacing:0.2em;
+                         text-transform:uppercase;color:#555566;">{subtitle}</span>
         </div>
     </div>
     """, unsafe_allow_html=True)
 
-    tc1, tc2 = st.columns(2)
-    with tc1:
+    # ── Public leaderboard bypass (athlete portal only) ──
+    if portal == 'athlete':
+        if st.button("🏆  VIEW PUBLIC LEADERBOARD  →", use_container_width=True, key="pub_lb_btn"):
+            st.session_state.public_view = True
+            st.rerun()
+        st.markdown('<div style="height:6px;"></div>', unsafe_allow_html=True)
+
+    # ── Tab strip ──
+    tl = f"flex:1;text-align:center;padding:11px;font-family:'DM Sans';font-size:0.7rem;letter-spacing:0.14em;text-transform:uppercase;border-bottom:2px solid {accent_col if mode=='login' else 'transparent'};color:{accent_col if mode=='login' else '#555566'};"
+    ts = f"flex:1;text-align:center;padding:11px;font-family:'DM Sans';font-size:0.7rem;letter-spacing:0.14em;text-transform:uppercase;border-bottom:2px solid {accent_col if mode=='signup' else 'transparent'};color:{accent_col if mode=='signup' else '#555566'};"
+
+    st.markdown(f"""
+    <div style="background:#12121A;border:1px solid {accent_bdr};border-radius:16px;
+                overflow:hidden;box-shadow:0 0 40px {accent_dim};
+                animation:formSlideUp 0.45s ease 0.2s both;">
+        <div style="display:flex;border-bottom:1px solid #1E1E2E;">
+            <div style="{tl}">LOG IN</div>
+            <div style="{ts}">SIGN UP</div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    _tc1, _tc2 = st.columns(2)
+    with _tc1:
         if st.button("LOG IN", key="tab_login", use_container_width=True,
                      type="primary" if mode == "login" else "secondary"):
             st.session_state.auth_mode = 'login'
             st.session_state.auth_error = ''
             st.rerun()
-    with tc2:
+    with _tc2:
         if st.button("SIGN UP", key="tab_signup", use_container_width=True,
                      type="primary" if mode == "signup" else "secondary"):
             st.session_state.auth_mode = 'signup'
             st.session_state.auth_error = ''
             st.rerun()
 
-    st.markdown('<div style="height:8px;"></div>', unsafe_allow_html=True)
+    st.markdown('<div style="height:6px;"></div>', unsafe_allow_html=True)
 
+    # ── Inline messages ──
     if st.session_state.auth_error:
         st.markdown(f"""
         <div style="background:#1A0D0D;border:1px solid rgba(255,77,106,0.3);
                     border-left:3px solid #FF4D6A;border-radius:0 8px 8px 0;
-                    padding:10px 14px;margin-bottom:12px;
+                    padding:10px 14px;margin-bottom:10px;
                     font-family:'DM Sans';font-size:0.8rem;color:#FF4D6A;">
             {st.session_state.auth_error}
         </div>""", unsafe_allow_html=True)
@@ -994,94 +1012,176 @@ if st.session_state.current_user is None:
         st.markdown(f"""
         <div style="background:#0D1A0D;border:1px solid rgba(29,219,139,0.3);
                     border-left:3px solid #1DDB8B;border-radius:0 8px 8px 0;
-                    padding:10px 14px;margin-bottom:12px;
+                    padding:10px 14px;margin-bottom:10px;
                     font-family:'DM Sans';font-size:0.8rem;color:#1DDB8B;">
             {st.session_state.auth_success}
         </div>""", unsafe_allow_html=True)
 
-    if mode == 'login':
-        with st.form("login_form", clear_on_submit=False):
-            st.markdown('<div style="font-family:\'DM Sans\';font-size:0.6rem;letter-spacing:0.14em;text-transform:uppercase;color:#555566;margin-bottom:2px;">Athlete Name</div>', unsafe_allow_html=True)
-            login_name = st.text_input("Name", placeholder="e.g. Franklin", label_visibility="collapsed")
-            st.markdown('<div style="height:6px;"></div>', unsafe_allow_html=True)
-            st.markdown('<div style="font-family:\'DM Sans\';font-size:0.6rem;letter-spacing:0.14em;text-transform:uppercase;color:#555566;margin-bottom:2px;">Password</div>', unsafe_allow_html=True)
-            login_pass = st.text_input("Password", type="password", placeholder="••••••••", label_visibility="collapsed")
-            st.markdown('<div style="height:12px;"></div>', unsafe_allow_html=True)
-            submitted = st.form_submit_button("LOG IN  →", use_container_width=True)
-            if submitted:
-                name_clean = login_name.strip()
-                if not name_clean or not login_pass:
-                    st.session_state.auth_error = "Please enter your name and password."
-                    st.rerun()
-                elif not athlete_has_password(name_clean):
-                    st.session_state.auth_error = f"No account found for '{name_clean}'. Sign up first."
-                    st.rerun()
-                elif verify_login(name_clean, login_pass):
-                    st.session_state.current_user = name_clean
-                    st.session_state.user_role = get_user_role(name_clean)
-                    st.session_state.auth_error = ''
-                    st.session_state.auth_success = ''
-                    st.rerun()
-                else:
-                    st.session_state.auth_error = "Incorrect password. Try again."
-                    st.rerun()
-    else:
-        with st.form("signup_form", clear_on_submit=False):
-            st.markdown('<div style="font-family:\'DM Sans\';font-size:0.6rem;letter-spacing:0.14em;text-transform:uppercase;color:#555566;margin-bottom:2px;">Your Name</div>', unsafe_allow_html=True)
-            signup_name = st.text_input("Name", placeholder="e.g. Franklin", label_visibility="collapsed", key="su_name")
-            st.markdown('<div style="font-family:\'DM Sans\';font-size:0.6rem;letter-spacing:0.14em;text-transform:uppercase;color:#555566;margin:8px 0 2px;">Password</div>', unsafe_allow_html=True)
-            signup_pass = st.text_input("Password", type="password", placeholder="Min 6 characters", label_visibility="collapsed", key="su_pass")
-            st.markdown('<div style="font-family:\'DM Sans\';font-size:0.6rem;letter-spacing:0.14em;text-transform:uppercase;color:#555566;margin:8px 0 2px;">Confirm Password</div>', unsafe_allow_html=True)
-            signup_pass2 = st.text_input("Confirm", type="password", placeholder="••••••••", label_visibility="collapsed", key="su_pass2")
-            st.markdown('<div style="font-family:\'DM Sans\';font-size:0.6rem;letter-spacing:0.14em;text-transform:uppercase;color:#555566;margin:8px 0 2px;">Coach Code (optional)</div>', unsafe_allow_html=True)
-            coach_code = st.text_input("Coach Code", placeholder="Leave blank if you're an athlete", label_visibility="collapsed", key="su_code")
-            st.markdown("""
-            <div style="font-family:'DM Sans';font-size:0.68rem;color:#2A2A3E;
-                        margin:10px 0 14px;line-height:1.5;">
-                Already have runs logged? Sign up with your exact athlete name to claim your history.
-            </div>""", unsafe_allow_html=True)
-            submitted2 = st.form_submit_button("CREATE ACCOUNT  →", use_container_width=True)
-            if submitted2:
-                name_clean = signup_name.strip()
-                intended_role = 'coach' if coach_code.strip() == 'DRIVEPHASE' else 'athlete'
-                if not name_clean:
-                    st.session_state.auth_error = "Name cannot be empty."
-                    st.rerun()
-                elif len(signup_pass) < 6:
-                    st.session_state.auth_error = "Password must be at least 6 characters."
-                    st.rerun()
-                elif signup_pass != signup_pass2:
-                    st.session_state.auth_error = "Passwords do not match."
-                    st.rerun()
-                elif coach_code.strip() and coach_code.strip() != 'DRIVEPHASE':
-                    st.session_state.auth_error = "Invalid coach code."
-                    st.rerun()
-                elif athlete_has_password(name_clean):
-                    st.session_state.auth_error = f"'{name_clean}' is already claimed. Log in instead."
-                    st.rerun()
-                else:
-                    success = register_athlete(name_clean, signup_pass, role=intended_role)
-                    if success:
-                        has_history = name_has_runs(name_clean)
-                        if intended_role == 'coach':
-                            msg = f"Coach account created for {name_clean}. Log in to manage the team."
-                        elif has_history:
-                            msg = f"Welcome, {name_clean}! Your run history has been linked."
-                        else:
-                            msg = f"Account created, {name_clean}. Log in to get started."
-                        st.session_state.auth_success = msg
-                        st.session_state.auth_error = ''
-                        st.session_state.auth_mode = 'login'
+    def _lbl(txt):
+        st.markdown(
+            f'<div style="font-family:\'DM Sans\';font-size:0.6rem;letter-spacing:0.14em;'
+            f'text-transform:uppercase;color:#555566;margin-bottom:2px;margin-top:10px;">{txt}</div>',
+            unsafe_allow_html=True)
+
+    # ════════════════════════════════════
+    # ATHLETE PORTAL FORMS
+    # ════════════════════════════════════
+    if portal == 'athlete':
+        if mode == 'login':
+            with st.form("athlete_login_form", clear_on_submit=False):
+                _lbl("Username")
+                al_u = st.text_input("u", placeholder="your username", label_visibility="collapsed", key="al_u")
+                _lbl("Password")
+                al_p = st.text_input("p", type="password", placeholder="••••••••", label_visibility="collapsed", key="al_p")
+                st.markdown('<div style="height:10px;"></div>', unsafe_allow_html=True)
+                if st.form_submit_button("LOG IN  →", use_container_width=True):
+                    u = al_u.strip()
+                    if not u or not al_p:
+                        st.session_state.auth_error = "Please fill in all fields."
+                        st.rerun()
+                    elif not username_exists(u):
+                        st.session_state.auth_error = f"No account found for '{u}'. Sign up first."
+                        st.rerun()
+                    elif not verify_login(u, al_p):
+                        st.session_state.auth_error = "Incorrect password."
+                        st.rerun()
+                    elif get_user_role(u) == 'coach':
+                        st.session_state.auth_error = "That's a coach account — use the Coach Portal below."
                         st.rerun()
                     else:
-                        st.session_state.auth_error = "Could not create account. Try a different name."
+                        st.session_state.current_user = get_name_by_username(u)
+                        st.session_state.user_role = 'athlete'
+                        st.session_state.auth_error = ''
+                        st.session_state.auth_success = ''
                         st.rerun()
+        else:
+            with st.form("athlete_signup_form", clear_on_submit=False):
+                _lbl("Athlete Name (shown on leaderboard)")
+                as_n = st.text_input("n", placeholder="e.g. Franklin", label_visibility="collapsed", key="as_n")
+                _lbl("Username (private login handle)")
+                as_u = st.text_input("u", placeholder="e.g. frank24", label_visibility="collapsed", key="as_u")
+                _lbl("Password")
+                as_p = st.text_input("p", type="password", placeholder="Min 6 characters", label_visibility="collapsed", key="as_p")
+                _lbl("Confirm Password")
+                as_p2 = st.text_input("p2", type="password", placeholder="••••••••", label_visibility="collapsed", key="as_p2")
+                st.markdown("""
+                <div style="font-family:'DM Sans';font-size:0.68rem;color:#2A2A3E;margin:10px 0 12px;line-height:1.5;">
+                    Already have runs logged? Use your exact athlete name to link your history.
+                </div>""", unsafe_allow_html=True)
+                if st.form_submit_button("CREATE ACCOUNT  →", use_container_width=True):
+                    n_c = as_n.strip()
+                    u_c = as_u.strip().lower()
+                    if not n_c or not u_c:
+                        st.session_state.auth_error = "Name and username cannot be empty."
+                        st.rerun()
+                    elif len(as_p) < 6:
+                        st.session_state.auth_error = "Password must be at least 6 characters."
+                        st.rerun()
+                    elif as_p != as_p2:
+                        st.session_state.auth_error = "Passwords do not match."
+                        st.rerun()
+                    else:
+                        ok, reason = register_user(n_c, u_c, as_p, role='athlete')
+                        if ok:
+                            msg = f"Welcome, {n_c}! History linked — log in now." if name_has_runs(n_c) else "Account created! Log in to get started."
+                            st.session_state.auth_success = msg
+                            st.session_state.auth_error = ''
+                            st.session_state.auth_mode = 'login'
+                            st.rerun()
+                        else:
+                            st.session_state.auth_error = reason
+                            st.rerun()
 
-    st.markdown('<div style="height:12px;"></div>', unsafe_allow_html=True)
+    # ════════════════════════════════════
+    # COACH PORTAL FORMS
+    # ════════════════════════════════════
+    else:
+        if mode == 'login':
+            with st.form("coach_login_form", clear_on_submit=False):
+                _lbl("Coach Username")
+                cl_u = st.text_input("cu", placeholder="your coach username", label_visibility="collapsed", key="cl_u")
+                _lbl("Password")
+                cl_p = st.text_input("cp", type="password", placeholder="••••••••", label_visibility="collapsed", key="cl_p")
+                st.markdown('<div style="height:10px;"></div>', unsafe_allow_html=True)
+                if st.form_submit_button("ENTER PORTAL  →", use_container_width=True):
+                    cu = cl_u.strip()
+                    if not cu or not cl_p:
+                        st.session_state.auth_error = "Please fill in all fields."
+                        st.rerun()
+                    elif not username_exists(cu):
+                        st.session_state.auth_error = f"No coach account found for '{cu}'."
+                        st.rerun()
+                    elif not verify_login(cu, cl_p):
+                        st.session_state.auth_error = "Incorrect password."
+                        st.rerun()
+                    elif get_user_role(cu) != 'coach':
+                        st.session_state.auth_error = "That's an athlete account — use the Athlete portal."
+                        st.rerun()
+                    else:
+                        st.session_state.current_user = get_name_by_username(cu)
+                        st.session_state.user_role = 'coach'
+                        st.session_state.auth_error = ''
+                        st.session_state.auth_success = ''
+                        st.rerun()
+        else:
+            with st.form("coach_signup_form", clear_on_submit=False):
+                _lbl("Choose a Username")
+                cs_u = st.text_input("csu", placeholder="e.g. coach_smith", label_visibility="collapsed", key="cs_u")
+                _lbl("Password")
+                cs_p = st.text_input("csp", type="password", placeholder="Min 6 characters", label_visibility="collapsed", key="cs_p")
+                _lbl("Confirm Password")
+                cs_p2 = st.text_input("csp2", type="password", placeholder="••••••••", label_visibility="collapsed", key="cs_p2")
+                _lbl("Coach Access Code")
+                cs_c = st.text_input("csc", type="password", placeholder="Provided by your organization", label_visibility="collapsed", key="cs_c")
+                st.markdown('<div style="height:10px;"></div>', unsafe_allow_html=True)
+                if st.form_submit_button("CREATE COACH ACCOUNT  →", use_container_width=True):
+                    cu2 = cs_u.strip().lower()
+                    if not cu2:
+                        st.session_state.auth_error = "Username cannot be empty."
+                        st.rerun()
+                    elif len(cs_p) < 6:
+                        st.session_state.auth_error = "Password must be at least 6 characters."
+                        st.rerun()
+                    elif cs_p != cs_p2:
+                        st.session_state.auth_error = "Passwords do not match."
+                        st.rerun()
+                    elif cs_c.strip() != 'DRIVEPHASE':
+                        st.session_state.auth_error = "Invalid coach access code."
+                        st.rerun()
+                    else:
+                        ok2, reason2 = register_user(cu2, cu2, cs_p, role='coach')
+                        if ok2:
+                            st.session_state.auth_success = "Coach account created. Log in now."
+                            st.session_state.auth_error = ''
+                            st.session_state.auth_mode = 'login'
+                            st.rerun()
+                        else:
+                            st.session_state.auth_error = reason2
+                            st.rerun()
+
+    # ── Portal switcher ──
+    st.markdown('<div style="height:14px;"></div>', unsafe_allow_html=True)
+    if portal == 'athlete':
+        st.markdown('<div style="text-align:center;"><span style="font-family:\'DM Sans\';font-size:0.7rem;color:#2A2A3E;">Are you a coach?</span></div>', unsafe_allow_html=True)
+        if st.button("⚙️  COACH PORTAL  →", use_container_width=True, key="to_coach"):
+            st.session_state.auth_portal = 'coach'
+            st.session_state.auth_mode = 'login'
+            st.session_state.auth_error = ''
+            st.session_state.auth_success = ''
+            st.rerun()
+    else:
+        st.markdown('<div style="text-align:center;"><span style="font-family:\'DM Sans\';font-size:0.7rem;color:#2A2A3E;">Are you an athlete?</span></div>', unsafe_allow_html=True)
+        if st.button("🏃  ATHLETE LOGIN  →", use_container_width=True, key="to_athlete"):
+            st.session_state.auth_portal = 'athlete'
+            st.session_state.auth_mode = 'login'
+            st.session_state.auth_error = ''
+            st.session_state.auth_success = ''
+            st.rerun()
+
     st.markdown("""
-    <div style="text-align:center;padding:20px 0 8px;">
-        <span style="font-family:'JetBrains Mono';font-size:0.65rem;color:#1E1E2E;">
-            DRIVE PHASE · v3.1 · built for athletes
+    <div style="text-align:center;padding:18px 0 6px;">
+        <span style="font-family:'JetBrains Mono';font-size:0.62rem;color:#1E1E2E;">
+            DRIVE PHASE · v3.2 · built for athletes
         </span>
     </div>
     """, unsafe_allow_html=True)
@@ -1089,7 +1189,7 @@ if st.session_state.current_user is None:
 
 current_user = st.session_state.current_user
 
-user_role = st.session_state.get('user_role', '') or get_user_role(current_user)
+user_role = st.session_state.get('user_role') or 'athlete'
 if not st.session_state.get('user_role'):
     st.session_state.user_role = user_role
 
@@ -1181,6 +1281,7 @@ with st.sidebar:
         st.session_state.public_view = False
         st.session_state.auth_error = ''
         st.session_state.auth_success = ''
+        st.session_state.auth_portal = 'athlete'
         st.rerun()
 
 page = st.session_state.page

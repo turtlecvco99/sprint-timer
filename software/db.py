@@ -158,27 +158,38 @@ def _hash_password(password: str, salt: bytes = None):
     return salt.hex(), key.hex()
 
 
-def register_athlete(name: str, password: str, role: str = 'athlete') -> bool:
-    """Create or claim an athlete account. Returns True on success, False if name already has a password."""
+def register_user(display_name: str, username: str, password: str, role: str = 'athlete') -> tuple:
+    """
+    Register a new account.
+    display_name: what shows in the leaderboard (athlete name). For coaches, same as username.
+    username: private login handle (must be unique).
+    role: 'athlete' or 'coach'.
+    Returns (True, '') on success, (False, reason_str) on failure.
+    """
     conn = get_conn()
-    existing = conn.execute('SELECT password_hash FROM athletes WHERE name=?', (name,)).fetchone()
+    # Check username not taken
+    if conn.execute('SELECT 1 FROM athletes WHERE username=?', (username,)).fetchone():
+        conn.close()
+        return False, 'Username already taken.'
+    # Check display_name not already claimed (has password)
+    existing = conn.execute('SELECT password_hash FROM athletes WHERE name=?', (display_name,)).fetchone()
     if existing and existing[0]:
         conn.close()
-        return False  # already claimed
+        return False, f'Athlete name "{display_name}" is already claimed.'
     salt_hex, key_hex = _hash_password(password)
-    conn.execute('''INSERT OR IGNORE INTO athletes (name, created_at) VALUES (?, ?)''',
-                 (name, datetime.now().isoformat()))
-    conn.execute('UPDATE athletes SET password_hash=?, salt=?, role=? WHERE name=?',
-                 (key_hex, salt_hex, role, name))
+    conn.execute('INSERT OR IGNORE INTO athletes (name, created_at) VALUES (?, ?)',
+                 (display_name, datetime.now().isoformat()))
+    conn.execute('UPDATE athletes SET username=?, password_hash=?, salt=?, role=? WHERE name=?',
+                 (username, key_hex, salt_hex, role, display_name))
     conn.commit()
     conn.close()
-    return True
+    return True, ''
 
 
-def verify_login(name: str, password: str) -> bool:
-    """Returns True if name+password is valid."""
+def verify_login(username: str, password: str) -> bool:
+    """Returns True if username+password is valid."""
     conn = get_conn()
-    row = conn.execute('SELECT password_hash, salt FROM athletes WHERE name=?', (name,)).fetchone()
+    row = conn.execute('SELECT password_hash, salt FROM athletes WHERE username=?', (username,)).fetchone()
     conn.close()
     if not row or not row[0] or not row[1]:
         return False
@@ -190,27 +201,41 @@ def verify_login(name: str, password: str) -> bool:
         return False
 
 
-def athlete_has_password(name: str) -> bool:
-    """Return True if this athlete has already set a password (account is claimed)."""
+def username_exists(username: str) -> bool:
+    """Return True if this username is already registered."""
     conn = get_conn()
-    row = conn.execute('SELECT password_hash FROM athletes WHERE name=?', (name,)).fetchone()
+    row = conn.execute('SELECT password_hash FROM athletes WHERE username=? AND password_hash IS NOT NULL', (username,)).fetchone()
     conn.close()
-    return bool(row and row[0])
+    return bool(row)
 
 
-def get_user_role(name: str) -> str:
-    """Return 'coach', 'athlete', or '' if not found."""
+def get_name_by_username(username: str) -> str:
+    """Get the display name (athlete name) from a username."""
     conn = get_conn()
-    row = conn.execute('SELECT role FROM athletes WHERE name=?', (name,)).fetchone()
+    row = conn.execute('SELECT name FROM athletes WHERE username=?', (username,)).fetchone()
     conn.close()
-    if not row or not row[0]:
-        return 'athlete'  # default
-    return row[0]
+    return row[0] if row else username
+
+
+def get_user_role(username: str) -> str:
+    """Return 'coach' or 'athlete' for a given username."""
+    conn = get_conn()
+    row = conn.execute('SELECT role FROM athletes WHERE username=?', (username,)).fetchone()
+    conn.close()
+    return row[0] if (row and row[0]) else 'athlete'
 
 
 def name_has_runs(name: str) -> bool:
-    """Return True if there are runs logged for this name."""
+    """Return True if there are runs logged for this athlete display name."""
     conn = get_conn()
     row = conn.execute('SELECT 1 FROM runs WHERE athlete=? LIMIT 1', (name,)).fetchone()
     conn.close()
     return bool(row)
+
+
+# Keep old name as alias for backward compat — not used in new flow but safe to have
+def athlete_has_password(name: str) -> bool:
+    conn = get_conn()
+    row = conn.execute('SELECT password_hash FROM athletes WHERE name=?', (name,)).fetchone()
+    conn.close()
+    return bool(row and row[0])
