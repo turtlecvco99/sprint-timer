@@ -908,61 +908,56 @@ if st.session_state.current_user is None:
     accent_dim = f'rgba({accent_rgb},0.10)'
     accent_bdr = f'rgba({accent_rgb},0.28)'
 
-    st.markdown(f"""<style>
-    @keyframes titleEntrance {{
-        0%   {{ opacity:0; transform:translateY(-40px) scale(0.95); }}
-        60%  {{ opacity:1; transform:translateY(4px) scale(1.01); }}
-        100% {{ opacity:1; transform:translateY(0) scale(1); }}
-    }}
-    @keyframes formSlideUp {{
-        from {{ opacity:0; transform:translateY(32px); }}
-        to   {{ opacity:1; transform:translateY(0); }}
-    }}
-    @keyframes dotPulse {{
-        0%,100% {{ opacity:1; transform:scale(1);    box-shadow:0 0 8px rgba(29,219,139,0.8); }}
-        50%      {{ opacity:0.5; transform:scale(0.7); box-shadow:0 0 3px rgba(29,219,139,0.3); }}
-    }}
-    [data-testid="stSidebar"] {{ display:none !important; }}
-    [data-testid="stMainBlockContainer"] {{
-        max-width: 500px !important;
-        margin: 0 auto !important;
-        padding-top: 3rem !important;
-    }}
-    </style>""", unsafe_allow_html=True)
-
-    # ── Brand header ──
-    portal_badge = (
-        '<div style="margin-top:10px;"><span style="font-family:\'DM Sans\';font-size:0.62rem;'
-        'letter-spacing:0.16em;text-transform:uppercase;background:rgba(255,61,138,0.12);'
+    # Build CSS + full brand header as one unbroken block (no blank lines from empty interpolations)
+    is_coach = (portal == 'coach')
+    subtitle  = 'team management portal' if is_coach else 'acceleration starts here'
+    coach_badge_html = (
+        '<div style="margin-top:10px;">'
+        '<span style="font-family:DM Sans,sans-serif;font-size:0.62rem;letter-spacing:0.16em;'
+        'text-transform:uppercase;background:rgba(255,61,138,0.12);'
         'border:1px solid rgba(255,61,138,0.3);color:#FF3D8A;border-radius:999px;'
         'padding:3px 12px;">COACH PORTAL</span></div>'
-    ) if portal == 'coach' else ''
+    ) if is_coach else '<div></div>'
 
-    subtitle = 'team management portal' if portal == 'coach' else 'acceleration starts here'
+    st.markdown(
+        f'<style>'
+        f'@keyframes titleEntrance{{0%{{opacity:0;transform:translateY(-40px) scale(0.95);}}'
+        f'60%{{opacity:1;transform:translateY(4px) scale(1.01);}}'
+        f'100%{{opacity:1;transform:translateY(0) scale(1);}}}}'
+        f'@keyframes formSlideUp{{from{{opacity:0;transform:translateY(28px);}}'
+        f'to{{opacity:1;transform:translateY(0);}}}}'
+        f'@keyframes authGlow{{0%,100%{{box-shadow:0 0 24px rgba({accent_rgb},0.12);}}'
+        f'50%{{box-shadow:0 0 48px rgba({accent_rgb},0.28);}}}}'
+        f'@keyframes liveDot{{0%,100%{{opacity:1;box-shadow:0 0 8px rgba(29,219,139,0.9);}}'
+        f'50%{{opacity:0.35;box-shadow:0 0 3px rgba(29,219,139,0.2);}}}}'
+        f'@keyframes lineReveal{{from{{width:0;opacity:0;}}to{{width:40px;opacity:1;}}}}'
+        f'[data-testid="stSidebar"]{{display:none!important;}}'
+        f'[data-testid="stMainBlockContainer"]{{max-width:500px!important;margin:0 auto!important;padding-top:3rem!important;}}'
+        f'.auth-card{{animation:authGlow 4s ease infinite,formSlideUp 0.45s ease 0.15s both;}}'
+        f'</style>',
+        unsafe_allow_html=True
+    )
 
-    st.markdown(f"""
-    <div style="text-align:center;padding:32px 0 24px;animation:titleEntrance 0.9s ease both;">
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:4.6rem;
-                    letter-spacing:0.06em;line-height:0.9;
-                    background:linear-gradient(135deg,{accent_col} 0%,#B39DDB 40%,#FF3D8A 100%);
-                    background-size:300% 300%;
-                    -webkit-background-clip:text;-webkit-text-fill-color:transparent;
-                    background-clip:text;animation:gradientShift 6s ease infinite;">
-            DRIVE<br>PHASE
-        </div>
-        {portal_badge}
-        <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-top:12px;">
-            <div style="width:5px;height:5px;border-radius:50%;background:#1DDB8B;
-                        animation:dotPulse 2s ease infinite;flex-shrink:0;"></div>
-            <span style="font-family:'DM Sans';font-size:0.68rem;letter-spacing:0.2em;
-                         text-transform:uppercase;color:#555566;">{subtitle}</span>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+    # Brand header — single tight string, no blank lines
+    st.markdown(
+        f'<div style="text-align:center;padding:36px 0 20px;animation:titleEntrance 0.8s cubic-bezier(0.22,1,0.36,1) both;">'
+        f'<div style="font-family:Bebas Neue,sans-serif;font-size:5rem;letter-spacing:0.06em;line-height:0.88;'
+        f'background:linear-gradient(135deg,{accent_col} 0%,#B39DDB 45%,#FF3D8A 100%);'
+        f'background-size:300% 300%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;'
+        f'background-clip:text;animation:gradientShift 7s ease infinite;">DRIVE<br>PHASE</div>'
+        f'{coach_badge_html}'
+        f'<div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-top:14px;">'
+        f'<div style="width:6px;height:6px;border-radius:50%;background:#1DDB8B;flex-shrink:0;animation:liveDot 2s ease infinite;"></div>'
+        f'<span style="font-family:DM Sans,sans-serif;font-size:0.68rem;letter-spacing:0.2em;text-transform:uppercase;color:#555566;">{subtitle}</span>'
+        f'</div>'
+        f'<div style="width:40px;height:1px;background:linear-gradient(90deg,transparent,{accent_col},transparent);margin:14px auto 0;animation:lineReveal 0.8s ease 0.6s both;"></div>'
+        f'</div>',
+        unsafe_allow_html=True
+    )
 
     # ── Public leaderboard bypass (athlete portal only) ──
     if portal == 'athlete':
-        if st.button("🏆  VIEW PUBLIC LEADERBOARD  →", use_container_width=True, key="pub_lb_btn"):
+        if st.button("VIEW PUBLIC LEADERBOARD", use_container_width=True, key="pub_lb_btn"):
             st.session_state.public_view = True
             st.rerun()
         st.markdown('<div style="height:6px;"></div>', unsafe_allow_html=True)
@@ -971,16 +966,14 @@ if st.session_state.current_user is None:
     tl = f"flex:1;text-align:center;padding:11px;font-family:'DM Sans';font-size:0.7rem;letter-spacing:0.14em;text-transform:uppercase;border-bottom:2px solid {accent_col if mode=='login' else 'transparent'};color:{accent_col if mode=='login' else '#555566'};"
     ts = f"flex:1;text-align:center;padding:11px;font-family:'DM Sans';font-size:0.7rem;letter-spacing:0.14em;text-transform:uppercase;border-bottom:2px solid {accent_col if mode=='signup' else 'transparent'};color:{accent_col if mode=='signup' else '#555566'};"
 
-    st.markdown(f"""
-    <div style="background:#12121A;border:1px solid {accent_bdr};border-radius:16px;
-                overflow:hidden;box-shadow:0 0 40px {accent_dim};
-                animation:formSlideUp 0.45s ease 0.2s both;">
-        <div style="display:flex;border-bottom:1px solid #1E1E2E;">
-            <div style="{tl}">LOG IN</div>
-            <div style="{ts}">SIGN UP</div>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+    st.markdown(
+        f'<div class="auth-card" style="background:#12121A;border:1px solid {accent_bdr};border-radius:16px;overflow:hidden;">'
+        f'<div style="display:flex;border-bottom:1px solid #1E1E2E;">'
+        f'<div style="{tl}">LOG IN</div>'
+        f'<div style="{ts}">SIGN UP</div>'
+        f'</div></div>',
+        unsafe_allow_html=True
+    )
 
     _tc1, _tc2 = st.columns(2)
     with _tc1:
@@ -1162,16 +1155,16 @@ if st.session_state.current_user is None:
     # ── Portal switcher ──
     st.markdown('<div style="height:14px;"></div>', unsafe_allow_html=True)
     if portal == 'athlete':
-        st.markdown('<div style="text-align:center;"><span style="font-family:\'DM Sans\';font-size:0.7rem;color:#2A2A3E;">Are you a coach?</span></div>', unsafe_allow_html=True)
-        if st.button("⚙️  COACH PORTAL  →", use_container_width=True, key="to_coach"):
+        st.markdown('<div style="text-align:center;"><span style="font-family:DM Sans,sans-serif;font-size:0.7rem;color:#2A2A3E;">Are you a coach?</span></div>', unsafe_allow_html=True)
+        if st.button("COACH PORTAL", use_container_width=True, key="to_coach"):
             st.session_state.auth_portal = 'coach'
             st.session_state.auth_mode = 'login'
             st.session_state.auth_error = ''
             st.session_state.auth_success = ''
             st.rerun()
     else:
-        st.markdown('<div style="text-align:center;"><span style="font-family:\'DM Sans\';font-size:0.7rem;color:#2A2A3E;">Are you an athlete?</span></div>', unsafe_allow_html=True)
-        if st.button("🏃  ATHLETE LOGIN  →", use_container_width=True, key="to_athlete"):
+        st.markdown('<div style="text-align:center;"><span style="font-family:DM Sans,sans-serif;font-size:0.7rem;color:#2A2A3E;">Are you an athlete?</span></div>', unsafe_allow_html=True)
+        if st.button("ATHLETE LOGIN", use_container_width=True, key="to_athlete"):
             st.session_state.auth_portal = 'athlete'
             st.session_state.auth_mode = 'login'
             st.session_state.auth_error = ''
