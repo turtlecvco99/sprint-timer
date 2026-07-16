@@ -231,11 +231,3 @@ def name_has_runs(name: str) -> bool:
     row = conn.execute('SELECT 1 FROM runs WHERE athlete=? LIMIT 1', (name,)).fetchone()
     conn.close()
     return bool(row)
-
-
-# Keep old name as alias for backward compat — not used in new flow but safe to have
-def athlete_has_password(name: str) -> bool:
-    conn = get_conn()
-    row = conn.execute('SELECT password_hash FROM athletes WHERE name=?', (name,)).fetchone()
-    conn.close()
-    return bool(row and row[0])

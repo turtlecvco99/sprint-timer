@@ -5,6 +5,7 @@ import sqlite3
 import datetime
 import random
 import os
+import io
 
 from db import (
     get_all_athletes, load_athlete_runs, load_all_runs, load_leaderboard,
@@ -320,7 +321,8 @@ section[data-testid="stSidebar"][aria-expanded="false"] {
     font-family: 'DM Sans', sans-serif !important;
 }
 [data-testid="stSelectbox"] > div > div {
-    background: #12121A !important; border: 1px solid #1E1E2E !important; color: #F0F0F0 !important;
+    background: #12121A !important; border: 1px solid #1E1E2E !important;
+    color: #F0F0F0 !important; border-radius: 8px !important;
 }
 [data-testid="stNumberInput"] input {
     background: #12121A !important; border: 1px solid #1E1E2E !important;
@@ -432,22 +434,6 @@ hr {
 /* ── Alert animation ── */
 [data-testid="stAlert"] { animation: fadeInUp 0.25s ease both; }
 [data-testid="stExpander"] { animation: fadeInUp 0.3s ease both; }
-
-/* ── Selectbox dark ── */
-[data-testid="stSelectbox"] > div > div {
-    background: #12121A !important;
-    border: 1px solid #1E1E2E !important;
-    color: #F0F0F0 !important;
-    border-radius: 8px !important;
-}
-
-/* ── Number input dark ── */
-[data-testid="stNumberInput"] input {
-    background: #12121A !important;
-    border: 1px solid #1E1E2E !important;
-    color: #F0F0F0 !important;
-    font-family: 'JetBrains Mono', monospace !important;
-}
 
 /* ── Date input dark ── */
 [data-testid="stDateInput"] input {
@@ -620,7 +606,7 @@ def page_header(title, subtitle, icon, accent='blue'):
                          text-transform:uppercase;color:#555566;">{subtitle}</span>
             <span style="margin-left:auto;font-family:'JetBrains Mono';
                          font-size:0.68rem;color:#2A2A3E;">
-                {__import__('datetime').datetime.now().strftime('%a %b %d · %H:%M')}
+                {datetime.datetime.now().strftime('%a %b %d · %H:%M')}
             </span>
         </div>
     </div>
@@ -1303,12 +1289,11 @@ if page == "MY DASHBOARD":
     page_header("MY DASHBOARD", f"welcome back, {current_user.lower()}", "⚡", "blue")
 
     # ── Streak calc ──
-    from datetime import date, timedelta
     df_me_dates = sorted(df_me['date'].dt.date.unique(), reverse=True)
     streak = 0
-    check  = date.today()
+    check  = datetime.date.today()
     for d in df_me_dates:
-        if d >= check - timedelta(days=1):
+        if d >= check - datetime.timedelta(days=1):
             streak += 1
             check = d
         else:
@@ -1358,10 +1343,9 @@ if page == "MY DASHBOARD":
     """, unsafe_allow_html=True)
 
     # ── TODAY'S SESSION ──
-    from datetime import date as _date, timedelta as _timedelta
     last_session_date = df_me['date'].dt.date.iloc[0]
     last_session_runs = df_me[df_me['date'].dt.date == last_session_date]
-    is_today = last_session_date == _date.today()
+    is_today = last_session_date == datetime.date.today()
     session_label = "TODAY'S SESSION" if is_today else f"LAST SESSION — {last_session_date.strftime('%b %d')}"
     session_color = '#1DDB8B' if is_today else '#555566'
     pulse_anim = 'animation:dp-pulse 2s infinite;' if is_today else ''
@@ -2484,8 +2468,7 @@ elif page == "SETTINGS":
     """, unsafe_allow_html=True)
     uploaded = st.file_uploader("Upload CSV", type=['csv'], label_visibility="collapsed")
     if uploaded is not None:
-        import io as _io
-        df_import = pd.read_csv(_io.BytesIO(uploaded.read()))
+        df_import = pd.read_csv(io.BytesIO(uploaded.read()))
         required_cols = ['athlete', 'date', 'split_0_10', 'split_10_30', 'split_30_60']
         if all(c in df_import.columns for c in required_cols):
             df_import['total']     = df_import['split_0_10'] + df_import['split_10_30'] + df_import['split_30_60']
@@ -2499,8 +2482,7 @@ elif page == "SETTINGS":
             </div>
             """, unsafe_allow_html=True)
             if st.button("CONFIRM IMPORT", use_container_width=True):
-                import sqlite3 as _sq
-                conn_imp = _sq.connect(DB)
+                conn_imp = sqlite3.connect(DB)
                 for _, row_imp in df_import.iterrows():
                     conn_imp.execute(
                         'INSERT INTO runs (date,athlete,split_0_10,split_10_30,split_30_60,total,top_speed) VALUES (?,?,?,?,?,?,?)',
@@ -2529,8 +2511,7 @@ elif page == "SETTINGS":
             """, unsafe_allow_html=True)
             del_confirm = st.text_input("Type DELETE to confirm", key="del_confirm")
             if st.button("DELETE RUNS", use_container_width=True) and del_confirm == "DELETE":
-                import sqlite3 as _sq2
-                conn_del = _sq2.connect(DB)
+                conn_del = sqlite3.connect(DB)
                 conn_del.execute("DELETE FROM runs WHERE athlete=?", (del_athlete,))
                 conn_del.commit(); conn_del.close()
                 st.cache_data.clear()

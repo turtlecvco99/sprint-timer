@@ -1,0 +1,5 @@
+sprint_env/
+__pycache__/
+*.pyc
+.DS_Store
+data/sprint_data.db
