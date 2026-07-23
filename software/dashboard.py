@@ -1355,37 +1355,37 @@ if page == "MY DASHBOARD":
     for i, row in reps.iterrows():
         is_pb_r = abs(row['total'] - pb_val_sess) < 0.001
         pb_tag = '<span style="font-family:DM Sans;font-size:0.55rem;background:#FFD70022;color:#FFD700;border:1px solid #FFD70044;border-radius:999px;padding:1px 6px;margin-left:6px;">PB</span>' if is_pb_r else ''
-        rep_html += f"""
-        <div style="display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid #1A1A26;">
-            <span style="font-family:'JetBrains Mono';font-size:0.72rem;color:#2A2A3E;width:30px;">#{i+1}</span>
-            <span style="font-family:'JetBrains Mono';font-size:0.85rem;color:#89C4E1;width:60px;">{row['split_0_10']:.3f}s</span>
-            <span style="font-family:'JetBrains Mono';font-size:0.85rem;color:#B39DDB;width:60px;">{row['split_10_30']:.3f}s</span>
-            <span style="font-family:'JetBrains Mono';font-size:0.85rem;color:#FF3D8A;width:60px;">{row['split_30_60']:.3f}s</span>
-            <span style="font-family:'JetBrains Mono';font-size:1rem;color:#F0F0F0;flex:1;font-weight:500;">{row['total']:.3f}s{pb_tag}</span>
-            <span style="font-family:'JetBrains Mono';font-size:0.72rem;color:#555566;">{row['top_speed']:.1f} mph</span>
-        </div>"""
+        rep_html += (
+            '<div style="display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid #1A1A26;">'
+            f'<span style="font-family:\'JetBrains Mono\';font-size:0.72rem;color:#2A2A3E;width:30px;">#{i+1}</span>'
+            f'<span style="font-family:\'JetBrains Mono\';font-size:0.85rem;color:#89C4E1;width:60px;">{row["split_0_10"]:.3f}s</span>'
+            f'<span style="font-family:\'JetBrains Mono\';font-size:0.85rem;color:#B39DDB;width:60px;">{row["split_10_30"]:.3f}s</span>'
+            f'<span style="font-family:\'JetBrains Mono\';font-size:0.85rem;color:#FF3D8A;width:60px;">{row["split_30_60"]:.3f}s</span>'
+            f'<span style="font-family:\'JetBrains Mono\';font-size:1rem;color:#F0F0F0;flex:1;font-weight:500;">{row["total"]:.3f}s{pb_tag}</span>'
+            f'<span style="font-family:\'JetBrains Mono\';font-size:0.72rem;color:#555566;">{row["top_speed"]:.1f} mph</span>'
+            '</div>'
+        )
     split_header_cols = [('#', 30), ('0–10m', 60), ('10–30m', 60), ('30–60m', 60), ('Total', 80), ('Speed', 60)]
     split_header = ''.join([
         f'<span style="font-family:DM Sans;font-size:0.6rem;letter-spacing:0.1em;text-transform:uppercase;color:#555566;width:{w}px;display:inline-block;">{t}</span>'
         for t, w in split_header_cols
     ])
-    st.markdown(f"""
-    <div style="background:#12121A;border:1px solid #1E1E2E;border-radius:14px;
-                padding:20px 20px 8px;margin-bottom:16px;">
-        <div style="font-family:'Bebas Neue';font-size:1.1rem;letter-spacing:0.1em;
-                    color:#F0F0F0;margin-bottom:14px;">
-            <span style="display:inline-block;width:7px;height:7px;border-radius:50%;
-                         background:{session_color};box-shadow:0 0 6px {session_color};
-                         margin-right:8px;vertical-align:middle;{pulse_anim}"></span>
-            {session_label}
-            <span style="font-family:'DM Sans';font-size:0.68rem;color:#555566;margin-left:8px;font-weight:normal;">
-                {len(reps)} {'run' if len(reps)==1 else 'reps'}
-            </span>
-        </div>
-        <div style="display:flex;gap:12px;padding:0 0 8px;border-bottom:1px solid #1E1E2E;margin-bottom:4px;">{split_header}</div>
-        {rep_html}
-    </div>
-    """, unsafe_allow_html=True)
+    reps_label = f"{len(reps)} {'run' if len(reps)==1 else 'reps'}"
+    st.markdown(
+        '<div style="background:#12121A;border:1px solid #1E1E2E;border-radius:14px;'
+        'padding:20px 20px 8px;margin-bottom:16px;">'
+        '<div style="font-family:\'Bebas Neue\';font-size:1.1rem;letter-spacing:0.1em;color:#F0F0F0;margin-bottom:14px;">'
+        f'<span style="display:inline-block;width:7px;height:7px;border-radius:50%;'
+        f'background:{session_color};box-shadow:0 0 6px {session_color};'
+        f'margin-right:8px;vertical-align:middle;{pulse_anim}"></span>'
+        f'{session_label}'
+        f'<span style="font-family:\'DM Sans\';font-size:0.68rem;color:#555566;margin-left:8px;font-weight:normal;">{reps_label}</span>'
+        '</div>'
+        f'<div style="display:flex;gap:12px;padding:0 0 8px;border-bottom:1px solid #1E1E2E;margin-bottom:4px;">{split_header}</div>'
+        f'{rep_html}'
+        '</div>',
+        unsafe_allow_html=True
+    )
 
     # ── TIME TO BEAT ──
     my_idx = int(rankings[rankings['athlete'] == current_user].index[0])
