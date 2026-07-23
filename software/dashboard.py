@@ -71,7 +71,7 @@ def _bootstrap():
         goal_0_10    REAL DEFAULT 0.0,
         goal_10_30   REAL DEFAULT 0.0,
         goal_30_60   REAL DEFAULT 0.0,
-        profile_color TEXT DEFAULT '#89C4E1',
+        profile_color TEXT DEFAULT '#FC4C02',
         created_at   TEXT
     )''')
     # Migrate existing DBs — add columns that may not exist yet
@@ -84,7 +84,7 @@ def _bootstrap():
         ('goal_0_10',     "REAL DEFAULT 0.0"),
         ('goal_10_30',    "REAL DEFAULT 0.0"),
         ('goal_30_60',    "REAL DEFAULT 0.0"),
-        ('profile_color', "TEXT DEFAULT '#89C4E1'"),
+        ('profile_color', "TEXT DEFAULT '#FC4C02'"),
         ('password_hash', "TEXT DEFAULT NULL"),
         ('salt',          "TEXT DEFAULT NULL"),
         ('role',          "TEXT DEFAULT 'athlete'"),
@@ -117,14 +117,18 @@ def _bootstrap():
 
 _bootstrap()
 
-SCALE = [[0,'#89C4E1'],[0.5,'#B39DDB'],[1.0,'#FF3D8A']]
+ACCENT = '#FC4C02'
+MUTED = '#6E6E76'
+SUCCESS = '#1DDB8B'
+DANGER = '#FF4D4D'
+SCALE = [[0,ACCENT],[1.0,'#3A3A42']]
 CHART_CFG = {'displayModeBar': False, 'staticPlot': False, 'responsive': True}
 
 # ── Fonts ──────────────────────────────────────────────────────────────────────
 st.markdown("""
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 """, unsafe_allow_html=True)
 
 # ── CSS ────────────────────────────────────────────────────────────────────────
@@ -135,15 +139,15 @@ html, body, [data-testid="stApp"],
 [data-testid="stAppViewContainer"],
 [data-testid="stMainBlockContainer"],
 [data-testid="block-container"] {
-    background-color: #0A0A0F !important;
-    color: #F0F0F0 !important;
+    background-color: #0A0A0D !important;
+    color: #F5F5F7 !important;
 }
 [data-testid="stMainBlockContainer"],
 [data-testid="block-container"] {
     padding-top: 1.5rem !important;
     padding-left: 2rem !important;
     padding-right: 2rem !important;
-    max-width: 1400px !important;
+    max-width: 1200px !important;
 }
 
 [data-testid="stHeader"] { height:0 !important; visibility:hidden !important; }
@@ -159,8 +163,8 @@ section[data-testid="stSidebar"] {
     display: flex !important;
     visibility: visible !important;
     opacity: 1 !important;
-    min-width: 260px !important;
-    width: 260px !important;
+    min-width: 240px !important;
+    width: 240px !important;
     left: 0 !important;
     position: relative !important;
 }
@@ -169,8 +173,8 @@ section[data-testid="stSidebar"][aria-expanded="false"] {
     display: flex !important;
     visibility: visible !important;
     opacity: 1 !important;
-    width: 260px !important;
-    min-width: 260px !important;
+    width: 240px !important;
+    min-width: 240px !important;
     left: 0 !important;
 }
 /* Hide only the collapse button inside the sidebar */
@@ -188,13 +192,13 @@ section[data-testid="stSidebar"][aria-expanded="false"] {
 [data-testid="stSidebar"],
 [data-testid="stSidebar"] > div,
 [data-testid="stSidebarContent"] {
-    background-color: #0D0D14 !important;
-    background: #0D0D14 !important;
+    background-color: #101013 !important;
+    background: #101013 !important;
 }
 [data-testid="stSidebar"] {
-    border-right: 1px solid #1E1E2E !important;
-    min-width: 260px !important;
-    max-width: 260px !important;
+    border-right: 1px solid #1E1E22 !important;
+    min-width: 240px !important;
+    max-width: 240px !important;
 }
 [data-testid="stSidebar"] > div:first-child {
     padding: 1.5rem 1rem 1rem !important;
@@ -204,291 +208,241 @@ section[data-testid="stSidebar"][aria-expanded="false"] {
 [data-testid="stSidebar"] div,
 [data-testid="stSidebar"] label,
 [data-testid="stSidebar"] small {
-    color: #C8C8D8 !important;
+    color: #C4C4C9 !important;
     font-family: 'DM Sans', sans-serif !important;
 }
 
-/* ── Main content buttons (gradient) ── */
+/* ── Main content buttons — flat outline by default, solid accent for primary ── */
 [data-testid="stButton"] button {
-    background: linear-gradient(135deg, #89C4E1, #FF3D8A) !important;
-    border: none !important;
-    color: #0A0A0F !important;
+    background: transparent !important;
+    border: 1px solid #26262C !important;
+    color: #D0D0D6 !important;
     font-size: 0.78rem !important;
     font-weight: 600 !important;
-    letter-spacing: 0.1em !important;
-    text-transform: uppercase !important;
-    border-radius: 6px !important;
+    letter-spacing: 0.03em !important;
+    text-transform: none !important;
+    border-radius: 8px !important;
     padding: 8px 20px !important;
-    transition: opacity 0.2s ease !important;
+    transition: background 0.15s ease, border-color 0.15s ease !important;
 }
-[data-testid="stButton"] button:hover { opacity: 0.85 !important; }
+[data-testid="stButton"] button:hover { border-color: #FC4C02 !important; color: #FC4C02 !important; }
+[data-testid="stButton"] button[kind="primary"],
+[data-testid="stBaseButton-primary"] {
+    background: #FC4C02 !important;
+    border: none !important;
+    color: #FFFFFF !important;
+}
+[data-testid="stButton"] button[kind="primary"]:hover { background: #E04500 !important; color: #FFFFFF !important; }
 
 /* ── Form submit buttons — outline style ── */
 [data-testid="stFormSubmitButton"] button {
     background: transparent !important;
     background-image: none !important;
-    border: 1px solid #89C4E1 !important;
-    color: #89C4E1 !important;
+    border: 1px solid #33333A !important;
+    color: #F5F5F7 !important;
     font-family: 'DM Sans', sans-serif !important;
-    font-size: 0.75rem !important;
-    letter-spacing: 0.12em !important;
-    text-transform: uppercase !important;
+    font-size: 0.78rem !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.03em !important;
+    text-transform: none !important;
     border-radius: 8px !important;
     padding: 10px 24px !important;
-    transition: all 0.2s ease !important;
+    transition: all 0.15s ease !important;
 }
 [data-testid="stFormSubmitButton"] button:hover {
-    background: #89C4E1 !important;
-    color: #0A0A0F !important;
-}
-
-/* ── Second form submit (LOG RUN) — pink accent ── */
-[data-testid="stForm"]:nth-of-type(2) [data-testid="stFormSubmitButton"] button {
-    border-color: #FF3D8A !important;
-    color: #FF3D8A !important;
-}
-[data-testid="stForm"]:nth-of-type(2) [data-testid="stFormSubmitButton"] button:hover {
-    background: #FF3D8A !important;
-    color: #0A0A0F !important;
+    background: #1A1A1E !important;
+    border-color: #FC4C02 !important;
+    color: #FC4C02 !important;
 }
 
 [data-testid="stDownloadButton"] button {
     background: transparent !important;
-    border: 1px solid #89C4E1 !important;
-    color: #89C4E1 !important;
+    border: 1px solid #33333A !important;
+    color: #F5F5F7 !important;
     font-size: 0.78rem !important;
-    letter-spacing: 0.1em !important;
-    text-transform: uppercase !important;
-    border-radius: 6px !important;
+    letter-spacing: 0.03em !important;
+    text-transform: none !important;
+    border-radius: 8px !important;
     padding: 8px 20px !important;
 }
 
-/* ── Sidebar buttons — nav style (after gradient rule, same specificity → later wins) ── */
+/* ── Sidebar buttons — nav style ── */
 [data-testid="stSidebar"] button,
 [data-testid="stSidebar"] [data-testid="stButton"] button {
-    background: #1A1A2A !important;
+    background: transparent !important;
     background-image: none !important;
-    border: 1px solid #2A2A3E !important;
-    color: #9090A8 !important;
-    font-size: 0.74rem !important;
-    font-weight: 400 !important;
-    letter-spacing: 0.07em !important;
-    text-transform: uppercase !important;
-    border-radius: 7px !important;
+    border: 1px solid transparent !important;
+    border-left: 2px solid transparent !important;
+    color: #9A9AA2 !important;
+    font-size: 0.82rem !important;
+    font-weight: 500 !important;
+    letter-spacing: 0 !important;
+    text-transform: none !important;
+    text-align: left !important;
+    border-radius: 6px !important;
     padding: 9px 12px !important;
     white-space: nowrap !important;
     overflow: hidden !important;
     text-overflow: ellipsis !important;
     opacity: 1 !important;
-    transition: border-color 0.15s, color 0.15s !important;
+    transition: background 0.15s, color 0.15s !important;
 }
 [data-testid="stSidebar"] button:hover,
 [data-testid="stSidebar"] [data-testid="stButton"] button:hover {
-    background: rgba(137,196,225,0.07) !important;
-    border-color: #89C4E1 !important;
-    color: #89C4E1 !important;
+    background: #17171B !important;
+    color: #F5F5F7 !important;
     opacity: 1 !important;
 }
 [data-testid="stSidebar"] button[kind="primary"],
 [data-testid="stSidebar"] [data-testid="stBaseButton-primary"] {
-    background: rgba(137,196,225,0.12) !important;
+    background: rgba(252,76,2,0.10) !important;
     background-image: none !important;
-    border: 1px solid #89C4E1 !important;
-    color: #89C4E1 !important;
+    border: 1px solid transparent !important;
+    border-left: 2px solid #FC4C02 !important;
+    color: #FC4C02 !important;
     font-weight: 600 !important;
     opacity: 1 !important;
 }
 
 /* ── Forms / inputs ── */
 [data-testid="stTextInput"] input {
-    background: #12121A !important;
-    border: none !important;
-    border-bottom: 2px solid #89C4E1 !important;
-    border-radius: 0 !important;
-    color: #F0F0F0 !important;
+    background: #131316 !important;
+    border: 1px solid #26262C !important;
+    border-radius: 8px !important;
+    color: #F5F5F7 !important;
     font-family: 'DM Sans', sans-serif !important;
     font-size: 0.95rem !important;
-    padding: 8px 4px !important;
+    padding: 9px 12px !important;
 }
-[data-testid="stTextInput"] input:focus { border-bottom-color: #FF3D8A !important; box-shadow:none !important; }
+[data-testid="stTextInput"] input:focus { border-color: #FC4C02 !important; box-shadow:none !important; }
 [data-testid="stTextInput"] label,
 [data-testid="stNumberInput"] label,
 [data-testid="stSelectbox"] label,
 [data-testid="stTextArea"] label,
 [data-testid="stDateInput"] label {
-    font-size: 0.7rem !important; letter-spacing: 0.12em !important;
-    text-transform: uppercase !important; color: #555566 !important;
+    font-size: 0.68rem !important; letter-spacing: 0.08em !important;
+    text-transform: uppercase !important; color: #6E6E76 !important;
     font-family: 'DM Sans', sans-serif !important;
 }
 [data-testid="stSelectbox"] > div > div {
-    background: #12121A !important; border: 1px solid #1E1E2E !important;
-    color: #F0F0F0 !important; border-radius: 8px !important;
+    background: #131316 !important; border: 1px solid #26262C !important;
+    color: #F5F5F7 !important; border-radius: 8px !important;
 }
 [data-testid="stNumberInput"] input {
-    background: #12121A !important; border: 1px solid #1E1E2E !important;
-    color: #F0F0F0 !important; font-family: 'JetBrains Mono', monospace !important;
+    background: #131316 !important; border: 1px solid #26262C !important;
+    color: #F5F5F7 !important; font-family: 'JetBrains Mono', monospace !important;
 }
 [data-testid="stTextArea"] textarea {
-    background: #12121A !important; border: 1px solid #1E1E2E !important;
-    color: #F0F0F0 !important; font-family: 'DM Sans', sans-serif !important;
+    background: #131316 !important; border: 1px solid #26262C !important;
+    color: #F5F5F7 !important; font-family: 'DM Sans', sans-serif !important;
 }
 
 /* ── Charts ── */
 [data-testid="stPlotlyChart"] > div {
-    background: #12121A !important; border-radius: 10px !important;
-    padding: 8px !important; border: 1px solid #1E1E2E !important;
+    background: #131316 !important; border-radius: 10px !important;
+    padding: 8px !important; border: 1px solid #1E1E22 !important;
 }
 
 /* ── Misc ── */
 [data-testid="stAlert"] {
-    background: #12121A !important; border: 1px solid #1E1E2E !important;
+    background: #131316 !important; border: 1px solid #1E1E22 !important;
     border-left: 3px solid #1DDB8B !important; border-radius: 8px !important;
 }
 [data-testid="stExpander"] {
-    background: #12121A !important; border: 1px solid #1E1E2E !important; border-radius: 10px !important;
+    background: #131316 !important; border: 1px solid #1E1E22 !important; border-radius: 10px !important;
 }
 [data-testid="stExpander"] summary {
-    font-size: 0.78rem !important; letter-spacing: 0.1em !important;
-    text-transform: uppercase !important; color: #555566 !important;
+    font-size: 0.78rem !important; letter-spacing: 0.06em !important;
+    text-transform: uppercase !important; color: #6E6E76 !important;
 }
 [data-testid="stVerticalBlock"] { gap: 0.4rem !important; }
 .element-container { margin-bottom: 0.15rem !important; }
 [data-testid="stHorizontalBlock"] { gap: 0.75rem !important; align-items: stretch !important; }
 hr {
     border: none !important; height: 1px !important;
-    background: linear-gradient(90deg, transparent, #89C4E1 30%, #FF3D8A 70%, transparent) !important;
-    margin: 16px 0 !important; opacity: 0.4 !important;
+    background: #1E1E22 !important;
+    margin: 16px 0 !important;
 }
 ::-webkit-scrollbar { width: 4px; height: 4px; }
-::-webkit-scrollbar-track { background: #0A0A0F; }
-::-webkit-scrollbar-thumb { background: #1E1E2E; border-radius: 2px; }
-::-webkit-scrollbar-thumb:hover { background: #89C4E1; }
+::-webkit-scrollbar-track { background: #0A0A0D; }
+::-webkit-scrollbar-thumb { background: #26262C; border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: #FC4C02; }
 @keyframes dp-pulse {
-    0%,100% { opacity:1; box-shadow:0 0 8px rgba(29,219,139,0.8); }
-    50%      { opacity:0.4; box-shadow:0 0 4px rgba(29,219,139,0.3); }
+    0%,100% { opacity:1; }
+    50%      { opacity:0.35; }
 }
 
-/* ── Animation library ── */
+/* ── Minimal fade-in, used sparingly ── */
 @keyframes fadeInUp {
-    from { opacity:0; transform:translateY(20px); }
+    from { opacity:0; transform:translateY(8px); }
     to   { opacity:1; transform:translateY(0); }
 }
-@keyframes fadeInLeft {
-    from { opacity:0; transform:translateX(-20px); }
-    to   { opacity:1; transform:translateX(0); }
-}
-@keyframes fadeInRight {
-    from { opacity:0; transform:translateX(20px); }
-    to   { opacity:1; transform:translateX(0); }
-}
-@keyframes scaleIn {
-    from { opacity:0; transform:scale(0.94); }
-    to   { opacity:1; transform:scale(1); }
-}
-@keyframes gradientShift {
-    0%   { background-position:0% 50%; }
-    50%  { background-position:100% 50%; }
-    100% { background-position:0% 50%; }
-}
-@keyframes borderGlow {
-    0%,100% { box-shadow:0 0 8px rgba(137,196,225,0.2); }
-    50%      { box-shadow:0 0 24px rgba(137,196,225,0.5); }
-}
-@keyframes shimmer {
-    0%   { background-position:-200% center; }
-    100% { background-position:200% center; }
-}
-
-/* ── Apply to main content blocks ── */
 [data-testid="stMainBlockContainer"] > div > div {
-    animation: fadeInUp 0.4s ease both;
-}
-[data-testid="stHorizontalBlock"] > div:nth-child(1) { animation: fadeInLeft 0.35s ease both; }
-[data-testid="stHorizontalBlock"] > div:nth-child(2) { animation: fadeInUp 0.4s ease 0.05s both; }
-[data-testid="stHorizontalBlock"] > div:nth-child(3) { animation: fadeInRight 0.35s ease 0.1s both; }
-[data-testid="stHorizontalBlock"] > div:nth-child(4) { animation: fadeInRight 0.35s ease 0.15s both; }
-
-/* ── Staggered metric card animations ── */
-.dp-metric-1 { animation: scaleIn 0.3s ease 0.05s both; }
-.dp-metric-2 { animation: scaleIn 0.3s ease 0.10s both; }
-.dp-metric-3 { animation: scaleIn 0.3s ease 0.15s both; }
-.dp-metric-4 { animation: scaleIn 0.3s ease 0.20s both; }
-
-/* ── Card hover lifts ── */
-.dp-card { transition: transform 0.2s ease, box-shadow 0.2s ease !important; }
-.dp-card:hover {
-    transform: translateY(-3px) !important;
-    box-shadow: 0 8px 32px rgba(137,196,225,0.12) !important;
+    animation: fadeInUp 0.25s ease both;
 }
 
-/* ── Animated gradient title ── */
-.dp-gradient-title {
-    background: linear-gradient(135deg,#89C4E1,#B39DDB,#FF3D8A,#89C4E1);
-    background-size: 300% 300%;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    animation: gradientShift 6s ease infinite;
-}
+/* ── Card hover lift (subtle) ── */
+.dp-card { transition: border-color 0.15s ease !important; }
+.dp-card:hover { border-color: #33333A !important; }
 
 /* ── Alert animation ── */
-[data-testid="stAlert"] { animation: fadeInUp 0.25s ease both; }
-[data-testid="stExpander"] { animation: fadeInUp 0.3s ease both; }
+[data-testid="stAlert"] { animation: fadeInUp 0.2s ease both; }
+[data-testid="stExpander"] { animation: fadeInUp 0.2s ease both; }
 
 /* ── Date input dark ── */
 [data-testid="stDateInput"] input {
-    background: #12121A !important;
-    border-bottom: 2px solid #89C4E1 !important;
-    color: #F0F0F0 !important;
-    border-radius: 0 !important;
+    background: #131316 !important;
+    border: 1px solid #26262C !important;
+    color: #F5F5F7 !important;
+    border-radius: 8px !important;
 }
 
 /* ── Selectbox fully dark ── */
 [data-testid="stSelectbox"] div[data-baseweb="select"] > div {
-    background-color: #12121A !important;
-    border-color: #1E1E2E !important;
-    color: #F0F0F0 !important;
+    background-color: #131316 !important;
+    border-color: #26262C !important;
+    color: #F5F5F7 !important;
 }
-[data-testid="stSelectbox"] svg { fill: #555566 !important; }
+[data-testid="stSelectbox"] svg { fill: #6E6E76 !important; }
 
 /* ── File uploader dark ── */
 [data-testid="stFileUploader"] {
-    background: #12121A !important;
-    border: 1px dashed #1E1E2E !important;
+    background: #131316 !important;
+    border: 1px dashed #26262C !important;
     border-radius: 10px !important;
     padding: 12px !important;
 }
 [data-testid="stFileUploader"] label {
-    color: #555566 !important;
+    color: #6E6E76 !important;
     font-family: 'DM Sans', sans-serif !important;
     font-size: 0.78rem !important;
 }
 
 /* ── Expander header hover ── */
-[data-testid="stExpander"] summary:hover { color: #89C4E1 !important; }
+[data-testid="stExpander"] summary:hover { color: #FC4C02 !important; }
 
 /* ── Table row hover ── */
-tr:hover { background: #1A1A26 !important; }
+tr:hover { background: #17171B !important; }
 
 /* ── Number input +/- buttons styled ── */
 [data-testid="stNumberInput"] > div {
-    background: #12121A !important;
-    border: 1px solid #1E1E2E !important;
+    background: #131316 !important;
+    border: 1px solid #26262C !important;
     border-radius: 8px !important;
 }
 [data-testid="stNumberInput"] button {
-    background: #1E1E2E !important;
+    background: #1E1E22 !important;
     border: none !important;
-    color: #8A8A9A !important;
+    color: #9A9AA2 !important;
 }
 [data-testid="stNumberInput"] button:hover {
-    background: #89C4E1 !important;
-    color: #0A0A0F !important;
+    background: #FC4C02 !important;
+    color: #FFFFFF !important;
 }
 
 /* ── Success alert styled ── */
 [data-testid="stAlert"][kind="success"] {
-    background: #0D1A0D !important;
+    background: #0D1712 !important;
     border: 1px solid rgba(29,219,139,0.3) !important;
     border-left: 3px solid #1DDB8B !important;
     border-radius: 0 8px 8px 0 !important;
@@ -498,36 +452,36 @@ tr:hover { background: #1A1A26 !important; }
 /* ── Error alert styled ── */
 [data-testid="stAlert"][kind="error"] {
     background: #1A0D0D !important;
-    border: 1px solid rgba(255,77,106,0.3) !important;
-    border-left: 3px solid #FF4D6A !important;
+    border: 1px solid rgba(255,77,77,0.3) !important;
+    border-left: 3px solid #FF4D4D !important;
     border-radius: 0 8px 8px 0 !important;
 }
 
-/* ── Auth form submit buttons — full gradient ── */
+/* ── Auth form submit buttons — solid accent ── */
 [data-testid="stForm"] [data-testid="stFormSubmitButton"] button {
-    background: linear-gradient(135deg, #89C4E1, #FF3D8A) !important;
+    background: #FC4C02 !important;
     border: none !important;
-    color: #0A0A0F !important;
+    color: #FFFFFF !important;
     font-family: 'DM Sans', sans-serif !important;
-    font-size: 0.78rem !important;
+    font-size: 0.82rem !important;
     font-weight: 700 !important;
-    letter-spacing: 0.12em !important;
-    text-transform: uppercase !important;
-    border-radius: 10px !important;
-    padding: 14px 24px !important;
-    transition: opacity 0.2s ease !important;
+    letter-spacing: 0.02em !important;
+    text-transform: none !important;
+    border-radius: 8px !important;
+    padding: 12px 24px !important;
+    transition: background 0.15s ease !important;
     width: 100% !important;
 }
 [data-testid="stForm"] [data-testid="stFormSubmitButton"] button:hover {
-    opacity: 0.88 !important;
+    background: #E04500 !important;
 }
 
 /* ── Auth tab toggle buttons ── */
 div[data-testid="stHorizontalBlock"]:has(button[kind="primary"]) button[kind="secondary"] {
     background: transparent !important;
     background-image: none !important;
-    border: 1px solid #1E1E2E !important;
-    color: #555566 !important;
+    border: 1px solid #1E1E22 !important;
+    color: #6E6E76 !important;
 }
 </style>""", unsafe_allow_html=True)
 
@@ -541,175 +495,86 @@ def smart_yrange(series, pad=0.02):
 
 def style_chart(fig, height=360):
     fig.update_layout(
-        paper_bgcolor='#12121A', plot_bgcolor='#12121A',
-        font=dict(family='DM Sans', color='#8A8A9A', size=12),
+        paper_bgcolor='#131316', plot_bgcolor='#131316',
+        font=dict(family='DM Sans', color='#9A9AA2', size=12),
         height=height, hovermode='x unified',
-        hoverlabel=dict(bgcolor='#1A1A26', bordercolor='#2A2A3E',
-                        font=dict(family='DM Sans', color='#F0F0F0', size=12)),
-        xaxis=dict(gridcolor='#1E1E2E', linecolor='#1E1E2E',
-                   tickfont=dict(family='DM Sans', size=12, color='#8A8A9A'),
+        hoverlabel=dict(bgcolor='#1A1A1F', bordercolor='#26262C',
+                        font=dict(family='DM Sans', color='#F5F5F7', size=12)),
+        xaxis=dict(gridcolor='#1E1E22', linecolor='#1E1E22',
+                   tickfont=dict(family='DM Sans', size=12, color='#9A9AA2'),
                    showgrid=True, zeroline=False),
-        yaxis=dict(gridcolor='#1E1E2E', linecolor='#1E1E2E',
-                   tickfont=dict(family='JetBrains Mono', size=11, color='#555566'),
+        yaxis=dict(gridcolor='#1E1E22', linecolor='#1E1E22',
+                   tickfont=dict(family='JetBrains Mono', size=11, color='#6E6E76'),
                    showgrid=True, zeroline=False),
-        legend=dict(bgcolor='#0A0A0F', bordercolor='#1E1E2E', borderwidth=1,
-                    font=dict(family='DM Sans', size=11, color='#8A8A9A')),
+        legend=dict(bgcolor='#0A0A0D', bordercolor='#1E1E22', borderwidth=1,
+                    font=dict(family='DM Sans', size=11, color='#9A9AA2')),
         margin=dict(l=16, r=16, t=48, b=60),
     )
     return fig
 
 
-def view_header(title, subtitle=None):
-    sub = f"""<div style="display:flex;align-items:center;gap:10px;margin-top:6px;">
-        <div style="width:6px;height:6px;border-radius:50%;background:#1DDB8B;
-                    box-shadow:0 0 8px rgba(29,219,139,0.8);
-                    animation:dp-pulse 2s infinite;flex-shrink:0;"></div>
-        <span style="font-family:'DM Sans',sans-serif;font-size:0.72rem;
-                     letter-spacing:0.14em;text-transform:uppercase;color:#555566;">{subtitle}</span>
-    </div>""" if subtitle else ''
+def page_header(title, subtitle, icon, accent='blue'):
     st.markdown(f"""
-    <div style="padding:20px 0 16px;border-bottom:1px solid #1E1E2E;margin-bottom:20px;
+    <div style="padding:16px 0 20px;border-bottom:1px solid #1E1E22;margin-bottom:24px;
                 display:flex;align-items:flex-end;justify-content:space-between;">
         <div>
-            <div style="font-family:'Bebas Neue',sans-serif;font-size:3.6rem;
-                        letter-spacing:0.06em;line-height:1;
-                        background:linear-gradient(135deg,#89C4E1 0%,#B39DDB 50%,#FF3D8A 100%);
-                        -webkit-background-clip:text;-webkit-text-fill-color:transparent;
-                        background-clip:text;">{title}</div>{sub}
+            <div style="font-family:'DM Sans';font-size:0.7rem;letter-spacing:0.1em;
+                        text-transform:uppercase;color:#6E6E76;margin-bottom:6px;">{subtitle}</div>
+            <div style="font-family:'DM Sans';font-size:2rem;font-weight:700;
+                        letter-spacing:-0.01em;line-height:1;color:#F5F5F7;">{title}</div>
         </div>
-        <span style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;
-                     color:#2A2A3E;padding-bottom:4px;">
+        <span style="font-family:'JetBrains Mono',monospace;font-size:0.68rem;
+                     color:#4A4A52;padding-bottom:2px;">
             {datetime.datetime.now().strftime('%a %b %d · %H:%M')}
         </span>
-    </div>""", unsafe_allow_html=True)
-
-
-def page_header(title, subtitle, icon, accent='blue'):
-    color = '#89C4E1' if accent == 'blue' else '#FF3D8A'
-    st.markdown(f"""
-    <div style="padding:20px 0 24px;border-bottom:1px solid #1E1E2E;margin-bottom:28px;">
-        <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px;">
-            <div style="width:40px;height:40px;border-radius:10px;
-                        background:rgba(137,196,225,0.08);border:1px solid rgba(137,196,225,0.2);
-                        display:flex;align-items:center;justify-content:center;
-                        font-size:1.3rem;flex-shrink:0;">{icon}</div>
-            <div style="font-family:'Bebas Neue',sans-serif;font-size:2.8rem;
-                        letter-spacing:0.06em;line-height:1;
-                        background:linear-gradient(135deg,{color},#FF3D8A);
-                        -webkit-background-clip:text;-webkit-text-fill-color:transparent;
-                        background-clip:text;">{title}</div>
-        </div>
-        <div style="display:flex;align-items:center;gap:10px;margin-left:54px;">
-            <div style="width:5px;height:5px;border-radius:50%;background:#1DDB8B;
-                        box-shadow:0 0 6px rgba(29,219,139,0.8);flex-shrink:0;"></div>
-            <span style="font-family:'DM Sans';font-size:0.7rem;letter-spacing:0.14em;
-                         text-transform:uppercase;color:#555566;">{subtitle}</span>
-            <span style="margin-left:auto;font-family:'JetBrains Mono';
-                         font-size:0.68rem;color:#2A2A3E;">
-                {datetime.datetime.now().strftime('%a %b %d · %H:%M')}
-            </span>
-        </div>
     </div>
     """, unsafe_allow_html=True)
 
 
-def stat_card(col, label, value, unit='', accent='#89C4E1', sublabel='', size='normal'):
-    font_size = '2rem' if size == 'normal' else '1.4rem' if size == 'small' else '2.6rem'
-    sub_html = f'<div style="font-family:DM Sans;font-size:0.68rem;color:#2A2A3E;margin-top:4px;">{sublabel}</div>' if sublabel else ''
+def stat_card(col, label, value, unit='', accent='#FC4C02', sublabel='', size='normal'):
+    font_size = '1.7rem' if size == 'normal' else '1.3rem' if size == 'small' else '2.2rem'
+    sub_html = f'<div style="font-family:DM Sans;font-size:0.68rem;color:#4A4A52;margin-top:4px;">{sublabel}</div>' if sublabel else ''
     col.markdown(f"""
-    <div style="background:#12121A;border:1px solid #1E1E2E;
-                border-top:3px solid {accent};border-radius:12px;
-                padding:16px 14px;height:100%;
-                box-shadow:0 0 20px rgba(137,196,225,0.04);">
-        <div style="font-family:'DM Sans';font-size:0.6rem;letter-spacing:0.14em;
-                    text-transform:uppercase;color:#555566;margin-bottom:8px;">{label}</div>
+    <div class="dp-card" style="background:#131316;border:1px solid #1E1E22;
+                border-radius:10px;padding:16px 14px;height:100%;">
+        <div style="font-family:'DM Sans';font-size:0.62rem;letter-spacing:0.1em;
+                    text-transform:uppercase;color:#6E6E76;margin-bottom:8px;">{label}</div>
         <div style="font-family:'JetBrains Mono';font-size:{font_size};
-                    color:#F0F0F0;line-height:1;">
-            {value}<span style="font-size:0.85rem;color:#555566;margin-left:3px;">{unit}</span>
-        </div>
-        {sub_html}
+                    color:{accent};line-height:1;">
+            {value}<span style="font-size:0.8rem;color:#6E6E76;margin-left:3px;">{unit}</span>
+        </div>{sub_html}
     </div>
     """, unsafe_allow_html=True)
 
 
 def section_header(label, accent='blue'):
-    color = '#89C4E1' if accent == 'blue' else '#FF3D8A'
-    glow  = 'rgba(137,196,225,0.4)' if accent == 'blue' else 'rgba(255,61,138,0.4)'
     st.markdown(f"""
-    <div style="display:flex;align-items:center;gap:14px;margin:20px 0 12px;">
-        <div style="width:4px;height:24px;background:{color};border-radius:2px;
-                    box-shadow:0 0 10px {glow};flex-shrink:0;"></div>
-        <span style="font-family:'Bebas Neue',sans-serif;font-size:1.5rem;
-                     letter-spacing:0.1em;color:#F0F0F0;">{label}</span>
-    </div>""", unsafe_allow_html=True)
-
-
-def metric_card(col, icon, label, value, accent='blue'):
-    bc = '#89C4E1' if accent == 'blue' else '#FF3D8A'
-    gl = 'rgba(137,196,225,0.08)' if accent == 'blue' else 'rgba(255,61,138,0.08)'
-    col.markdown(f"""
-    <div style="background:#12121A;border:1px solid #1E1E2E;
-                border-top:3px solid {bc};border-radius:12px;
-                padding:16px 14px;box-shadow:0 0 24px {gl};height:100%;">
-        <div style="font-family:'DM Sans',sans-serif;font-size:0.62rem;letter-spacing:0.14em;
-                    text-transform:uppercase;color:#555566;margin-bottom:6px;">{icon}&nbsp; {label}</div>
-        <div style="font-family:'JetBrains Mono',monospace;font-size:1.8rem;
-                    color:#F0F0F0;line-height:1.1;white-space:nowrap;
-                    overflow:hidden;text-overflow:ellipsis;">{value}</div>
-    </div>""", unsafe_allow_html=True)
-
-
-def podium_card(col, rank, name, total, runs, top_speed):
-    c = {
-        1:{'border':'#FFD700','glow':'rgba(255,215,0,0.15)',
-           'bg':'linear-gradient(160deg,#1A1600 0%,#12121A 60%)',
-           'nc':'#FFD700','medal':'🥇','sz':'2.6rem','badge':'FASTEST','bc':'#FFD700'},
-        2:{'border':'#89C4E1','glow':'rgba(137,196,225,0.10)',
-           'bg':'linear-gradient(160deg,#0A1520 0%,#12121A 60%)',
-           'nc':'#89C4E1','medal':'🥈','sz':'2.2rem','badge':'2ND','bc':'#89C4E1'},
-        3:{'border':'#CD7F32','glow':'rgba(205,127,50,0.10)',
-           'bg':'linear-gradient(160deg,#160E00 0%,#12121A 60%)',
-           'nc':'#CD7F32','medal':'🥉','sz':'2.0rem','badge':'3RD','bc':'#CD7F32'},
-    }[rank]
-    col.markdown(f"""
-    <div style="background:{c['bg']};border:1px solid {c['border']};
-                border-top:3px solid {c['border']};border-radius:14px;
-                padding:28px 20px 24px;text-align:center;
-                box-shadow:0 0 40px {c['glow']};position:relative;min-height:200px;">
-        <div style="position:absolute;top:12px;right:14px;font-family:'DM Sans',sans-serif;
-                    font-size:0.6rem;letter-spacing:0.16em;text-transform:uppercase;
-                    color:{c['bc']};background:{c['bc']}18;border:1px solid {c['bc']}44;
-                    border-radius:999px;padding:3px 10px;">{c['badge']}</div>
-        <div style="font-size:2.4rem;margin-bottom:8px;">{c['medal']}</div>
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:0.1em;
-                    color:{c['nc']};margin-bottom:6px;">{name.upper()}</div>
-        <div style="font-family:'JetBrains Mono',monospace;font-size:{c['sz']};
-                    color:#F0F0F0;font-weight:500;line-height:1;margin-bottom:12px;">{total:.2f}s</div>
-        <div style="font-family:'DM Sans',sans-serif;font-size:0.75rem;color:#555566;">
-            {runs} runs &nbsp;·&nbsp; {top_speed:.1f} mph top speed</div>
+    <div style="margin:24px 0 12px;">
+        <span style="font-family:'DM Sans',sans-serif;font-size:0.78rem;font-weight:700;
+                     letter-spacing:0.06em;text-transform:uppercase;color:#F5F5F7;">{label}</span>
     </div>""", unsafe_allow_html=True)
 
 
 def render_rankings_table(lb_df, current_user=''):
-    MEDALS = {1:'🥇',2:'🥈',3:'🥉'}
-    RANK_COLORS = {1:'#FFD700',2:'#C0C0C0',3:'#CD7F32'}
     rows = ''
     for _, row in lb_df.iterrows():
-        rank = int(row['rank']); rc = RANK_COLORS.get(rank,'#555566')
+        rank = int(row['rank'])
+        rc = ACCENT if rank == 1 else '#6E6E76'
+        rank_label = f'👑 #{rank}' if rank == 1 else f'#{rank}'
         is_me = row['athlete'] == current_user
-        you_badge = '<span style="font-family:DM Sans;font-size:0.55rem;background:#89C4E1;color:#0A0A0F;border-radius:999px;padding:2px 7px;margin-left:8px;font-weight:600;vertical-align:middle;">YOU</span>' if is_me else ''
-        name_color = '#F0F0F0' if is_me else '#8A8A9A'
-        row_bg = 'background:#1A1A2A;' if is_me else ''
-        rows += f"""<tr style="border-bottom:1px solid #1A1A26;{row_bg}">
-            <td style="padding:12px 16px;font-family:'JetBrains Mono',monospace;color:{rc};font-size:0.85rem;">{MEDALS.get(rank,f'#{rank}')}</td>
+        you_badge = f'<span style="font-family:DM Sans;font-size:0.55rem;background:{ACCENT};color:#FFFFFF;border-radius:999px;padding:2px 7px;margin-left:8px;font-weight:600;vertical-align:middle;">YOU</span>' if is_me else ''
+        name_color = '#F5F5F7' if is_me else '#D0D0D6'
+        row_bg = 'background:#17171B;' if is_me else ''
+        rows += f"""<tr style="border-bottom:1px solid #1A1A1F;{row_bg}">
+            <td style="padding:12px 16px;font-family:'JetBrains Mono',monospace;color:{rc};font-size:0.85rem;">{rank_label}</td>
             <td style="padding:12px 16px;font-family:'DM Sans',sans-serif;color:{name_color};font-size:0.9rem;font-weight:500;">{row['athlete']}{you_badge}</td>
-            <td style="padding:12px 16px;font-family:'JetBrains Mono',monospace;color:#89C4E1;font-size:0.85rem;">{row['best_total']:.3f}s</td>
-            <td style="padding:12px 16px;font-family:'JetBrains Mono',monospace;color:#8A8A9A;font-size:0.85rem;">{row['best_0_10']:.3f}s</td>
-            <td style="padding:12px 16px;font-family:'JetBrains Mono',monospace;color:#8A8A9A;font-size:0.85rem;">{row['best_10_30']:.3f}s</td>
-            <td style="padding:12px 16px;font-family:'JetBrains Mono',monospace;color:#FF3D8A;font-size:0.85rem;">{row['best_30_60']:.3f}s</td>
-            <td style="padding:12px 16px;font-family:'JetBrains Mono',monospace;color:#8A8A9A;font-size:0.85rem;">{row['top_speed']:.1f}</td>
-            <td style="padding:12px 16px;font-family:'JetBrains Mono',monospace;color:#555566;font-size:0.85rem;">{row['runs']}</td>
-            <td style="padding:12px 16px;font-family:'DM Sans',sans-serif;color:#555566;font-size:0.78rem;">{row['last_run']}</td>
+            <td style="padding:12px 16px;font-family:'JetBrains Mono',monospace;color:#F5F5F7;font-size:0.85rem;">{row['best_total']:.3f}s</td>
+            <td style="padding:12px 16px;font-family:'JetBrains Mono',monospace;color:#9A9AA2;font-size:0.85rem;">{row['best_0_10']:.3f}s</td>
+            <td style="padding:12px 16px;font-family:'JetBrains Mono',monospace;color:#9A9AA2;font-size:0.85rem;">{row['best_10_30']:.3f}s</td>
+            <td style="padding:12px 16px;font-family:'JetBrains Mono',monospace;color:#9A9AA2;font-size:0.85rem;">{row['best_30_60']:.3f}s</td>
+            <td style="padding:12px 16px;font-family:'JetBrains Mono',monospace;color:#9A9AA2;font-size:0.85rem;">{row['top_speed']:.1f}</td>
+            <td style="padding:12px 16px;font-family:'JetBrains Mono',monospace;color:#6E6E76;font-size:0.85rem;">{row['runs']}</td>
+            <td style="padding:12px 16px;font-family:'DM Sans',sans-serif;color:#6E6E76;font-size:0.78rem;">{row['last_run']}</td>
         </tr>"""
     # Field averages footer row
     all_runs_df = load_all_runs()
@@ -720,22 +585,22 @@ def render_rankings_table(lb_df, current_user=''):
         avg_30_60   = all_runs_df.groupby('athlete')['split_30_60'].min().mean()
         avg_speed   = all_runs_df['top_speed'].mean()
         avg_runs_ct = int(all_runs_df.groupby('athlete').size().mean())
-        rows += f"""<tr style="border-top:2px solid #2A2A3E;background:#0D0D14;">
-            <td style="padding:12px 16px;font-family:'DM Sans',monospace;color:#2A2A3E;font-size:0.75rem;font-style:italic;">AVG</td>
-            <td style="padding:12px 16px;font-family:'DM Sans',sans-serif;color:#2A2A3E;font-size:0.8rem;font-style:italic;">Field average</td>
-            <td style="padding:12px 16px;font-family:'JetBrains Mono',monospace;color:#2A2A3E;font-size:0.82rem;">{avg_best:.3f}s</td>
-            <td style="padding:12px 16px;font-family:'JetBrains Mono',monospace;color:#2A2A3E;font-size:0.82rem;">{avg_0_10:.3f}s</td>
-            <td style="padding:12px 16px;font-family:'JetBrains Mono',monospace;color:#2A2A3E;font-size:0.82rem;">{avg_10_30:.3f}s</td>
-            <td style="padding:12px 16px;font-family:'JetBrains Mono',monospace;color:#2A2A3E;font-size:0.82rem;">{avg_30_60:.3f}s</td>
-            <td style="padding:12px 16px;font-family:'JetBrains Mono',monospace;color:#2A2A3E;font-size:0.82rem;">{avg_speed:.1f}</td>
-            <td style="padding:12px 16px;font-family:'JetBrains Mono',monospace;color:#2A2A3E;font-size:0.82rem;">{avg_runs_ct}</td>
-            <td style="padding:12px 16px;font-family:'DM Sans',sans-serif;color:#2A2A3E;font-size:0.78rem;">—</td>
+        rows += f"""<tr style="border-top:2px solid #26262C;background:#0D0D10;">
+            <td style="padding:12px 16px;font-family:'DM Sans',monospace;color:#4A4A52;font-size:0.75rem;font-style:italic;">AVG</td>
+            <td style="padding:12px 16px;font-family:'DM Sans',sans-serif;color:#4A4A52;font-size:0.8rem;font-style:italic;">Field average</td>
+            <td style="padding:12px 16px;font-family:'JetBrains Mono',monospace;color:#4A4A52;font-size:0.82rem;">{avg_best:.3f}s</td>
+            <td style="padding:12px 16px;font-family:'JetBrains Mono',monospace;color:#4A4A52;font-size:0.82rem;">{avg_0_10:.3f}s</td>
+            <td style="padding:12px 16px;font-family:'JetBrains Mono',monospace;color:#4A4A52;font-size:0.82rem;">{avg_10_30:.3f}s</td>
+            <td style="padding:12px 16px;font-family:'JetBrains Mono',monospace;color:#4A4A52;font-size:0.82rem;">{avg_30_60:.3f}s</td>
+            <td style="padding:12px 16px;font-family:'JetBrains Mono',monospace;color:#4A4A52;font-size:0.82rem;">{avg_speed:.1f}</td>
+            <td style="padding:12px 16px;font-family:'JetBrains Mono',monospace;color:#4A4A52;font-size:0.82rem;">{avg_runs_ct}</td>
+            <td style="padding:12px 16px;font-family:'DM Sans',sans-serif;color:#4A4A52;font-size:0.78rem;">—</td>
         </tr>"""
-    th = "padding:12px 16px;font-family:'DM Sans',sans-serif;font-size:0.65rem;letter-spacing:0.14em;text-transform:uppercase;color:#555566;text-align:left;font-weight:500;"
+    th = "padding:12px 16px;font-family:'DM Sans',sans-serif;font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;color:#6E6E76;text-align:left;font-weight:500;"
     st.markdown(f"""
-    <div style="border:1px solid #1E1E2E;border-radius:12px;overflow:hidden;margin-top:8px;">
-        <table style="width:100%;border-collapse:collapse;background:#12121A;">
-            <thead><tr style="border-bottom:2px solid #1E1E2E;background:#0D0D14;">
+    <div style="border:1px solid #1E1E22;border-radius:10px;overflow:hidden;margin-top:8px;">
+        <table style="width:100%;border-collapse:collapse;background:#131316;">
+            <thead><tr style="border-bottom:2px solid #1E1E22;background:#0D0D10;">
                 <th style="{th}">Rank</th><th style="{th}">Athlete</th>
                 <th style="{th}">Best Total</th><th style="{th}">0–10m</th>
                 <th style="{th}">10–30m</th><th style="{th}">30–60m</th>
@@ -748,42 +613,41 @@ def render_rankings_table(lb_df, current_user=''):
 
 def empty_state(icon='📭', title="NO DATA", subtitle="Log some runs to unlock this."):
     st.markdown(f"""
-    <div style="background:#12121A;border:1px solid #1E1E2E;border-radius:14px;
+    <div style="background:#131316;border:1px solid #1E1E22;border-radius:10px;
                 padding:48px 32px;text-align:center;margin:8px 0;">
         <div style="font-size:2.5rem;margin-bottom:12px;opacity:0.4;">{icon}</div>
-        <div style="font-family:'Bebas Neue';font-size:1.4rem;letter-spacing:0.08em;
-                    color:#2A2A3E;margin-bottom:6px;">{title}</div>
-        <div style="font-family:'DM Sans';font-size:0.78rem;color:#2A2A3E;">{subtitle}</div>
+        <div style="font-family:'DM Sans';font-size:1.1rem;font-weight:700;
+                    color:#6E6E76;margin-bottom:6px;">{title}</div>
+        <div style="font-family:'DM Sans';font-size:0.78rem;color:#4A4A52;">{subtitle}</div>
     </div>
     """, unsafe_allow_html=True)
 
 
 def render_footer():
     st.markdown("""
-    <div style="margin-top:40px;padding:20px 0;border-top:1px solid #1E1E2E;
+    <div style="margin-top:40px;padding:20px 0;border-top:1px solid #1E1E22;
                 display:flex;justify-content:space-between;align-items:center;">
-        <span style="font-family:'Bebas Neue',sans-serif;font-size:1rem;
-                     letter-spacing:0.1em;color:#2A2A3E;">DRIVE PHASE</span>
+        <span style="font-family:'DM Sans',sans-serif;font-size:0.85rem;font-weight:700;
+                     color:#4A4A52;">DRIVE PHASE</span>
         <span style="font-family:'DM Sans',sans-serif;font-size:0.72rem;
-                     color:#555566;letter-spacing:0.08em;">built by athletes · powered by data</span>
-        <span style="font-family:'JetBrains Mono',monospace;font-size:0.7rem;color:#555566;">v3.0</span>
+                     color:#4A4A52;">built by athletes · powered by data</span>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:0.7rem;color:#4A4A52;">v4.0</span>
     </div>""", unsafe_allow_html=True)
 
 
 def info_card(text, accent='blue'):
-    color = '#89C4E1' if accent == 'blue' else '#FF3D8A'
     st.markdown(f"""
-    <div style="background:#12121A;border:1px solid #1E1E2E;border-left:3px solid {color};
+    <div style="background:#131316;border:1px solid #1E1E22;border-left:3px solid {ACCENT};
                 border-radius:0 8px 8px 0;padding:12px 16px;margin:8px 0;">
         <p style="font-family:'DM Sans',sans-serif;font-size:0.82rem;
-                  color:#8A8A9A;margin:0;font-style:italic;">{text}</p>
+                  color:#9A9AA2;margin:0;">{text}</p>
     </div>""", unsafe_allow_html=True)
 
 
 def quick_stat(label, value, color):
     return f"""<div style="display:flex;justify-content:space-between;align-items:center;
-        padding:5px 0;border-bottom:1px solid #1E1E2E;">
-        <span style="font-family:'DM Sans',sans-serif;font-size:0.72rem;color:#666677;">{label}</span>
+        padding:5px 0;border-bottom:1px solid #1E1E22;">
+        <span style="font-family:'DM Sans',sans-serif;font-size:0.72rem;color:#6E6E76;">{label}</span>
         <span style="font-family:'JetBrains Mono',monospace;font-size:0.78rem;color:{color};">{value}</span>
     </div>"""
 
@@ -803,17 +667,14 @@ if st.session_state.public_view and st.session_state.current_user is None:
     # Top bar
     st.markdown(f"""
     <div style="display:flex;align-items:center;justify-content:space-between;
-                padding:16px 0 20px;border-bottom:1px solid #1E1E2E;margin-bottom:28px;">
+                padding:16px 0 20px;border-bottom:1px solid #1E1E22;margin-bottom:28px;">
         <div style="display:flex;align-items:center;gap:12px;">
-            <div style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;
-                        letter-spacing:0.1em;
-                        background:linear-gradient(135deg,#89C4E1,#FF3D8A);
-                        -webkit-background-clip:text;-webkit-text-fill-color:transparent;
-                        background-clip:text;">DRIVE PHASE</div>
-            <span style="font-family:'DM Sans';font-size:0.65rem;letter-spacing:0.16em;
-                         text-transform:uppercase;color:#2A2A3E;">· Public Leaderboard</span>
+            <div style="font-family:'DM Sans',sans-serif;font-size:1.3rem;font-weight:700;
+                        color:#F5F5F7;">DRIVE PHASE</div>
+            <span style="font-family:'DM Sans';font-size:0.65rem;letter-spacing:0.1em;
+                         text-transform:uppercase;color:#4A4A52;">· Public Leaderboard</span>
         </div>
-        <span style="font-family:'JetBrains Mono';font-size:0.68rem;color:#2A2A3E;">
+        <span style="font-family:'JetBrains Mono';font-size:0.68rem;color:#4A4A52;">
             {datetime.datetime.now().strftime('%a %b %d · %H:%M')}
         </span>
     </div>
@@ -825,49 +686,31 @@ if st.session_state.public_view and st.session_state.current_user is None:
     else:
         # Global stats strip
         gs = get_global_stats()
-        st.markdown(f"""
-        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:28px;">
-            <div style="background:#12121A;border:1px solid #1E1E2E;border-top:3px solid #89C4E1;
-                        border-radius:12px;padding:16px 14px;text-align:center;">
-                <div style="font-family:'JetBrains Mono';font-size:2rem;color:#89C4E1;">{gs['athlete_count']}</div>
-                <div style="font-family:'DM Sans';font-size:0.6rem;letter-spacing:0.12em;text-transform:uppercase;color:#555566;margin-top:4px;">Athletes</div>
-            </div>
-            <div style="background:#12121A;border:1px solid #1E1E2E;border-top:3px solid #B39DDB;
-                        border-radius:12px;padding:16px 14px;text-align:center;">
-                <div style="font-family:'JetBrains Mono';font-size:2rem;color:#B39DDB;">{gs['total_runs']}</div>
-                <div style="font-family:'DM Sans';font-size:0.6rem;letter-spacing:0.12em;text-transform:uppercase;color:#555566;margin-top:4px;">Total Runs</div>
-            </div>
-            <div style="background:#12121A;border:1px solid #1E1E2E;border-top:3px solid #FF3D8A;
-                        border-radius:12px;padding:16px 14px;text-align:center;">
-                <div style="font-family:'JetBrains Mono';font-size:2rem;color:#FF3D8A;">{gs['fastest_total']:.2f}s</div>
-                <div style="font-family:'DM Sans';font-size:0.6rem;letter-spacing:0.12em;text-transform:uppercase;color:#555566;margin-top:4px;">Fastest Time</div>
-            </div>
-            <div style="background:#12121A;border:1px solid #1E1E2E;border-top:3px solid #FFD700;
-                        border-radius:12px;padding:16px 14px;text-align:center;">
-                <div style="font-family:'JetBrains Mono';font-size:2rem;color:#FFD700;">{gs['top_speed_ever']:.1f}</div>
-                <div style="font-family:'DM Sans';font-size:0.6rem;letter-spacing:0.12em;text-transform:uppercase;color:#555566;margin-top:4px;">Top Speed (mph)</div>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
+        gc1, gc2, gc3, gc4 = st.columns(4)
+        stat_card(gc1, "Athletes", str(gs['athlete_count']), accent='#F5F5F7')
+        stat_card(gc2, "Total Runs", str(gs['total_runs']), accent='#F5F5F7')
+        stat_card(gc3, "Fastest Time", f"{gs['fastest_total']:.2f}", "s", accent=ACCENT)
+        stat_card(gc4, "Top Speed", f"{gs['top_speed_ever']:.1f}", "mph", accent=ACCENT)
+        st.markdown('<div style="height:16px;"></div>', unsafe_allow_html=True)
 
-        section_header("FULL RANKINGS", accent='blue')
+        section_header("FULL RANKINGS")
         render_rankings_table(lb_pub)
 
-        section_header("BEST TOTAL TIME", accent='pink')
+        section_header("BEST TOTAL TIME")
         lb_s_pub = lb_pub.sort_values('best_total')
         fig_pub = go.Figure(go.Bar(
             x=lb_s_pub['athlete'], y=lb_s_pub['best_total'],
             marker=dict(color=lb_s_pub['best_total'], colorscale=SCALE, showscale=False,
-                        line=dict(color='#0A0A0F', width=1)),
+                        line=dict(color='#0A0A0D', width=1)),
             text=[f"{v:.2f}s" for v in lb_s_pub['best_total']],
-            textposition='outside', textfont=dict(family='JetBrains Mono', size=11, color='#F0F0F0'),
+            textposition='outside', textfont=dict(family='JetBrains Mono', size=11, color='#F5F5F7'),
             cliponaxis=False,
         ))
         style_chart(fig_pub, height=300)
         fig_pub.update_layout(
             bargap=0.35,
             yaxis=dict(visible=False, range=[lb_s_pub['best_total'].min()*0.97, lb_s_pub['best_total'].max()*1.04]),
-            xaxis=dict(tickfont=dict(family='DM Sans', size=12, color='#8A8A9A')),
+            xaxis=dict(tickfont=dict(family='DM Sans', size=12, color='#9A9AA2')),
         )
         st.plotly_chart(fig_pub, use_container_width=True, config=CHART_CFG)
 
@@ -879,7 +722,7 @@ if st.session_state.public_view and st.session_state.current_user is None:
             st.rerun()
     st.markdown("""
     <div style="text-align:center;padding:16px 0;font-family:'JetBrains Mono';
-                font-size:0.65rem;color:#1E1E2E;">DRIVE PHASE · v3.1</div>
+                font-size:0.65rem;color:#26262C;">DRIVE PHASE · v4.0</div>
     """, unsafe_allow_html=True)
     st.stop()
 
@@ -889,54 +732,34 @@ if st.session_state.current_user is None:
     portal = st.session_state.auth_portal   # 'athlete' or 'coach'
     mode   = st.session_state.auth_mode     # 'login' or 'signup'
 
-    accent_col = '#89C4E1' if portal == 'athlete' else '#FF3D8A'
-    accent_rgb = '137,196,225' if portal == 'athlete' else '255,61,138'
-    accent_dim = f'rgba({accent_rgb},0.10)'
-    accent_bdr = f'rgba({accent_rgb},0.28)'
-
-    # Build CSS + full brand header as one unbroken block (no blank lines from empty interpolations)
     is_coach = (portal == 'coach')
     subtitle  = 'team management portal' if is_coach else 'acceleration starts here'
     coach_badge_html = (
         '<div style="margin-top:10px;">'
-        '<span style="font-family:DM Sans,sans-serif;font-size:0.62rem;letter-spacing:0.16em;'
-        'text-transform:uppercase;background:rgba(255,61,138,0.12);'
-        'border:1px solid rgba(255,61,138,0.3);color:#FF3D8A;border-radius:999px;'
+        '<span style="font-family:DM Sans,sans-serif;font-size:0.62rem;letter-spacing:0.12em;'
+        'text-transform:uppercase;background:#1A1A1E;'
+        'border:1px solid #26262C;color:#9A9AA2;border-radius:999px;'
         'padding:3px 12px;">COACH PORTAL</span></div>'
     ) if is_coach else '<div></div>'
 
     st.markdown(
         f'<style>'
-        f'@keyframes titleEntrance{{0%{{opacity:0;transform:translateY(-40px) scale(0.95);}}'
-        f'60%{{opacity:1;transform:translateY(4px) scale(1.01);}}'
-        f'100%{{opacity:1;transform:translateY(0) scale(1);}}}}'
-        f'@keyframes formSlideUp{{from{{opacity:0;transform:translateY(28px);}}'
-        f'to{{opacity:1;transform:translateY(0);}}}}'
-        f'@keyframes authGlow{{0%,100%{{box-shadow:0 0 24px rgba({accent_rgb},0.12);}}'
-        f'50%{{box-shadow:0 0 48px rgba({accent_rgb},0.28);}}}}'
-        f'@keyframes liveDot{{0%,100%{{opacity:1;box-shadow:0 0 8px rgba(29,219,139,0.9);}}'
-        f'50%{{opacity:0.35;box-shadow:0 0 3px rgba(29,219,139,0.2);}}}}'
-        f'@keyframes lineReveal{{from{{width:0;opacity:0;}}to{{width:40px;opacity:1;}}}}'
         f'[data-testid="stSidebar"]{{display:none!important;}}'
-        f'[data-testid="stMainBlockContainer"]{{max-width:500px!important;margin:0 auto!important;padding-top:3rem!important;}}'
-        f'.auth-card{{animation:authGlow 4s ease infinite,formSlideUp 0.45s ease 0.15s both;}}'
+        f'[data-testid="stMainBlockContainer"]{{max-width:440px!important;margin:0 auto!important;padding-top:3rem!important;}}'
         f'</style>',
         unsafe_allow_html=True
     )
 
     # Brand header — single tight string, no blank lines
     st.markdown(
-        f'<div style="text-align:center;padding:36px 0 20px;animation:titleEntrance 0.8s cubic-bezier(0.22,1,0.36,1) both;">'
-        f'<div style="font-family:Bebas Neue,sans-serif;font-size:5rem;letter-spacing:0.06em;line-height:0.88;'
-        f'background:linear-gradient(135deg,{accent_col} 0%,#B39DDB 45%,#FF3D8A 100%);'
-        f'background-size:300% 300%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;'
-        f'background-clip:text;animation:gradientShift 7s ease infinite;">DRIVE<br>PHASE</div>'
+        f'<div style="text-align:center;padding:36px 0 20px;">'
+        f'<div style="font-family:DM Sans,sans-serif;font-size:2.4rem;font-weight:800;line-height:1;'
+        f'color:#F5F5F7;">DRIVE PHASE</div>'
         f'{coach_badge_html}'
         f'<div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-top:14px;">'
-        f'<div style="width:6px;height:6px;border-radius:50%;background:#1DDB8B;flex-shrink:0;animation:liveDot 2s ease infinite;"></div>'
-        f'<span style="font-family:DM Sans,sans-serif;font-size:0.68rem;letter-spacing:0.2em;text-transform:uppercase;color:#555566;">{subtitle}</span>'
+        f'<div style="width:6px;height:6px;border-radius:50%;background:{SUCCESS};flex-shrink:0;animation:dp-pulse 2s infinite;"></div>'
+        f'<span style="font-family:DM Sans,sans-serif;font-size:0.68rem;letter-spacing:0.14em;text-transform:uppercase;color:#6E6E76;">{subtitle}</span>'
         f'</div>'
-        f'<div style="width:40px;height:1px;background:linear-gradient(90deg,transparent,{accent_col},transparent);margin:14px auto 0;animation:lineReveal 0.8s ease 0.6s both;"></div>'
         f'</div>',
         unsafe_allow_html=True
     )
@@ -949,18 +772,6 @@ if st.session_state.current_user is None:
         st.markdown('<div style="height:6px;"></div>', unsafe_allow_html=True)
 
     # ── Tab strip ──
-    tl = f"flex:1;text-align:center;padding:11px;font-family:'DM Sans';font-size:0.7rem;letter-spacing:0.14em;text-transform:uppercase;border-bottom:2px solid {accent_col if mode=='login' else 'transparent'};color:{accent_col if mode=='login' else '#555566'};"
-    ts = f"flex:1;text-align:center;padding:11px;font-family:'DM Sans';font-size:0.7rem;letter-spacing:0.14em;text-transform:uppercase;border-bottom:2px solid {accent_col if mode=='signup' else 'transparent'};color:{accent_col if mode=='signup' else '#555566'};"
-
-    st.markdown(
-        f'<div class="auth-card" style="background:#12121A;border:1px solid {accent_bdr};border-radius:16px;overflow:hidden;">'
-        f'<div style="display:flex;border-bottom:1px solid #1E1E2E;">'
-        f'<div style="{tl}">LOG IN</div>'
-        f'<div style="{ts}">SIGN UP</div>'
-        f'</div></div>',
-        unsafe_allow_html=True
-    )
-
     _tc1, _tc2 = st.columns(2)
     with _tc1:
         if st.button("LOG IN", key="tab_login", use_container_width=True,
@@ -981,9 +792,9 @@ if st.session_state.current_user is None:
     if st.session_state.auth_error:
         st.markdown(f"""
         <div style="background:#1A0D0D;border:1px solid rgba(255,77,106,0.3);
-                    border-left:3px solid #FF4D6A;border-radius:0 8px 8px 0;
+                    border-left:3px solid #FF4D4D;border-radius:0 8px 8px 0;
                     padding:10px 14px;margin-bottom:10px;
-                    font-family:'DM Sans';font-size:0.8rem;color:#FF4D6A;">
+                    font-family:'DM Sans';font-size:0.8rem;color:#FF4D4D;">
             {st.session_state.auth_error}
         </div>""", unsafe_allow_html=True)
 
@@ -999,7 +810,7 @@ if st.session_state.current_user is None:
     def _lbl(txt):
         st.markdown(
             f'<div style="font-family:\'DM Sans\';font-size:0.6rem;letter-spacing:0.14em;'
-            f'text-transform:uppercase;color:#555566;margin-bottom:2px;margin-top:10px;">{txt}</div>',
+            f'text-transform:uppercase;color:#6E6E76;margin-bottom:2px;margin-top:10px;">{txt}</div>',
             unsafe_allow_html=True)
 
     # ════════════════════════════════════
@@ -1044,7 +855,7 @@ if st.session_state.current_user is None:
                 _lbl("Confirm Password")
                 as_p2 = st.text_input("p2", type="password", placeholder="••••••••", label_visibility="collapsed", key="as_p2")
                 st.markdown("""
-                <div style="font-family:'DM Sans';font-size:0.68rem;color:#2A2A3E;margin:10px 0 12px;line-height:1.5;">
+                <div style="font-family:'DM Sans';font-size:0.68rem;color:#3A3A42;margin:10px 0 12px;line-height:1.5;">
                     Already have runs logged? Use your exact athlete name to link your history.
                 </div>""", unsafe_allow_html=True)
                 if st.form_submit_button("CREATE ACCOUNT  →", use_container_width=True):
@@ -1141,7 +952,7 @@ if st.session_state.current_user is None:
     # ── Portal switcher ──
     st.markdown('<div style="height:14px;"></div>', unsafe_allow_html=True)
     if portal == 'athlete':
-        st.markdown('<div style="text-align:center;"><span style="font-family:DM Sans,sans-serif;font-size:0.7rem;color:#2A2A3E;">Are you a coach?</span></div>', unsafe_allow_html=True)
+        st.markdown('<div style="text-align:center;"><span style="font-family:DM Sans,sans-serif;font-size:0.7rem;color:#3A3A42;">Are you a coach?</span></div>', unsafe_allow_html=True)
         if st.button("COACH PORTAL", use_container_width=True, key="to_coach"):
             st.session_state.auth_portal = 'coach'
             st.session_state.auth_mode = 'login'
@@ -1149,7 +960,7 @@ if st.session_state.current_user is None:
             st.session_state.auth_success = ''
             st.rerun()
     else:
-        st.markdown('<div style="text-align:center;"><span style="font-family:DM Sans,sans-serif;font-size:0.7rem;color:#2A2A3E;">Are you an athlete?</span></div>', unsafe_allow_html=True)
+        st.markdown('<div style="text-align:center;"><span style="font-family:DM Sans,sans-serif;font-size:0.7rem;color:#3A3A42;">Are you an athlete?</span></div>', unsafe_allow_html=True)
         if st.button("ATHLETE LOGIN", use_container_width=True, key="to_athlete"):
             st.session_state.auth_portal = 'athlete'
             st.session_state.auth_mode = 'login'
@@ -1159,8 +970,8 @@ if st.session_state.current_user is None:
 
     st.markdown("""
     <div style="text-align:center;padding:18px 0 6px;">
-        <span style="font-family:'JetBrains Mono';font-size:0.62rem;color:#1E1E2E;">
-            DRIVE PHASE · v3.2 · built for athletes
+        <span style="font-family:'JetBrains Mono';font-size:0.62rem;color:#1E1E22;">
+            DRIVE PHASE · v4.0 · built for athletes
         </span>
     </div>
     """, unsafe_allow_html=True)
@@ -1181,7 +992,6 @@ _base_nav = [
     ("🏆", "LEADERBOARD"),
     ("👤", "MY PROFILE"),
     ("📈", "MY PROGRESS"),
-    ("⚔️",  "COMPARE"),
 ]
 _coach_nav = [("⚙️", "SETTINGS")]
 NAV_ITEMS = _base_nav + (_coach_nav if st.session_state.get('user_role') == 'coach' else [])
@@ -1190,35 +1000,30 @@ with st.sidebar:
     # Logo
     st.markdown("""
     <div style="padding:8px 0 12px;">
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.9rem;letter-spacing:0.1em;
-                    background:linear-gradient(135deg,#89C4E1,#FF3D8A);
-                    -webkit-background-clip:text;-webkit-text-fill-color:transparent;
-                    background-clip:text;">DRIVE PHASE</div>
-        <div style="font-family:'DM Sans',sans-serif;font-size:0.6rem;letter-spacing:0.18em;
-                    text-transform:uppercase;color:#555566;margin-top:2px;">acceleration starts here</div>
+        <div style="font-family:'DM Sans',sans-serif;font-weight:800;font-size:1.3rem;
+                    color:#F5F5F7;">DRIVE PHASE</div>
+        <div style="font-family:'DM Sans',sans-serif;font-size:0.6rem;letter-spacing:0.14em;
+                    text-transform:uppercase;color:#6E6E76;margin-top:2px;">acceleration starts here</div>
     </div>""", unsafe_allow_html=True)
 
     # Identity pill
     role_label = '⚙️ Coach' if user_role == 'coach' else '🏃 Athlete'
-    role_color = '#FF3D8A' if user_role == 'coach' else '#89C4E1'
     st.markdown(f"""
-    <div style="background:linear-gradient(135deg,#89C4E1,#FF3D8A);
+    <div style="background:#131316;border:1px solid #1E1E22;
                 border-radius:10px;padding:12px 14px;margin-bottom:14px;
                 display:flex;align-items:center;gap:10px;">
-        <div style="width:32px;height:32px;border-radius:50%;background:#0A0A0F;
+        <div style="width:32px;height:32px;border-radius:50%;background:{ACCENT};
                     display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-            <span style="font-family:'Bebas Neue';font-size:1rem;color:#F0F0F0;">
+            <span style="font-family:'DM Sans';font-weight:700;font-size:1rem;color:#FFFFFF;">
                 {current_user[0].upper()}</span>
         </div>
         <div>
-            <div style="font-family:'Bebas Neue';font-size:1rem;letter-spacing:0.08em;
-                        color:#0A0A0F;line-height:1;">{current_user.upper()}</div>
-            <div style="font-family:'DM Sans';font-size:0.6rem;color:#0A0A0F99;
-                        letter-spacing:0.1em;text-transform:uppercase;">{role_label}</div>
+            <div style="font-family:'DM Sans';font-weight:700;font-size:0.9rem;
+                        color:#F5F5F7;line-height:1;">{current_user}</div>
+            <div style="font-family:'DM Sans';font-size:0.6rem;color:#6E6E76;
+                        letter-spacing:0.08em;text-transform:uppercase;margin-top:2px;">{role_label}</div>
         </div>
     </div>
-    <div style="height:1px;background:linear-gradient(90deg,#89C4E1,#FF3D8A);
-                margin-bottom:12px;opacity:0.25;"></div>
     """, unsafe_allow_html=True)
 
     # Navigation
@@ -1241,13 +1046,13 @@ with st.sidebar:
     # Live stats
     stats = get_global_stats()
     st.markdown(f"""
-    <div style="background:#0A0A0F;border:1px solid #1E1E2E;border-radius:10px;padding:12px 14px;">
+    <div style="background:#0A0A0D;border:1px solid #1E1E22;border-radius:10px;padding:12px 14px;">
         <div style="font-family:'DM Sans',sans-serif;font-size:0.6rem;letter-spacing:0.14em;
                     text-transform:uppercase;color:#444455;margin-bottom:8px;">Live snapshot</div>
-        {quick_stat('Athletes', str(stats['athlete_count']), '#89C4E1')}
-        {quick_stat('Total runs', str(stats['total_runs']), '#89C4E1')}
-        {quick_stat('Fastest ever', f"{stats['fastest_total']:.2f}s", '#FF3D8A')}
-        {quick_stat('Top speed', f"{stats['top_speed_ever']:.1f} mph", '#FF3D8A')}
+        {quick_stat('Athletes', str(stats['athlete_count']), '#FC4C02')}
+        {quick_stat('Total runs', str(stats['total_runs']), '#FC4C02')}
+        {quick_stat('Fastest ever', f"{stats['fastest_total']:.2f}s", '#FC4C02')}
+        {quick_stat('Top speed', f"{stats['top_speed_ever']:.1f} mph", '#FC4C02')}
     </div>
     """, unsafe_allow_html=True)
 
@@ -1299,89 +1104,57 @@ if page == "MY DASHBOARD":
         else:
             break
     streak_emoji = '🔥' if streak >= 3 else '⚡' if streak >= 1 else '—'
-    rank_color   = '#FFD700' if my_rank == 1 else '#89C4E1' if my_rank <= 3 else '#8A8A9A'
+    rank_color   = ACCENT if my_rank == 1 else '#F5F5F7'
 
     # ── 5-card hero strip (rank / PB / speed / runs / streak) ──
-    st.markdown(f"""
-    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:20px;">
-        <div style="background:#12121A;border:1px solid #1E1E2E;border-top:3px solid {rank_color};
-                    border-radius:12px;padding:16px 14px;">
-            <div style="font-family:'DM Sans';font-size:0.6rem;letter-spacing:0.14em;
-                        text-transform:uppercase;color:#555566;margin-bottom:6px;">Team rank</div>
-            <div style="font-family:'JetBrains Mono';font-size:1.8rem;color:{rank_color};line-height:1;">
-                #{my_rank}<span style="font-size:0.9rem;color:#2A2A3E;">/{total_athletes}</span></div>
-        </div>
-        <div style="background:#12121A;border:1px solid #1E1E2E;border-top:3px solid #89C4E1;
-                    border-radius:12px;padding:16px 14px;">
-            <div style="font-family:'DM Sans';font-size:0.6rem;letter-spacing:0.14em;
-                        text-transform:uppercase;color:#555566;margin-bottom:6px;">Personal best</div>
-            <div style="font-family:'JetBrains Mono';font-size:1.8rem;color:#89C4E1;line-height:1;">
-                {best['total']:.2f}s</div>
-        </div>
-        <div style="background:#12121A;border:1px solid #1E1E2E;border-top:3px solid #FF3D8A;
-                    border-radius:12px;padding:16px 14px;">
-            <div style="font-family:'DM Sans';font-size:0.6rem;letter-spacing:0.14em;
-                        text-transform:uppercase;color:#555566;margin-bottom:6px;">Top speed</div>
-            <div style="font-family:'JetBrains Mono';font-size:1.8rem;color:#FF3D8A;line-height:1;">
-                {df_me['top_speed'].max():.1f}<span style="font-size:0.9rem;color:#555566;"> mph</span></div>
-        </div>
-        <div style="background:#12121A;border:1px solid #1E1E2E;border-top:3px solid #B39DDB;
-                    border-radius:12px;padding:16px 14px;">
-            <div style="font-family:'DM Sans';font-size:0.6rem;letter-spacing:0.14em;
-                        text-transform:uppercase;color:#555566;margin-bottom:6px;">Runs logged</div>
-            <div style="font-family:'JetBrains Mono';font-size:1.8rem;color:#B39DDB;line-height:1;">
-                {len(df_me)}</div>
-        </div>
-        <div style="background:#12121A;border:1px solid #1E1E2E;border-top:3px solid #FFD700;
-                    border-radius:12px;padding:16px 14px;">
-            <div style="font-family:'DM Sans';font-size:0.6rem;letter-spacing:0.14em;
-                        text-transform:uppercase;color:#555566;margin-bottom:6px;">Streak</div>
-            <div style="font-family:'JetBrains Mono';font-size:1.8rem;color:#FFD700;line-height:1;">
-                {streak}<span style="font-size:1rem;margin-left:4px;">{streak_emoji}</span></div>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+    hc1, hc2, hc3, hc4, hc5 = st.columns(5)
+    stat_card(hc1, "Team rank", f"#{my_rank}", f"/{total_athletes}", accent=rank_color)
+    stat_card(hc2, "Personal best", f"{best['total']:.2f}", "s", accent=ACCENT)
+    stat_card(hc3, "Top speed", f"{df_me['top_speed'].max():.1f}", "mph", accent='#F5F5F7')
+    stat_card(hc4, "Runs logged", f"{len(df_me)}", "", accent='#F5F5F7')
+    stat_card(hc5, "Streak", f"{streak}", streak_emoji, accent=ACCENT if streak >= 1 else '#F5F5F7')
+    st.markdown('<div style="height:12px;"></div>', unsafe_allow_html=True)
 
     # ── TODAY'S SESSION ──
     last_session_date = df_me['date'].dt.date.iloc[0]
     last_session_runs = df_me[df_me['date'].dt.date == last_session_date]
     is_today = last_session_date == datetime.date.today()
     session_label = "TODAY'S SESSION" if is_today else f"LAST SESSION — {last_session_date.strftime('%b %d')}"
-    session_color = '#1DDB8B' if is_today else '#555566'
+    session_color = SUCCESS if is_today else '#6E6E76'
     pulse_anim = 'animation:dp-pulse 2s infinite;' if is_today else ''
     reps = last_session_runs[::-1].reset_index(drop=True)
     rep_html = ''
     pb_val_sess = df_me['total'].min()
     for i, row in reps.iterrows():
         is_pb_r = abs(row['total'] - pb_val_sess) < 0.001
-        pb_tag = '<span style="font-family:DM Sans;font-size:0.55rem;background:#FFD70022;color:#FFD700;border:1px solid #FFD70044;border-radius:999px;padding:1px 6px;margin-left:6px;">PB</span>' if is_pb_r else ''
+        pb_tag = f'<span style="font-family:DM Sans;font-size:0.55rem;background:{ACCENT}22;color:{ACCENT};border:1px solid {ACCENT}44;border-radius:999px;padding:1px 6px;margin-left:6px;">PB</span>' if is_pb_r else ''
         rep_html += (
-            '<div style="display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid #1A1A26;">'
-            f'<span style="font-family:\'JetBrains Mono\';font-size:0.72rem;color:#2A2A3E;width:30px;">#{i+1}</span>'
-            f'<span style="font-family:\'JetBrains Mono\';font-size:0.85rem;color:#89C4E1;width:60px;">{row["split_0_10"]:.3f}s</span>'
-            f'<span style="font-family:\'JetBrains Mono\';font-size:0.85rem;color:#B39DDB;width:60px;">{row["split_10_30"]:.3f}s</span>'
-            f'<span style="font-family:\'JetBrains Mono\';font-size:0.85rem;color:#FF3D8A;width:60px;">{row["split_30_60"]:.3f}s</span>'
-            f'<span style="font-family:\'JetBrains Mono\';font-size:1rem;color:#F0F0F0;flex:1;font-weight:500;">{row["total"]:.3f}s{pb_tag}</span>'
-            f'<span style="font-family:\'JetBrains Mono\';font-size:0.72rem;color:#555566;">{row["top_speed"]:.1f} mph</span>'
+            '<div style="display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid #1A1A1F;">'
+            f'<span style="font-family:\'JetBrains Mono\';font-size:0.72rem;color:#4A4A52;width:30px;">#{i+1}</span>'
+            f'<span style="font-family:\'JetBrains Mono\';font-size:0.85rem;color:#D0D0D6;width:60px;">{row["split_0_10"]:.3f}s</span>'
+            f'<span style="font-family:\'JetBrains Mono\';font-size:0.85rem;color:#D0D0D6;width:60px;">{row["split_10_30"]:.3f}s</span>'
+            f'<span style="font-family:\'JetBrains Mono\';font-size:0.85rem;color:#D0D0D6;width:60px;">{row["split_30_60"]:.3f}s</span>'
+            f'<span style="font-family:\'JetBrains Mono\';font-size:1rem;color:#F5F5F7;flex:1;font-weight:500;">{row["total"]:.3f}s{pb_tag}</span>'
+            f'<span style="font-family:\'JetBrains Mono\';font-size:0.72rem;color:#6E6E76;">{row["top_speed"]:.1f} mph</span>'
             '</div>'
         )
     split_header_cols = [('#', 30), ('0–10m', 60), ('10–30m', 60), ('30–60m', 60), ('Total', 80), ('Speed', 60)]
     split_header = ''.join([
-        f'<span style="font-family:DM Sans;font-size:0.6rem;letter-spacing:0.1em;text-transform:uppercase;color:#555566;width:{w}px;display:inline-block;">{t}</span>'
+        f'<span style="font-family:DM Sans;font-size:0.6rem;letter-spacing:0.1em;text-transform:uppercase;color:#6E6E76;width:{w}px;display:inline-block;">{t}</span>'
         for t, w in split_header_cols
     ])
     reps_label = f"{len(reps)} {'run' if len(reps)==1 else 'reps'}"
     st.markdown(
-        '<div style="background:#12121A;border:1px solid #1E1E2E;border-radius:14px;'
+        '<div style="background:#131316;border:1px solid #1E1E22;border-radius:10px;'
         'padding:20px 20px 8px;margin-bottom:16px;">'
-        '<div style="font-family:\'Bebas Neue\';font-size:1.1rem;letter-spacing:0.1em;color:#F0F0F0;margin-bottom:14px;">'
+        '<div style="font-family:\'DM Sans\';font-size:0.95rem;font-weight:700;color:#F5F5F7;margin-bottom:14px;">'
         f'<span style="display:inline-block;width:7px;height:7px;border-radius:50%;'
-        f'background:{session_color};box-shadow:0 0 6px {session_color};'
+        f'background:{session_color};'
         f'margin-right:8px;vertical-align:middle;{pulse_anim}"></span>'
         f'{session_label}'
-        f'<span style="font-family:\'DM Sans\';font-size:0.68rem;color:#555566;margin-left:8px;font-weight:normal;">{reps_label}</span>'
+        f'<span style="font-family:\'DM Sans\';font-size:0.68rem;color:#6E6E76;margin-left:8px;font-weight:normal;">{reps_label}</span>'
         '</div>'
-        f'<div style="display:flex;gap:12px;padding:0 0 8px;border-bottom:1px solid #1E1E2E;margin-bottom:4px;">{split_header}</div>'
+        f'<div style="display:flex;gap:12px;padding:0 0 8px;border-bottom:1px solid #1E1E22;margin-bottom:4px;">{split_header}</div>'
         f'{rep_html}'
         '</div>',
         unsafe_allow_html=True
@@ -1393,37 +1166,34 @@ if page == "MY DASHBOARD":
         athlete_above = rankings.iloc[my_idx - 1]
         gap = float(best['total']) - float(athlete_above['total'])
         st.markdown(f"""
-        <div style="background:linear-gradient(135deg,#0D0D14,#12121A);
-                    border:1px solid rgba(255,61,138,0.27);border-radius:12px;
+        <div style="background:#131316;border:1px solid #1E1E22;border-radius:10px;
                     padding:16px 20px;margin-bottom:16px;
                     display:flex;align-items:center;gap:20px;">
             <div style="font-size:1.8rem;">🎯</div>
             <div style="flex:1;">
-                <div style="font-family:'DM Sans';font-size:0.62rem;letter-spacing:0.14em;
-                            text-transform:uppercase;color:#555566;margin-bottom:4px;">Time to beat</div>
-                <div style="font-family:'DM Sans';font-size:0.82rem;color:#8A8A9A;">
-                    You're <span style="color:#FF3D8A;font-family:JetBrains Mono;">+{gap:.3f}s</span> behind
-                    <span style="color:#F0F0F0;">{athlete_above['athlete']}</span>
+                <div style="font-family:'DM Sans';font-size:0.62rem;letter-spacing:0.1em;
+                            text-transform:uppercase;color:#6E6E76;margin-bottom:4px;">Time to beat</div>
+                <div style="font-family:'DM Sans';font-size:0.82rem;color:#9A9AA2;">
+                    You're <span style="color:{ACCENT};font-family:JetBrains Mono;">+{gap:.3f}s</span> behind
+                    <span style="color:#F5F5F7;">{athlete_above['athlete']}</span>
                     (#{my_idx})
                 </div>
             </div>
             <div style="text-align:right;">
-                <div style="font-family:'JetBrains Mono';font-size:1.6rem;color:#FF3D8A;">{float(athlete_above['total']):.2f}s</div>
-                <div style="font-family:'DM Sans';font-size:0.62rem;color:#555566;">their best</div>
+                <div style="font-family:'JetBrains Mono';font-size:1.6rem;color:{ACCENT};">{float(athlete_above['total']):.2f}s</div>
+                <div style="font-family:'DM Sans';font-size:0.62rem;color:#6E6E76;">their best</div>
             </div>
         </div>
         """, unsafe_allow_html=True)
     else:
         st.markdown(f"""
-        <div style="background:linear-gradient(135deg,#0D1A0D,#12121A);
-                    border:1px solid rgba(29,219,139,0.27);border-radius:12px;
+        <div style="background:#131316;border:1px solid #1E1E22;border-radius:10px;
                     padding:16px 20px;margin-bottom:16px;
                     display:flex;align-items:center;gap:20px;">
             <div style="font-size:1.8rem;">👑</div>
             <div>
-                <div style="font-family:'Bebas Neue';font-size:1.2rem;
-                            letter-spacing:0.08em;color:#1DDB8B;">You're leading the pack</div>
-                <div style="font-family:'DM Sans';font-size:0.8rem;color:#555566;">
+                <div style="font-family:'DM Sans';font-size:1rem;font-weight:700;color:{SUCCESS};">You're leading the pack</div>
+                <div style="font-family:'DM Sans';font-size:0.8rem;color:#6E6E76;">
                     {current_user} holds the fastest time on the team
                 </div>
             </div>
@@ -1448,88 +1218,60 @@ if page == "MY DASHBOARD":
         else:
             insight_text = f"Times up slightly (+{abs(improvement):.3f}s) this season. Focus on recovery and consistency in {weakest}."
 
-    # ── Two-column body ──
-    left, right = st.columns([1.55, 1])
+    if insight_text:
+        st.markdown(f"""
+        <div style="background:#131316;border:1px solid #1E1E22;
+                    border-left:3px solid {SUCCESS};border-radius:0 10px 10px 0;
+                    padding:12px 16px;margin-bottom:12px;">
+            <div style="font-family:'DM Sans';font-size:0.62rem;letter-spacing:0.1em;
+                        text-transform:uppercase;color:{SUCCESS};margin-bottom:4px;">
+                💡 Season insight</div>
+            <div style="font-family:'DM Sans';font-size:0.8rem;color:#9A9AA2;
+                        line-height:1.55;">{insight_text}</div>
+        </div>
+        """, unsafe_allow_html=True)
 
-    with left:
-        if insight_text:
-            st.markdown(f"""
-            <div style="background:#0D1A12;border:1px solid rgba(29,219,139,0.2);
-                        border-left:3px solid #1DDB8B;border-radius:0 10px 10px 0;
-                        padding:12px 16px;margin-bottom:12px;">
-                <div style="font-family:'DM Sans';font-size:0.62rem;letter-spacing:0.12em;
-                            text-transform:uppercase;color:#1DDB8B;margin-bottom:4px;">
-                    💡 Season insight</div>
-                <div style="font-family:'DM Sans';font-size:0.8rem;color:#8A8A9A;
-                            line-height:1.55;">{insight_text}</div>
-            </div>
-            """, unsafe_allow_html=True)
+    section_header("LATEST VS PB")
+    chips_html = ''
+    for lbl, lat_val, pb_val in [
+        ('0–10m',  float(latest['split_0_10']),  float(best['split_0_10'])),
+        ('10–30m', float(latest['split_10_30']), float(best['split_10_30'])),
+        ('30–60m', float(latest['split_30_60']), float(best['split_30_60'])),
+        ('Total',  float(latest['total']),        float(best['total'])),
+    ]:
+        diff = lat_val - pb_val
+        sign = '+' if diff > 0 else ''
+        dcol = SUCCESS if diff <= 0.001 else DANGER
+        chips_html += f"""
+        <div style="background:#131316;border:1px solid #1E1E22;
+                    border-radius:10px;padding:12px 14px;flex:1;min-width:0;">
+            <div style="font-family:'DM Sans';font-size:0.58rem;letter-spacing:0.1em;
+                        text-transform:uppercase;color:#6E6E76;
+                        margin-bottom:6px;white-space:nowrap;">{lbl}</div>
+            <div style="font-family:'JetBrains Mono';font-size:1.3rem;
+                        color:#F5F5F7;line-height:1;">{lat_val:.3f}s</div>
+            <div style="font-family:'JetBrains Mono';font-size:0.7rem;
+                        color:{dcol};margin-top:4px;">{sign}{diff:.3f}s</div>
+        </div>"""
+    st.markdown(f'<div style="display:flex;gap:8px;margin-bottom:4px;">{chips_html}</div>',
+                unsafe_allow_html=True)
 
-        section_header("LATEST VS PB", accent='blue')
-        chips_html = ''
-        for lbl, lat_val, pb_val, color in [
-            ('0–10m',  float(latest['split_0_10']),  float(best['split_0_10']),  '#89C4E1'),
-            ('10–30m', float(latest['split_10_30']), float(best['split_10_30']), '#B39DDB'),
-            ('30–60m', float(latest['split_30_60']), float(best['split_30_60']), '#FF3D8A'),
-            ('Total',  float(latest['total']),        float(best['total']),       '#F0F0F0'),
-        ]:
-            diff = lat_val - pb_val
-            sign = '+' if diff > 0 else ''
-            dcol = '#1DDB8B' if diff <= 0.001 else '#FF4D6A'
-            chips_html += f"""
-            <div style="background:#12121A;border:1px solid #1E1E2E;border-top:2px solid {color};
-                        border-radius:10px;padding:12px 14px;flex:1;min-width:0;">
-                <div style="font-family:'DM Sans';font-size:0.58rem;letter-spacing:0.12em;
-                            text-transform:uppercase;color:#555566;
-                            margin-bottom:6px;white-space:nowrap;">{lbl}</div>
-                <div style="font-family:'JetBrains Mono';font-size:1.3rem;
-                            color:#F0F0F0;line-height:1;">{lat_val:.3f}s</div>
-                <div style="font-family:'JetBrains Mono';font-size:0.7rem;
-                            color:{dcol};margin-top:4px;">{sign}{diff:.3f}s</div>
-            </div>"""
-        st.markdown(f'<div style="display:flex;gap:8px;margin-bottom:4px;">{chips_html}</div>',
-                    unsafe_allow_html=True)
-
-    with right:
-        section_header("WHERE I STAND", accent='pink')
-        roster_html = ''
-        for rank_idx, row in rankings.iterrows():
-            rank_n  = rank_idx + 1
-            is_me   = row['athlete'] == current_user
-            you_tag = '<span style="background:#89C4E1;color:#0A0A0F;font-size:0.55rem;font-family:DM Sans;padding:2px 6px;border-radius:999px;margin-left:6px;font-weight:600;vertical-align:middle;">YOU</span>' if is_me else ''
-            rcolor  = '#FFD700' if rank_n == 1 else '#C0C0C0' if rank_n == 2 else '#CD7F32' if rank_n == 3 else '#2A2A3E'
-            medal   = '🥇' if rank_n == 1 else '🥈' if rank_n == 2 else '🥉' if rank_n == 3 else f'#{rank_n}'
-            bg      = 'background:#12121A;border:1px solid rgba(137,196,225,0.27);' if is_me else 'background:transparent;border:1px solid transparent;'
-            ncolor  = '#F0F0F0' if is_me else '#555566'
-            vcolor  = '#89C4E1' if is_me else '#2A2A3E'
-            roster_html += f"""
-            <div style="{bg}border-radius:8px;padding:8px 12px;margin-bottom:3px;
-                        display:flex;align-items:center;gap:10px;">
-                <span style="font-family:'JetBrains Mono';font-size:0.75rem;color:{rcolor};
-                             width:22px;flex-shrink:0;">{medal}</span>
-                <span style="font-family:'DM Sans';font-size:0.82rem;color:{ncolor};flex:1;">
-                    {row['athlete']}{you_tag}</span>
-                <span style="font-family:'JetBrains Mono';font-size:0.78rem;color:{vcolor};">
-                    {row['total']:.2f}s</span>
-            </div>"""
-        st.markdown(f'<div style="margin-bottom:8px;">{roster_html}</div>', unsafe_allow_html=True)
-
-    # ── Full-width last 10 runs ──
-    section_header("MY LAST 10 RUNS", accent='blue')
+    # ── Last 10 runs ──
+    section_header("MY LAST 10 RUNS")
     df_recent = df_me[::-1].tail(10).reset_index(drop=True)
     df_recent['run_num'] = range(1, len(df_recent)+1)
     pb_val = df_me['total'].min()
-    bar_colors = ['#FFD700' if abs(v - pb_val) < 0.001 else '#89C4E1' for v in df_recent['total']]
+    bar_colors = [ACCENT if abs(v - pb_val) < 0.001 else '#3A3A42' for v in df_recent['total']]
     fig = go.Figure(go.Bar(
         x=df_recent['run_num'], y=df_recent['total'],
         marker=dict(color=bar_colors, line=dict(width=0)),
         text=[f"{v:.2f}s" for v in df_recent['total']],
         textposition='outside',
-        textfont=dict(family='JetBrains Mono', size=10, color='#8A8A9A'),
+        textfont=dict(family='JetBrains Mono', size=10, color='#9A9AA2'),
         cliponaxis=False,
     ))
-    fig.add_hline(y=pb_val, line=dict(color='#FFD700', width=1.5, dash='dot'),
-                  annotation_text="PB", annotation_font=dict(color='#FFD700', size=10))
+    fig.add_hline(y=pb_val, line=dict(color=ACCENT, width=1.5, dash='dot'),
+                  annotation_text="PB", annotation_font=dict(color=ACCENT, size=10))
     style_chart(fig, height=260)
     fig.update_layout(
         yaxis=dict(range=[df_me['total'].min()*0.995, df_me['total'].max()*1.015], visible=False),
@@ -1550,14 +1292,14 @@ elif page == "LEADERBOARD":
     lb = load_leaderboard()
     page_header("LEADERBOARD", f"{len(get_all_athletes())} athletes ranked · season 2026", "🏆", "pink")
 
-    st.markdown("""
-    <div style="background:#12121A;border:1px solid #1E1E2E;border-left:3px solid #89C4E1;
+    st.markdown(f"""
+    <div style="background:#131316;border:1px solid #1E1E22;border-left:3px solid {ACCENT};
                 border-radius:0 8px 8px 0;padding:10px 16px;margin-bottom:16px;
                 display:flex;align-items:center;gap:10px;">
         <span style="font-size:1rem;">🌐</span>
-        <span style="font-family:'DM Sans';font-size:0.78rem;color:#555566;">
+        <span style="font-family:'DM Sans';font-size:0.78rem;color:#9A9AA2;">
             Share the public leaderboard — anyone can view rankings without logging in
-            by visiting the app URL and clicking <strong style="color:#89C4E1;">View Public Leaderboard</strong>.
+            by visiting the app URL and clicking <strong style="color:{ACCENT};">View Public Leaderboard</strong>.
         </span>
     </div>
     """, unsafe_allow_html=True)
@@ -1567,57 +1309,50 @@ elif page == "LEADERBOARD":
         render_footer()
         st.stop()
 
-    section_header("PODIUM", accent='blue')
-    top3 = lb.head(3).to_dict('records')
-    p1, p2, p3 = st.columns([1.15, 1, 1])
-    if len(top3) > 0: podium_card(p1,1,top3[0]['athlete'],top3[0]['best_total'],top3[0]['runs'],top3[0]['top_speed'])
-    if len(top3) > 1: podium_card(p2,2,top3[1]['athlete'],top3[1]['best_total'],top3[1]['runs'],top3[1]['top_speed'])
-    if len(top3) > 2: podium_card(p3,3,top3[2]['athlete'],top3[2]['best_total'],top3[2]['runs'],top3[2]['top_speed'])
-
-    section_header("FULL RANKINGS", accent='pink')
+    section_header("FULL RANKINGS")
     render_rankings_table(lb, current_user)
 
-    section_header("BEST TOTAL TIME", accent='blue')
+    section_header("BEST TOTAL TIME")
     lb_s = lb.sort_values('best_total')
     fig = go.Figure(go.Bar(
         x=lb_s['athlete'], y=lb_s['best_total'],
         marker=dict(color=lb_s['best_total'], colorscale=SCALE, showscale=False,
-                    line=dict(color='#0A0A0F', width=1)),
+                    line=dict(color='#0A0A0D', width=1)),
         text=[f"{v:.2f}s" for v in lb_s['best_total']],
-        textposition='outside', textfont=dict(family='JetBrains Mono', size=11, color='#F0F0F0'),
+        textposition='outside', textfont=dict(family='JetBrains Mono', size=11, color='#F5F5F7'),
         cliponaxis=False,
     ))
     style_chart(fig, height=320)
     fig.update_layout(
         bargap=0.35,
         yaxis=dict(visible=False, range=[lb_s['best_total'].min()*0.97, lb_s['best_total'].max()*1.04]),
-        xaxis=dict(tickfont=dict(family='DM Sans', size=12, color='#8A8A9A')),
+        xaxis=dict(tickfont=dict(family='DM Sans', size=12, color='#9A9AA2')),
         margin=dict(l=16, r=16, t=48, b=60),
     )
     st.plotly_chart(fig, use_container_width=True, config=CHART_CFG)
 
-    section_header("SPLIT BREAKDOWN", accent='pink')
+    section_header("SPLIT BREAKDOWN")
     fig2 = go.Figure()
     for split, label, color in [
-        ('best_30_60','30–60m','#FF3D8A'),
-        ('best_10_30','10–30m','#B39DDB'),
-        ('best_0_10', '0–10m', '#89C4E1'),
+        ('best_30_60','30–60m', ACCENT),
+        ('best_10_30','10–30m','#9A9AA2'),
+        ('best_0_10', '0–10m', '#4A4A52'),
     ]:
         fig2.add_trace(go.Bar(y=lb['athlete'], x=lb[split], name=label,
             orientation='h', marker_color=color, marker_line=dict(width=0)))
     style_chart(fig2, height=340)
     fig2.update_layout(
         barmode='stack', xaxis_title='Time (s)',
-        yaxis=dict(autorange='reversed', tickfont=dict(family='DM Sans', size=12, color='#8A8A9A')),
+        yaxis=dict(autorange='reversed', tickfont=dict(family='DM Sans', size=12, color='#9A9AA2')),
         legend=dict(orientation='h', yanchor='bottom', y=1.02, xanchor='right', x=1),
         margin=dict(l=16, r=16, t=48, b=40),
     )
     st.plotly_chart(fig2, use_container_width=True, config=CHART_CFG)
 
-    section_header("TOP SPEED BY ATHLETE", accent='pink')
+    section_header("TOP SPEED BY ATHLETE")
     speed_df = load_all_runs().groupby('athlete')['top_speed'].max().reset_index()
     speed_df = speed_df.sort_values('top_speed', ascending=False).reset_index(drop=True)
-    spd_colors = ['#FFD700' if r['athlete'] == current_user else '#FF3D8A'
+    spd_colors = [ACCENT if r['athlete'] == current_user else '#3A3A42'
                   for _, r in speed_df.iterrows()]
     fig_spd = go.Figure(go.Bar(
         x=speed_df['athlete'],
@@ -1625,7 +1360,7 @@ elif page == "LEADERBOARD":
         marker=dict(color=spd_colors, line=dict(width=0)),
         text=[f"{v:.1f}" for v in speed_df['top_speed']],
         textposition='outside',
-        textfont=dict(family='JetBrains Mono', size=11, color='#8A8A9A'),
+        textfont=dict(family='JetBrains Mono', size=11, color='#9A9AA2'),
         cliponaxis=False
     ))
     style_chart(fig_spd, height=280)
@@ -1634,10 +1369,153 @@ elif page == "LEADERBOARD":
             range=[speed_df['top_speed'].min()*0.97, speed_df['top_speed'].max()*1.04],
             visible=False
         ),
-        xaxis=dict(tickfont=dict(family='DM Sans', size=12, color='#8A8A9A')),
+        xaxis=dict(tickfont=dict(family='DM Sans', size=12, color='#9A9AA2')),
         bargap=0.35,
     )
     st.plotly_chart(fig_spd, use_container_width=True, config=CHART_CFG)
+
+    # ── HEAD TO HEAD (folded in from the old standalone Compare tab) ──
+    section_header("HEAD TO HEAD")
+    all_ath = get_all_athletes()
+    if len(all_ath) < 2:
+        info_card("Add at least one more athlete to unlock head-to-head comparison.")
+    else:
+        c1, c2 = st.columns(2)
+        default_a = all_ath.index(current_user) if current_user in all_ath else 0
+        default_b = (default_a + 1) % len(all_ath)
+        athlete_a = c1.selectbox("Athlete A", all_ath, index=default_a, key="compare_a")
+        athlete_b = c2.selectbox("Athlete B", all_ath, index=default_b, key="compare_b")
+        da, db_ = load_athlete_runs(athlete_a), load_athlete_runs(athlete_b)
+
+        metrics = [
+            ('Best Total',  'total',       '{:.3f}s', True),
+            ('0–10m PB',    'split_0_10',  '{:.3f}s', True),
+            ('10–30m PB',   'split_10_30', '{:.3f}s', True),
+            ('30–60m PB',   'split_30_60', '{:.3f}s', True),
+            ('Top Speed',   'top_speed',   '{:.1f} mph', False),
+        ]
+        countable = [(col, lib) for _, col, _, lib in metrics if col is not None]
+        wins_a = sum(1 for col, lib in countable
+                     if (lib and da[col].min() < db_[col].min()) or
+                        (not lib and da[col].max() > db_[col].max()))
+        wins_b = sum(1 for col, lib in countable
+                     if (lib and db_[col].min() < da[col].min()) or
+                        (not lib and db_[col].max() > da[col].max()))
+        overall_winner = athlete_a if wins_a > wins_b else athlete_b if wins_b > wins_a else None
+        wc = ACCENT if overall_winner else '#6E6E76'
+
+        st.markdown(f"""
+        <div style="background:#131316;border:1px solid #1E1E22;
+                    border-radius:10px;padding:18px 24px;margin:12px 0 20px;text-align:center;">
+            <div style="font-family:'DM Sans';font-size:0.65rem;letter-spacing:0.1em;
+                        text-transform:uppercase;color:#6E6E76;margin-bottom:8px;">Overall winner</div>
+            <div style="font-family:'DM Sans';font-size:1.6rem;font-weight:700;color:{wc};">
+                {'TIE' if not overall_winner else overall_winner.upper()}</div>
+            <div style="font-family:'JetBrains Mono';font-size:0.8rem;color:#6E6E76;margin-top:4px;">
+                {wins_a} vs {wins_b} categories</div>
+        </div>""", unsafe_allow_html=True)
+
+        h_l, h_mid, h_r = st.columns([2, 1, 2])
+        h_l.markdown(f"""
+        <div style="text-align:center;padding:12px;background:#131316;
+                    border:1px solid #1E1E22;border-radius:8px;margin-bottom:8px;">
+            <div style="font-family:'DM Sans';font-size:1.05rem;font-weight:700;color:{ACCENT};">
+                {athlete_a.upper()}</div>
+        </div>""", unsafe_allow_html=True)
+        h_r.markdown(f"""
+        <div style="text-align:center;padding:12px;background:#131316;
+                    border:1px solid #1E1E22;border-radius:8px;margin-bottom:8px;">
+            <div style="font-family:'DM Sans';font-size:1.05rem;font-weight:700;color:#D0D0D6;">
+                {athlete_b.upper()}</div>
+        </div>""", unsafe_allow_html=True)
+
+        all_metrics = metrics + [('Runs Logged', None, '{}', False)]
+        for label, col, fmt, lib in all_metrics:
+            if col is None:
+                va, vb = len(da), len(db_)
+                wa, wb = va > vb, vb > va
+            elif lib:
+                va, vb = da[col].min(), db_[col].min()
+                wa, wb = va < vb - 0.001, vb < va - 0.001
+            else:
+                va, vb = da[col].max(), db_[col].max()
+                wa, wb = va > vb + 0.001, vb > va + 0.001
+
+            ca     = '#F5F5F7' if wa else '#4A4A52'
+            cb     = '#F5F5F7' if wb else '#4A4A52'
+            a_tick = f'<span style="font-size:0.7rem;margin-left:6px;color:{SUCCESS};">✓</span>' if wa else ''
+            b_tick = f'<span style="font-size:0.7rem;margin-left:6px;color:{SUCCESS};">✓</span>' if wb else ''
+
+            l, mid, r = st.columns([2, 1, 2])
+            l.markdown(f"""
+            <div style="background:#131316;border:1px solid #1E1E22;border-radius:8px;
+                        padding:12px 16px;text-align:right;margin-bottom:6px;">
+                <span style="font-family:'JetBrains Mono',monospace;font-size:1.15rem;color:{ca};">
+                    {fmt.format(va)}{a_tick}</span>
+            </div>""", unsafe_allow_html=True)
+            mid.markdown(f"""
+            <div style="padding:12px 0;text-align:center;margin-bottom:6px;">
+                <div style="font-family:'DM Sans',sans-serif;font-size:0.6rem;letter-spacing:0.1em;
+                            text-transform:uppercase;color:#4A4A52;margin-top:8px;">{label}</div>
+            </div>""", unsafe_allow_html=True)
+            r.markdown(f"""
+            <div style="background:#131316;border:1px solid #1E1E22;border-radius:8px;
+                        padding:12px 16px;text-align:left;margin-bottom:6px;">
+                <span style="font-family:'JetBrains Mono',monospace;font-size:1.15rem;color:{cb};">
+                    {b_tick}{fmt.format(vb)}</span>
+            </div>""", unsafe_allow_html=True)
+
+        fig_h2h = go.Figure()
+        for df_x, name, color in [(da,athlete_a,ACCENT),(db_,athlete_b,'#9A9AA2')]:
+            df_s = df_x[::-1].reset_index(drop=True)
+            df_s['run_num'] = range(1, len(df_s)+1)
+            fig_h2h.add_trace(go.Scatter(x=df_s['run_num'], y=df_s['total'],
+                mode='lines+markers', name=name,
+                line=dict(color=color, width=2), marker=dict(size=5)))
+        style_chart(fig_h2h, height=300)
+        combined = pd.concat([da['total'], db_['total']])
+        fig_h2h.update_layout(yaxis=dict(range=smart_yrange(combined)))
+        st.plotly_chart(fig_h2h, use_container_width=True, config=CHART_CFG)
+
+        compare_deltas = [
+            ('0–10m',     float(da['split_0_10'].mean()),  float(db_['split_0_10'].mean()),  False),
+            ('10–30m',    float(da['split_10_30'].mean()), float(db_['split_10_30'].mean()), False),
+            ('30–60m',    float(da['split_30_60'].mean()), float(db_['split_30_60'].mean()), False),
+            ('Total avg', float(da['total'].mean()),        float(db_['total'].mean()),       False),
+            ('Top speed', float(da['top_speed'].max()),     float(db_['top_speed'].max()),    True),
+        ]
+        delta_rows = ''
+        for label, val_a, val_b, is_speed in compare_deltas:
+            a_wins = (val_a > val_b) if is_speed else (val_a < val_b)
+            delta  = val_a - val_b
+            sign   = '+' if delta > 0 else ''
+            dcol   = SUCCESS if (delta < 0 and not is_speed) or (delta > 0 and is_speed) else DANGER
+            unit_s = ' mph' if is_speed else 's'
+            delta_rows += (
+                '<tr style="border-bottom:1px solid #1A1A1F;">'
+                f'<td style="padding:10px 14px;font-family:DM Sans;color:#9A9AA2;font-size:0.8rem;">{label}</td>'
+                f'<td style="padding:10px 14px;font-family:JetBrains Mono;color:{ACCENT if a_wins else "#6E6E76"};font-size:0.85rem;text-align:right;">{val_a:.3f}{unit_s}</td>'
+                f'<td style="padding:10px 14px;font-family:JetBrains Mono;color:{dcol};font-size:0.82rem;text-align:center;">{sign}{delta:.3f}{"s" if not is_speed else ""}</td>'
+                f'<td style="padding:10px 14px;font-family:JetBrains Mono;color:{"#D0D0D6" if not a_wins else "#6E6E76"};font-size:0.85rem;text-align:left;">{val_b:.3f}{unit_s}</td>'
+                '</tr>'
+            )
+        th_d = "padding:10px 14px;font-family:DM Sans;font-size:0.6rem;letter-spacing:0.1em;text-transform:uppercase;color:#6E6E76;font-weight:500;"
+        st.markdown(
+            '<div style="border:1px solid #1E1E22;border-radius:10px;overflow:hidden;margin-bottom:16px;">'
+            '<table style="width:100%;border-collapse:collapse;background:#131316;">'
+            '<thead>'
+            f'<tr style="background:#0D0D10;border-bottom:2px solid #1E1E22;">'
+            f'<th style="{th_d};text-align:left;">Split</th>'
+            f'<th style="{th_d};text-align:right;color:{ACCENT};">{athlete_a}</th>'
+            f'<th style="{th_d};text-align:center;">Δ</th>'
+            f'<th style="{th_d};text-align:left;color:#D0D0D6;">{athlete_b}</th>'
+            '</tr>'
+            '</thead>'
+            f'<tbody>{delta_rows}</tbody>'
+            '</table>'
+            '</div>',
+            unsafe_allow_html=True
+        )
 
     render_footer()
     st.stop()
@@ -1660,16 +1538,13 @@ elif page == "MY PROFILE":
     all_df   = load_all_runs()
     rankings = all_df.groupby('athlete')['total'].min().sort_values().reset_index()
     my_rank  = int(rankings[rankings['athlete'] == current_user].index[0]) + 1
-    accent   = profile.get('profile_color', '#89C4E1') or '#89C4E1'
+    accent   = ACCENT
 
     page_header("MY PROFILE", f"{current_user.lower()}'s athlete card", "👤", "blue")
 
     # ── Build profile tags as plain variables (no nested f-string quotes) ──
-    accent_rgb = {'#89C4E1':'137,196,225','#FF3D8A':'255,61,138','#B39DDB':'179,157,219',
-                  '#1DDB8B':'29,219,139','#FFD700':'255,215,0','#FF6B6B':'255,107,107'}
-    acc_rgb = accent_rgb.get(accent, '137,196,225')
-    acc_bg  = f'rgba({acc_rgb},0.09)'
-    acc_bdr = f'rgba({acc_rgb},0.27)'
+    acc_bg  = f'{ACCENT}18'
+    acc_bdr = f'{ACCENT}44'
 
     tag_parts = []
     if profile.get('school'):
@@ -1677,55 +1552,50 @@ elif page == "MY PROFILE":
         tag_parts.append(f'<span style="font-family:DM Sans;font-size:0.68rem;background:{acc_bg};border:1px solid {acc_bdr};color:{accent};border-radius:999px;padding:3px 10px;letter-spacing:0.08em;">{v}</span>')
     if profile.get('events'):
         v = profile['events']
-        tag_parts.append(f'<span style="font-family:DM Sans;font-size:0.68rem;background:rgba(255,61,138,0.09);border:1px solid rgba(255,61,138,0.27);color:#FF3D8A;border-radius:999px;padding:3px 10px;">{v}</span>')
+        tag_parts.append(f'<span style="font-family:DM Sans;font-size:0.68rem;background:#1E1E22;border:1px solid #26262C;color:#D0D0D6;border-radius:999px;padding:3px 10px;">{v}</span>')
     if profile.get('grad_year'):
         v = profile['grad_year']
-        tag_parts.append(f'<span style="font-family:DM Sans;font-size:0.68rem;background:#1E1E2E;color:#555566;border-radius:999px;padding:3px 10px;">Class of {v}</span>')
+        tag_parts.append(f'<span style="font-family:DM Sans;font-size:0.68rem;background:#1E1E22;color:#6E6E76;border-radius:999px;padding:3px 10px;">Class of {v}</span>')
     if profile.get('age') and int(profile.get('age') or 0) > 0:
         v = profile['age']
-        tag_parts.append(f'<span style="font-family:DM Sans;font-size:0.68rem;background:#1E1E2E;color:#555566;border-radius:999px;padding:3px 10px;">Age {v}</span>')
+        tag_parts.append(f'<span style="font-family:DM Sans;font-size:0.68rem;background:#1E1E22;color:#6E6E76;border-radius:999px;padding:3px 10px;">Age {v}</span>')
     profile_tags = ' '.join(tag_parts)
 
     bio_val  = profile.get('bio', '') or ''
-    bio_html = f'<div style="font-family:DM Sans;font-size:0.82rem;color:#8A8A9A;margin-top:12px;line-height:1.6;max-width:500px;">{bio_val}</div>' if bio_val else ''
+    bio_html = f'<div style="font-family:DM Sans;font-size:0.82rem;color:#9A9AA2;margin-top:12px;line-height:1.6;max-width:500px;">{bio_val}</div>' if bio_val else ''
 
     hero_html = f"""
-    <div style="background:linear-gradient(135deg,#12121A 0%,#1A1A26 100%);
-                border:1px solid {accent};border-radius:20px;overflow:hidden;
-                margin-bottom:28px;animation:scaleIn 0.4s ease both;
-                box-shadow:0 0 60px rgba({acc_rgb},0.09);">
-        <div style="height:6px;background:linear-gradient(90deg,{accent},#FF3D8A);"></div>
-        <div style="padding:32px;">
-            <div style="display:flex;align-items:center;gap:28px;flex-wrap:wrap;">
-                <div style="width:96px;height:96px;border-radius:50%;flex-shrink:0;
-                            background:linear-gradient(135deg,{accent},#FF3D8A);
+    <div style="background:#131316;border:1px solid #1E1E22;border-radius:14px;overflow:hidden;
+                margin-bottom:28px;">
+        <div style="padding:28px 32px;">
+            <div style="display:flex;align-items:center;gap:24px;flex-wrap:wrap;">
+                <div style="width:80px;height:80px;border-radius:50%;flex-shrink:0;
+                            background:{accent};
                             display:flex;align-items:center;justify-content:center;
-                            box-shadow:0 0 30px rgba({acc_rgb},0.25);
-                            font-family:'Bebas Neue';font-size:3rem;color:#0A0A0F;">
+                            font-family:'DM Sans';font-weight:800;font-size:2.2rem;color:#FFFFFF;">
                     {current_user[0].upper()}
                 </div>
                 <div style="flex:1;min-width:200px;">
-                    <div style="font-family:'Bebas Neue';font-size:2.8rem;
-                                letter-spacing:0.06em;color:#F0F0F0;line-height:0.95;margin-bottom:8px;">
-                        {current_user.upper()}
+                    <div style="font-family:'DM Sans';font-weight:800;font-size:1.8rem;
+                                color:#F5F5F7;line-height:1;margin-bottom:8px;">
+                        {current_user}
                     </div>
-                    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">{profile_tags}</div>
-                    {bio_html}
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">{profile_tags}</div>{bio_html}
                 </div>
                 <div style="display:flex;flex-direction:column;gap:10px;flex-shrink:0;">
-                    <div style="text-align:center;background:#0A0A0F;border-radius:12px;
-                                padding:14px 20px;border:1px solid #1E1E2E;">
-                        <div style="font-family:'JetBrains Mono';font-size:2rem;color:{accent};line-height:1;">
+                    <div style="text-align:center;background:#0A0A0D;border-radius:10px;
+                                padding:14px 20px;border:1px solid #1E1E22;">
+                        <div style="font-family:'JetBrains Mono';font-size:1.8rem;color:{accent};line-height:1;">
                             #{my_rank}</div>
-                        <div style="font-family:'DM Sans';font-size:0.6rem;letter-spacing:0.12em;
-                                    text-transform:uppercase;color:#555566;margin-top:4px;">Team rank</div>
+                        <div style="font-family:'DM Sans';font-size:0.6rem;letter-spacing:0.1em;
+                                    text-transform:uppercase;color:#6E6E76;margin-top:4px;">Team rank</div>
                     </div>
-                    <div style="text-align:center;background:#0A0A0F;border-radius:12px;
-                                padding:14px 20px;border:1px solid #1E1E2E;">
-                        <div style="font-family:'JetBrains Mono';font-size:2rem;color:#FF3D8A;line-height:1;">
+                    <div style="text-align:center;background:#0A0A0D;border-radius:10px;
+                                padding:14px 20px;border:1px solid #1E1E22;">
+                        <div style="font-family:'JetBrains Mono';font-size:1.8rem;color:#F5F5F7;line-height:1;">
                             {best['total']:.2f}s</div>
-                        <div style="font-family:'DM Sans';font-size:0.6rem;letter-spacing:0.12em;
-                                    text-transform:uppercase;color:#555566;margin-top:4px;">Personal best</div>
+                        <div style="font-family:'DM Sans';font-size:0.6rem;letter-spacing:0.1em;
+                                    text-transform:uppercase;color:#6E6E76;margin-top:4px;">Personal best</div>
                     </div>
                 </div>
             </div>
@@ -1742,26 +1612,26 @@ elif page == "MY PROFILE":
     best_total_p = df_me_p['total'].min()
     improvement_p = df_me_p.tail(5)['total'].mean() - df_me_p.head(5)['total'].mean() if len(df_me_p) >= 10 else 0.0
     consistency_p = max(0, 100 - (df_me_p['total'].std() / df_me_p['total'].mean() * 100)) if len(df_me_p) > 1 else 100.0
-    impr_color = '#1DDB8B' if improvement_p < 0 else '#FF4D6A'
+    impr_color = '#1DDB8B' if improvement_p < 0 else '#FF4D4D'
     summary_items = [
-        ('Runs logged',   str(total_runs_p),          '',   '#89C4E1'),
-        ('Days active',   str(days_active_p),          '',   '#B39DDB'),
-        ('Avg total',     f'{avg_total_p:.2f}',        's',  '#8A8A9A'),
-        ('Personal best', f'{best_total_p:.2f}',       's',  '#FF3D8A'),
+        ('Runs logged',   str(total_runs_p),          '',   '#FC4C02'),
+        ('Days active',   str(days_active_p),          '',   '#9A9AA2'),
+        ('Avg total',     f'{avg_total_p:.2f}',        's',  '#9A9AA2'),
+        ('Personal best', f'{best_total_p:.2f}',       's',  '#FC4C02'),
         ('Season delta',  f'{improvement_p:+.3f}',     's',  impr_color),
         ('Consistency',   f'{consistency_p:.0f}',      '%',  '#FFD700'),
     ]
-    border_style = 'border-right:1px solid #1E1E2E;'
+    border_style = 'border-right:1px solid #1E1E22;'
     items_html = ''.join([f"""
     <div style="flex:1;text-align:center;padding:14px 8px;{border_style if i < len(summary_items)-1 else ''}">
         <div style="font-family:'JetBrains Mono';font-size:1.4rem;color:{color};line-height:1;">
-            {val}<span style="font-size:0.8rem;color:#555566;">{unit}</span>
+            {val}<span style="font-size:0.8rem;color:#6E6E76;">{unit}</span>
         </div>
         <div style="font-family:'DM Sans';font-size:0.58rem;letter-spacing:0.1em;
-                    text-transform:uppercase;color:#555566;margin-top:5px;">{label}</div>
+                    text-transform:uppercase;color:#6E6E76;margin-top:5px;">{label}</div>
     </div>""" for i, (label, val, unit, color) in enumerate(summary_items)])
     st.markdown(f"""
-    <div style="background:#12121A;border:1px solid #1E1E2E;border-radius:12px;
+    <div style="background:#131316;border:1px solid #1E1E22;border-radius:12px;
                 display:flex;margin-bottom:20px;overflow:hidden;">
         {items_html}
     </div>
@@ -1778,9 +1648,9 @@ elif page == "MY PROFILE":
     if has_goals:
         goals = [
             ('Total time goal', float(profile.get('goal_total') or 0), float(best['total']),                        accent,    acc_rgb),
-            ('0–10m goal',      float(profile.get('goal_0_10')  or 0), float(athlete_data['split_0_10'].min()),  '#89C4E1', '137,196,225'),
-            ('10–30m goal',     float(profile.get('goal_10_30') or 0), float(athlete_data['split_10_30'].min()), '#B39DDB', '179,157,219'),
-            ('30–60m goal',     float(profile.get('goal_30_60') or 0), float(athlete_data['split_30_60'].min()), '#FF3D8A', '255,61,138'),
+            ('0–10m goal',      float(profile.get('goal_0_10')  or 0), float(athlete_data['split_0_10'].min()),  '#FC4C02', '137,196,225'),
+            ('10–30m goal',     float(profile.get('goal_10_30') or 0), float(athlete_data['split_10_30'].min()), '#9A9AA2', '179,157,219'),
+            ('30–60m goal',     float(profile.get('goal_30_60') or 0), float(athlete_data['split_30_60'].min()), '#FC4C02', '255,61,138'),
         ]
         for label, goal, current_val, color, crgb in goals:
             if not goal:
@@ -1791,14 +1661,14 @@ elif page == "MY PROFILE":
             status_text  = '✓ ACHIEVED' if hit else f'{current_val:.3f}s → {goal:.3f}s target'
             bar_shadow   = f'rgba({crgb},0.38)'
             st.markdown(f"""
-            <div style="background:#12121A;border:1px solid #1E1E2E;border-radius:12px;
+            <div style="background:#131316;border:1px solid #1E1E22;border-radius:12px;
                         padding:16px 20px;margin-bottom:8px;">
                 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
                     <span style="font-family:'DM Sans';font-size:0.75rem;letter-spacing:0.08em;
-                                 text-transform:uppercase;color:#8A8A9A;">{label}</span>
+                                 text-transform:uppercase;color:#9A9AA2;">{label}</span>
                     <span style="font-family:'JetBrains Mono';font-size:0.78rem;color:{status_color};">{status_text}</span>
                 </div>
-                <div style="background:#0A0A0F;border-radius:999px;height:6px;overflow:hidden;">
+                <div style="background:#0A0A0D;border-radius:999px;height:6px;overflow:hidden;">
                     <div style="height:100%;width:{min(100,progress):.0f}%;
                                 background:{color};border-radius:999px;
                                 box-shadow:0 0 8px {bar_shadow};"></div>
@@ -1807,9 +1677,9 @@ elif page == "MY PROFILE":
             """, unsafe_allow_html=True)
     else:
         st.markdown("""
-        <div style="background:#12121A;border:1px solid #1E1E2E;border-left:3px solid #2A2A3E;
+        <div style="background:#131316;border:1px solid #1E1E22;border-left:3px solid #3A3A42;
                     border-radius:0 10px 10px 0;padding:14px 16px;margin-bottom:16px;">
-            <div style="font-family:'DM Sans';font-size:0.8rem;color:#2A2A3E;">
+            <div style="font-family:'DM Sans';font-size:0.8rem;color:#3A3A42;">
                 No season goals set — add targets in Edit Profile to track progress here.
             </div>
         </div>
@@ -1818,16 +1688,16 @@ elif page == "MY PROFILE":
     # ── Personal records board — 2x2 grid + top speed full-width ──
     section_header("PERSONAL RECORDS", accent='pink')
     pr_splits = [
-        ('⚡', '0–10m',  athlete_data['split_0_10'].min(),  '1st 10 meters — reaction + first step',  '#89C4E1'),
-        ('🔥', '10–30m', athlete_data['split_10_30'].min(), 'Drive phase — peak acceleration window', '#B39DDB'),
-        ('💨', '30–60m', athlete_data['split_30_60'].min(), 'Max velocity — highest speed window',    '#FF3D8A'),
-        ('🏁', 'Total',  athlete_data['total'].min(),        '60m combined — full sprint',             '#F0F0F0'),
+        ('⚡', '0–10m',  athlete_data['split_0_10'].min(),  '1st 10 meters — reaction + first step',  '#FC4C02'),
+        ('🔥', '10–30m', athlete_data['split_10_30'].min(), 'Drive phase — peak acceleration window', '#9A9AA2'),
+        ('💨', '30–60m', athlete_data['split_30_60'].min(), 'Max velocity — highest speed window',    '#FC4C02'),
+        ('🏁', 'Total',  athlete_data['total'].min(),        '60m combined — full sprint',             '#F5F5F7'),
     ]
     pc1, pc2 = st.columns(2)
     for i, (icon, label, val, desc, lcolor) in enumerate(pr_splits):
         col = pc1 if i % 2 == 0 else pc2
         col.markdown(f"""
-        <div style="background:#12121A;border:1px solid #1E1E2E;border-left:3px solid {lcolor};
+        <div style="background:#131316;border:1px solid #1E1E22;border-left:3px solid {lcolor};
                     border-radius:0 10px 10px 0;padding:14px 18px;margin-bottom:8px;
                     display:flex;align-items:center;gap:14px;transition:transform 0.2s ease;"
              onmouseover="this.style.transform='translateX(4px)'"
@@ -1835,22 +1705,22 @@ elif page == "MY PROFILE":
             <span style="font-size:1.4rem;">{icon}</span>
             <div style="flex:1;">
                 <div style="font-family:'DM Sans';font-size:0.62rem;letter-spacing:0.1em;
-                            text-transform:uppercase;color:#555566;">{label}</div>
-                <div style="font-family:'DM Sans';font-size:0.7rem;color:#2A2A3E;margin-top:1px;">{desc}</div>
+                            text-transform:uppercase;color:#6E6E76;">{label}</div>
+                <div style="font-family:'DM Sans';font-size:0.7rem;color:#3A3A42;margin-top:1px;">{desc}</div>
             </div>
-            <div style="font-family:'JetBrains Mono';font-size:1.5rem;color:#F0F0F0;flex-shrink:0;">{val:.3f}s</div>
+            <div style="font-family:'JetBrains Mono';font-size:1.5rem;color:#F5F5F7;flex-shrink:0;">{val:.3f}s</div>
         </div>
         """, unsafe_allow_html=True)
     top_spd = athlete_data['top_speed'].max()
     st.markdown(f"""
-    <div style="background:#12121A;border:1px solid #1E1E2E;border-left:3px solid #FFD700;
+    <div style="background:#131316;border:1px solid #1E1E22;border-left:3px solid #FFD700;
                 border-radius:0 10px 10px 0;padding:14px 18px;margin-bottom:8px;
                 display:flex;align-items:center;gap:14px;">
         <span style="font-size:1.4rem;">🚀</span>
         <div style="flex:1;">
             <div style="font-family:'DM Sans';font-size:0.62rem;letter-spacing:0.1em;
-                        text-transform:uppercase;color:#555566;">Top speed</div>
-            <div style="font-family:'DM Sans';font-size:0.7rem;color:#2A2A3E;margin-top:1px;">
+                        text-transform:uppercase;color:#6E6E76;">Top speed</div>
+            <div style="font-family:'DM Sans';font-size:0.7rem;color:#3A3A42;margin-top:1px;">
                 Peak speed recorded across all runs</div>
         </div>
         <div style="font-family:'JetBrains Mono';font-size:1.5rem;color:#FFD700;flex-shrink:0;">
@@ -1868,29 +1738,29 @@ elif page == "MY PROFILE":
     br_date = best_run['date']
     br_date_str = br_date.strftime('%b %d, %Y') if hasattr(br_date, 'strftime') else str(br_date)[:10]
     st.markdown(f"""
-    <div style="background:#12121A;border:1px solid #1E1E2E;border-radius:14px;
+    <div style="background:#131316;border:1px solid #1E1E22;border-radius:14px;
                 padding:20px 24px;margin-bottom:16px;">
         <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:16px;">
-            <div style="font-family:'JetBrains Mono';font-size:2.4rem;color:#F0F0F0;">{total_time_br:.3f}s</div>
-            <div style="font-family:'DM Sans';font-size:0.7rem;color:#555566;">{br_date_str}</div>
+            <div style="font-family:'JetBrains Mono';font-size:2.4rem;color:#F5F5F7;">{total_time_br:.3f}s</div>
+            <div style="font-family:'DM Sans';font-size:0.7rem;color:#6E6E76;">{br_date_str}</div>
         </div>
         <div style="display:flex;border-radius:6px;overflow:hidden;height:10px;margin-bottom:16px;gap:2px;">
-            <div style="width:{pct_0_10_br:.1f}%;background:#89C4E1;border-radius:4px;"></div>
-            <div style="width:{pct_10_30_br:.1f}%;background:#B39DDB;border-radius:4px;"></div>
-            <div style="width:{pct_30_60_br:.1f}%;background:#FF3D8A;border-radius:4px;"></div>
+            <div style="width:{pct_0_10_br:.1f}%;background:#FC4C02;border-radius:4px;"></div>
+            <div style="width:{pct_10_30_br:.1f}%;background:#9A9AA2;border-radius:4px;"></div>
+            <div style="width:{pct_30_60_br:.1f}%;background:#FC4C02;border-radius:4px;"></div>
         </div>
         <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
             <div style="text-align:center;">
-                <div style="font-family:'JetBrains Mono';font-size:1.3rem;color:#89C4E1;">{float(best_run['split_0_10']):.3f}s</div>
-                <div style="font-family:'DM Sans';font-size:0.6rem;letter-spacing:0.1em;text-transform:uppercase;color:#555566;margin-top:3px;">0–10m · {pct_0_10_br:.0f}%</div>
+                <div style="font-family:'JetBrains Mono';font-size:1.3rem;color:#FC4C02;">{float(best_run['split_0_10']):.3f}s</div>
+                <div style="font-family:'DM Sans';font-size:0.6rem;letter-spacing:0.1em;text-transform:uppercase;color:#6E6E76;margin-top:3px;">0–10m · {pct_0_10_br:.0f}%</div>
             </div>
-            <div style="text-align:center;border-left:1px solid #1E1E2E;border-right:1px solid #1E1E2E;">
-                <div style="font-family:'JetBrains Mono';font-size:1.3rem;color:#B39DDB;">{float(best_run['split_10_30']):.3f}s</div>
-                <div style="font-family:'DM Sans';font-size:0.6rem;letter-spacing:0.1em;text-transform:uppercase;color:#555566;margin-top:3px;">10–30m · {pct_10_30_br:.0f}%</div>
+            <div style="text-align:center;border-left:1px solid #1E1E22;border-right:1px solid #1E1E22;">
+                <div style="font-family:'JetBrains Mono';font-size:1.3rem;color:#9A9AA2;">{float(best_run['split_10_30']):.3f}s</div>
+                <div style="font-family:'DM Sans';font-size:0.6rem;letter-spacing:0.1em;text-transform:uppercase;color:#6E6E76;margin-top:3px;">10–30m · {pct_10_30_br:.0f}%</div>
             </div>
             <div style="text-align:center;">
-                <div style="font-family:'JetBrains Mono';font-size:1.3rem;color:#FF3D8A;">{float(best_run['split_30_60']):.3f}s</div>
-                <div style="font-family:'DM Sans';font-size:0.6rem;letter-spacing:0.1em;text-transform:uppercase;color:#555566;margin-top:3px;">30–60m · {pct_30_60_br:.0f}%</div>
+                <div style="font-family:'JetBrains Mono';font-size:1.3rem;color:#FC4C02;">{float(best_run['split_30_60']):.3f}s</div>
+                <div style="font-family:'DM Sans';font-size:0.6rem;letter-spacing:0.1em;text-transform:uppercase;color:#6E6E76;margin-top:3px;">30–60m · {pct_30_60_br:.0f}%</div>
             </div>
         </div>
     </div>
@@ -1911,12 +1781,12 @@ elif page == "MY PROFILE":
         ic = st.columns(3)
         for i, (label, val) in enumerate(visible_info):
             ic[i % 3].markdown(f"""
-            <div style="background:#12121A;border:1px solid #1E1E2E;border-radius:10px;
+            <div style="background:#131316;border:1px solid #1E1E22;border-radius:10px;
                         padding:14px 16px;margin-bottom:8px;
                         animation:scaleIn 0.3s ease {0.04*i:.2f}s both;">
                 <div style="font-family:'DM Sans';font-size:0.6rem;letter-spacing:0.14em;
-                            text-transform:uppercase;color:#2A2A3E;margin-bottom:6px;">{label}</div>
-                <div style="font-family:'DM Sans';font-size:0.9rem;color:#F0F0F0;">{val}</div>
+                            text-transform:uppercase;color:#3A3A42;margin-bottom:6px;">{label}</div>
+                <div style="font-family:'DM Sans';font-size:0.9rem;color:#F5F5F7;">{val}</div>
             </div>
             """, unsafe_allow_html=True)
 
@@ -1924,7 +1794,7 @@ elif page == "MY PROFILE":
     section_header("EDIT MY PROFILE", accent='pink')
     with st.expander("✏️  Update profile information", expanded=False):
         st.markdown('<div style="height:8px"></div>', unsafe_allow_html=True)
-        st.markdown('<div style="font-family:\'Bebas Neue\';font-size:1rem;letter-spacing:0.1em;color:#555566;margin-bottom:12px;">IDENTITY</div>', unsafe_allow_html=True)
+        st.markdown('<div style="font-family:\'DM Sans\';font-weight:700;font-size:0.85rem;letter-spacing:0.06em;color:#9A9AA2;margin-bottom:12px;">IDENTITY</div>', unsafe_allow_html=True)
         ci1, ci2, ci3 = st.columns(3)
         school   = ci1.text_input("School / Team",  value=str(profile.get('school','') or ''))
         hometown = ci2.text_input("Hometown",        value=str(profile.get('hometown','') or ''))
@@ -1940,41 +1810,20 @@ elif page == "MY PROFILE":
         bio      = st.text_area("Bio", value=str(profile.get('bio','') or ''),
                                 placeholder="Training philosophy, goals, personal notes...", height=100)
 
-        st.markdown('<div style="font-family:\'Bebas Neue\';font-size:1rem;letter-spacing:0.1em;color:#555566;margin:16px 0 12px;">SEASON GOALS</div>', unsafe_allow_html=True)
-        st.markdown('<div style="font-family:\'DM Sans\';font-size:0.75rem;color:#555566;margin-bottom:12px;">Set target times — progress bars track how close you are</div>', unsafe_allow_html=True)
+        st.markdown('<div style="font-family:\'DM Sans\';font-weight:700;font-size:0.85rem;letter-spacing:0.06em;color:#9A9AA2;margin:16px 0 12px;">SEASON GOALS</div>', unsafe_allow_html=True)
+        st.markdown('<div style="font-family:\'DM Sans\';font-size:0.75rem;color:#6E6E76;margin-bottom:12px;">Set target times — progress bars track how close you are</div>', unsafe_allow_html=True)
         cg1, cg2, cg3, cg4 = st.columns(4)
         goal_total = cg1.number_input("Total goal (s)", 0.0, 15.0, float(profile.get('goal_total') or 0.0), step=0.01, format="%.3f")
         goal_0_10  = cg2.number_input("0–10m goal (s)",  0.0, 5.0,  float(profile.get('goal_0_10')  or 0.0), step=0.001, format="%.3f")
         goal_10_30 = cg3.number_input("10–30m goal (s)", 0.0, 5.0,  float(profile.get('goal_10_30') or 0.0), step=0.001, format="%.3f")
         goal_30_60 = cg4.number_input("30–60m goal (s)", 0.0, 5.0,  float(profile.get('goal_30_60') or 0.0), step=0.001, format="%.3f")
 
-        st.markdown('<div style="font-family:\'Bebas Neue\';font-size:1rem;letter-spacing:0.1em;color:#555566;margin:16px 0 12px;">PROFILE COLOR</div>', unsafe_allow_html=True)
-        color_options = {
-            'Powder Blue': '#89C4E1', 'Hot Pink': '#FF3D8A', 'Lavender': '#B39DDB',
-            'Mint': '#1DDB8B', 'Gold': '#FFD700', 'Coral': '#FF6B6B',
-        }
-        selected_color = profile.get('profile_color','#89C4E1') or '#89C4E1'
-        cc = st.columns(len(color_options))
-        for i, (cname, cval) in enumerate(color_options.items()):
-            is_active = selected_color == cval
-            cc[i].markdown(f"""
-            <div style="background:{cval}22;border:2px solid {'#F0F0F0' if is_active else cval+'55'};
-                        border-radius:8px;padding:8px 4px;text-align:center;cursor:pointer;
-                        transition:all 0.2s ease;">
-                <div style="width:20px;height:20px;border-radius:50%;background:{cval};
-                            margin:0 auto 6px;{'box-shadow:0 0 10px '+cval if is_active else ''}"></div>
-                <div style="font-family:'DM Sans';font-size:0.6rem;color:{cval};letter-spacing:0.06em;">
-                    {cname.split()[0].upper()}</div>
-            </div>""", unsafe_allow_html=True)
-            if cc[i].button("●", key=f"color_{cname}", use_container_width=True):
-                selected_color = cval
-
         if st.button("💾  SAVE MY PROFILE", use_container_width=True):
             save_athlete_profile(current_user, school, events, age, height, weight, bio,
                                   hometown=hometown, coach=coach, grad_year=grad_year,
                                   position=position, goal_total=goal_total,
                                   goal_0_10=goal_0_10, goal_10_30=goal_10_30,
-                                  goal_30_60=goal_30_60, profile_color=selected_color)
+                                  goal_30_60=goal_30_60)
             st.success("Profile saved.")
             st.rerun()
 
@@ -2003,27 +1852,27 @@ elif page == "MY PROGRESS":
         pct    = (delta / first5) * 100
         st.markdown(f"""
         <div style="display:flex;gap:12px;flex-wrap:wrap;margin:12px 0 20px;">
-            <div style="background:#12121A;border:1px solid #1DDB8B44;border-left:3px solid #1DDB8B;
+            <div style="background:#131316;border:1px solid #1DDB8B44;border-left:3px solid #1DDB8B;
                         border-radius:10px;padding:14px 20px;">
                 <div style="font-family:'JetBrains Mono',monospace;font-size:1.6rem;color:#1DDB8B;">
                     -{delta:.3f}s</div>
                 <div style="font-family:'DM Sans',sans-serif;font-size:0.65rem;letter-spacing:0.1em;
-                            text-transform:uppercase;color:#555566;margin-top:4px;">
+                            text-transform:uppercase;color:#6E6E76;margin-top:4px;">
                     Time improved (first 5 vs last 5)</div>
             </div>
-            <div style="background:#12121A;border:1px solid #89C4E144;border-left:3px solid #89C4E1;
+            <div style="background:#131316;border:1px solid #FC4C0244;border-left:3px solid #FC4C02;
                         border-radius:10px;padding:14px 20px;">
-                <div style="font-family:'JetBrains Mono',monospace;font-size:1.6rem;color:#89C4E1;">
+                <div style="font-family:'JetBrains Mono',monospace;font-size:1.6rem;color:#FC4C02;">
                     {pct:.1f}%</div>
                 <div style="font-family:'DM Sans',sans-serif;font-size:0.65rem;letter-spacing:0.1em;
-                            text-transform:uppercase;color:#555566;margin-top:4px;">Percentage faster</div>
+                            text-transform:uppercase;color:#6E6E76;margin-top:4px;">Percentage faster</div>
             </div>
-            <div style="background:#12121A;border:1px solid #FF3D8A44;border-left:3px solid #FF3D8A;
+            <div style="background:#131316;border:1px solid #FC4C0244;border-left:3px solid #FC4C02;
                         border-radius:10px;padding:14px 20px;">
-                <div style="font-family:'JetBrains Mono',monospace;font-size:1.6rem;color:#FF3D8A;">
+                <div style="font-family:'JetBrains Mono',monospace;font-size:1.6rem;color:#FC4C02;">
                     {df_p['top_speed'].max():.1f} mph</div>
                 <div style="font-family:'DM Sans',sans-serif;font-size:0.65rem;letter-spacing:0.1em;
-                            text-transform:uppercase;color:#555566;margin-top:4px;">Peak top speed</div>
+                            text-transform:uppercase;color:#6E6E76;margin-top:4px;">Peak top speed</div>
             </div>
         </div>""", unsafe_allow_html=True)
 
@@ -2041,30 +1890,30 @@ elif page == "MY PROGRESS":
     }
     phase_html = ''
     for phase_label, my_val, f_val, p_color in [
-        ('0–10m  · Reaction + first step', my_avgs_pa['0–10m'],  field_avgs_pa['0–10m'],  '#89C4E1'),
-        ('10–30m · Drive phase',           my_avgs_pa['10–30m'], field_avgs_pa['10–30m'], '#B39DDB'),
-        ('30–60m · Max velocity',          my_avgs_pa['30–60m'], field_avgs_pa['30–60m'], '#FF3D8A'),
+        ('0–10m  · Reaction + first step', my_avgs_pa['0–10m'],  field_avgs_pa['0–10m'],  '#FC4C02'),
+        ('10–30m · Drive phase',           my_avgs_pa['10–30m'], field_avgs_pa['10–30m'], '#9A9AA2'),
+        ('30–60m · Max velocity',          my_avgs_pa['30–60m'], field_avgs_pa['30–60m'], '#FC4C02'),
     ]:
         diff      = my_val - f_val
         diff_pct  = abs(diff / f_val * 100) if f_val else 0
         is_ahead  = diff < -0.005
         is_behind = diff > 0.005
-        bar_color = '#1DDB8B' if is_ahead else '#FF4D6A' if is_behind else '#555566'
+        bar_color = '#1DDB8B' if is_ahead else '#FF4D4D' if is_behind else '#6E6E76'
         status    = f'▲ {diff_pct:.1f}% ahead of field' if is_ahead else f'▼ {diff_pct:.1f}% behind field' if is_behind else 'At field average'
         bar_fill  = min(100, diff_pct * 10)
         phase_html += f"""
-        <div style="background:#12121A;border:1px solid #1E1E2E;border-radius:10px;
+        <div style="background:#131316;border:1px solid #1E1E22;border-radius:10px;
                     padding:14px 18px;margin-bottom:8px;">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-                <span style="font-family:'DM Sans';font-size:0.75rem;color:#8A8A9A;">{phase_label}</span>
+                <span style="font-family:'DM Sans';font-size:0.75rem;color:#9A9AA2;">{phase_label}</span>
                 <span style="font-family:'JetBrains Mono';font-size:0.75rem;color:{bar_color};">{status}</span>
             </div>
             <div style="display:flex;align-items:center;gap:12px;">
-                <span style="font-family:'JetBrains Mono';font-size:0.85rem;color:#F0F0F0;width:52px;">{my_val:.3f}s</span>
-                <div style="flex:1;background:#0A0A0F;border-radius:999px;height:5px;">
+                <span style="font-family:'JetBrains Mono';font-size:0.85rem;color:#F5F5F7;width:52px;">{my_val:.3f}s</span>
+                <div style="flex:1;background:#0A0A0D;border-radius:999px;height:5px;">
                     <div style="height:100%;width:{bar_fill:.0f}%;background:{bar_color};border-radius:999px;max-width:100%;"></div>
                 </div>
-                <span style="font-family:'JetBrains Mono';font-size:0.72rem;color:#555566;width:52px;text-align:right;">avg {f_val:.3f}s</span>
+                <span style="font-family:'JetBrains Mono';font-size:0.72rem;color:#6E6E76;width:52px;text-align:right;">avg {f_val:.3f}s</span>
             </div>
         </div>"""
     st.markdown(phase_html, unsafe_allow_html=True)
@@ -2075,14 +1924,14 @@ elif page == "MY PROGRESS":
     fig_pb = go.Figure()
     fig_pb.add_trace(go.Scatter(x=df_p['run_num'], y=df_p['total'],
         mode='lines+markers', name='Run time',
-        line=dict(color='#1E1E2E', width=1), marker=dict(size=4, color='#2A2A3E')))
+        line=dict(color='#1E1E22', width=1), marker=dict(size=4, color='#3A3A42')))
     fig_pb.add_trace(go.Scatter(x=df_p['run_num'], y=df_p['running_pb'],
         mode='lines', name='Personal best',
-        line=dict(color='#FF3D8A', width=2.5, shape='hv'),
+        line=dict(color='#FC4C02', width=2.5, shape='hv'),
         fill='tozeroy', fillcolor='rgba(255,61,138,0.03)'))
     fig_pb.add_trace(go.Scatter(x=pb_runs['run_num'], y=pb_runs['total'],
         mode='markers+text', name='New PB',
-        marker=dict(size=12, color='#FFD700', symbol='star', line=dict(color='#0A0A0F', width=1)),
+        marker=dict(size=12, color='#FFD700', symbol='star', line=dict(color='#0A0A0D', width=1)),
         text=[f"{v:.2f}s" for v in pb_runs['total']],
         textposition='top center',
         textfont=dict(family='JetBrains Mono', size=10, color='#FFD700')))
@@ -2094,11 +1943,11 @@ elif page == "MY PROGRESS":
     df_p['rolling_avg'] = df_p['total'].rolling(5, min_periods=1).mean()
     fig = go.Figure()
     fig.add_trace(go.Scatter(x=df_p['run_num'], y=df_p['total'], mode='markers',
-        name='Individual runs', marker=dict(color='#1E1E2E', size=6, line=dict(color='#89C4E1', width=1.5))))
+        name='Individual runs', marker=dict(color='#1E1E22', size=6, line=dict(color='#FC4C02', width=1.5))))
     fig.add_trace(go.Scatter(x=df_p['run_num'], y=df_p['rolling_avg'], mode='lines',
-        name='5-run avg', line=dict(color='#89C4E1', width=2.5)))
+        name='5-run avg', line=dict(color='#FC4C02', width=2.5)))
     fig.add_trace(go.Scatter(x=df_p['run_num'], y=df_p['running_pb'],
-        mode='lines', name='Personal best', line=dict(color='#FF3D8A', width=1.5, dash='dot')))
+        mode='lines', name='Personal best', line=dict(color='#FC4C02', width=1.5, dash='dot')))
     style_chart(fig, height=320)
     fig.update_layout(yaxis=dict(range=smart_yrange(df_p['total'])))
     st.plotly_chart(fig, use_container_width=True, config=CHART_CFG)
@@ -2106,8 +1955,8 @@ elif page == "MY PROGRESS":
     section_header("SPLIT TRENDS", accent='pink')
     fig2 = go.Figure()
     for col, label, color in [
-        ('split_0_10','0–10m','#89C4E1'),('split_10_30','10–30m','#B39DDB'),
-        ('split_30_60','30–60m','#FF3D8A'),
+        ('split_0_10','0–10m','#D0D0D6'),('split_10_30','10–30m','#9A9AA2'),
+        ('split_30_60','30–60m','#FC4C02'),
     ]:
         fig2.add_trace(go.Scatter(x=df_p['run_num'], y=df_p[col], mode='lines+markers',
             name=label, line=dict(color=color, width=2), marker=dict(size=4)))
@@ -2116,8 +1965,8 @@ elif page == "MY PROGRESS":
     y_max = df_p['split_30_60'].max() * 1.03
     fig2.update_layout(yaxis=dict(range=[y_min, y_max]))
     for col, label, color in [
-        ('split_0_10','0–10m','#89C4E1'),('split_10_30','10–30m','#B39DDB'),
-        ('split_30_60','30–60m','#FF3D8A'),
+        ('split_0_10','0–10m','#D0D0D6'),('split_10_30','10–30m','#9A9AA2'),
+        ('split_30_60','30–60m','#FC4C02'),
     ]:
         last_val = df_p[col].iloc[-1]
         last_run = df_p['run_num'].iloc[-1]
@@ -2132,15 +1981,15 @@ elif page == "MY PROGRESS":
     weekly_counts = df_p_orig.groupby('week_label').size().reset_index(name='runs')
     fig_wk = go.Figure(go.Bar(
         x=weekly_counts['week_label'], y=weekly_counts['runs'],
-        marker=dict(color='#89C4E1', line=dict(width=0)),
+        marker=dict(color='#FC4C02', line=dict(width=0)),
         text=weekly_counts['runs'], textposition='outside',
-        textfont=dict(family='JetBrains Mono', size=10, color='#8A8A9A'),
+        textfont=dict(family='JetBrains Mono', size=10, color='#9A9AA2'),
         cliponaxis=False,
     ))
     style_chart(fig_wk, height=220)
     fig_wk.update_layout(
         yaxis=dict(visible=False),
-        xaxis=dict(tickfont=dict(family='DM Sans', size=11, color='#555566')),
+        xaxis=dict(tickfont=dict(family='DM Sans', size=11, color='#6E6E76')),
         bargap=0.3,
     )
     st.plotly_chart(fig_wk, use_container_width=True, config=CHART_CFG)
@@ -2150,21 +1999,21 @@ elif page == "MY PROGRESS":
     t5_rows = ''
     for i, row in top5.iterrows():
         t5_rows += f"""
-        <tr style="border-bottom:1px solid #1A1A26;">
+        <tr style="border-bottom:1px solid #1A1A1F;">
             <td style="padding:10px 14px;font-family:JetBrains Mono;color:#FFD700;font-size:0.8rem;">#{i+1}</td>
-            <td style="padding:10px 14px;font-family:DM Sans;color:#555566;font-size:0.75rem;">{str(row['date'])[:10]}</td>
-            <td style="padding:10px 14px;font-family:JetBrains Mono;color:#89C4E1;font-size:0.82rem;">{float(row['split_0_10']):.3f}s</td>
-            <td style="padding:10px 14px;font-family:JetBrains Mono;color:#B39DDB;font-size:0.82rem;">{float(row['split_10_30']):.3f}s</td>
-            <td style="padding:10px 14px;font-family:JetBrains Mono;color:#FF3D8A;font-size:0.82rem;">{float(row['split_30_60']):.3f}s</td>
-            <td style="padding:10px 14px;font-family:JetBrains Mono;color:#F0F0F0;font-size:0.9rem;font-weight:500;">{float(row['total']):.3f}s</td>
-            <td style="padding:10px 14px;font-family:JetBrains Mono;color:#555566;font-size:0.78rem;">{float(row['top_speed']):.1f} mph</td>
+            <td style="padding:10px 14px;font-family:DM Sans;color:#6E6E76;font-size:0.75rem;">{str(row['date'])[:10]}</td>
+            <td style="padding:10px 14px;font-family:JetBrains Mono;color:#FC4C02;font-size:0.82rem;">{float(row['split_0_10']):.3f}s</td>
+            <td style="padding:10px 14px;font-family:JetBrains Mono;color:#9A9AA2;font-size:0.82rem;">{float(row['split_10_30']):.3f}s</td>
+            <td style="padding:10px 14px;font-family:JetBrains Mono;color:#FC4C02;font-size:0.82rem;">{float(row['split_30_60']):.3f}s</td>
+            <td style="padding:10px 14px;font-family:JetBrains Mono;color:#F5F5F7;font-size:0.9rem;font-weight:500;">{float(row['total']):.3f}s</td>
+            <td style="padding:10px 14px;font-family:JetBrains Mono;color:#6E6E76;font-size:0.78rem;">{float(row['top_speed']):.1f} mph</td>
         </tr>"""
-    th5 = "padding:10px 14px;font-family:DM Sans;font-size:0.6rem;letter-spacing:0.12em;text-transform:uppercase;color:#2A2A3E;text-align:left;font-weight:500;"
+    th5 = "padding:10px 14px;font-family:DM Sans;font-size:0.6rem;letter-spacing:0.12em;text-transform:uppercase;color:#3A3A42;text-align:left;font-weight:500;"
     st.markdown(f"""
-    <div style="border:1px solid #1E1E2E;border-radius:12px;overflow:hidden;margin-bottom:16px;">
-        <table style="width:100%;border-collapse:collapse;background:#12121A;">
+    <div style="border:1px solid #1E1E22;border-radius:12px;overflow:hidden;margin-bottom:16px;">
+        <table style="width:100%;border-collapse:collapse;background:#131316;">
             <thead>
-                <tr style="background:#0D0D14;border-bottom:2px solid #1E1E2E;">
+                <tr style="background:#0D0D10;border-bottom:2px solid #1E1E22;">
                     {''.join([f'<th style="{th5}">{h}</th>' for h in ['#','Date','0–10m','10–30m','30–60m','Total','Speed']])}
                 </tr>
             </thead>
@@ -2178,203 +2027,27 @@ elif page == "MY PROGRESS":
     pb = df_p['total'].min()
     rows = ''
     for _, row in recent.iterrows():
-        pb_badge = '<span style="font-family:DM Sans;font-size:0.6rem;background:#FF3D8A22;color:#FF3D8A;border:1px solid #FF3D8A44;border-radius:999px;padding:2px 7px;margin-left:8px;">PB</span>' if row['total'] == pb else ''
-        rows += f"""<tr style="border-bottom:1px solid #1A1A26;">
-            <td style="padding:10px 14px;font-family:'JetBrains Mono',monospace;color:#555566;font-size:0.8rem;">#{int(row['run_num'])}</td>
-            <td style="padding:10px 14px;font-family:'DM Sans',sans-serif;color:#555566;font-size:0.78rem;">{str(row['date'])[:10]}</td>
-            <td style="padding:10px 14px;font-family:'JetBrains Mono',monospace;color:#89C4E1;font-size:0.82rem;">{row['split_0_10']:.3f}s</td>
-            <td style="padding:10px 14px;font-family:'JetBrains Mono',monospace;color:#B39DDB;font-size:0.82rem;">{row['split_10_30']:.3f}s</td>
-            <td style="padding:10px 14px;font-family:'JetBrains Mono',monospace;color:#FF3D8A;font-size:0.82rem;">{row['split_30_60']:.3f}s</td>
-            <td style="padding:10px 14px;font-family:'JetBrains Mono',monospace;color:#F0F0F0;font-size:0.9rem;font-weight:500;">{row['total']:.3f}s{pb_badge}</td>
-            <td style="padding:10px 14px;font-family:'JetBrains Mono',monospace;color:#555566;font-size:0.8rem;">{row['top_speed']:.1f}</td>
+        pb_badge = '<span style="font-family:DM Sans;font-size:0.6rem;background:#FC4C0222;color:#FC4C02;border:1px solid #FC4C0244;border-radius:999px;padding:2px 7px;margin-left:8px;">PB</span>' if row['total'] == pb else ''
+        rows += f"""<tr style="border-bottom:1px solid #1A1A1F;">
+            <td style="padding:10px 14px;font-family:'JetBrains Mono',monospace;color:#6E6E76;font-size:0.8rem;">#{int(row['run_num'])}</td>
+            <td style="padding:10px 14px;font-family:'DM Sans',sans-serif;color:#6E6E76;font-size:0.78rem;">{str(row['date'])[:10]}</td>
+            <td style="padding:10px 14px;font-family:'JetBrains Mono',monospace;color:#FC4C02;font-size:0.82rem;">{row['split_0_10']:.3f}s</td>
+            <td style="padding:10px 14px;font-family:'JetBrains Mono',monospace;color:#9A9AA2;font-size:0.82rem;">{row['split_10_30']:.3f}s</td>
+            <td style="padding:10px 14px;font-family:'JetBrains Mono',monospace;color:#FC4C02;font-size:0.82rem;">{row['split_30_60']:.3f}s</td>
+            <td style="padding:10px 14px;font-family:'JetBrains Mono',monospace;color:#F5F5F7;font-size:0.9rem;font-weight:500;">{row['total']:.3f}s{pb_badge}</td>
+            <td style="padding:10px 14px;font-family:'JetBrains Mono',monospace;color:#6E6E76;font-size:0.8rem;">{row['top_speed']:.1f}</td>
         </tr>"""
-    th = "padding:10px 14px;font-family:'DM Sans',sans-serif;font-size:0.6rem;letter-spacing:0.12em;text-transform:uppercase;color:#2A2A3E;text-align:left;font-weight:500;"
+    th = "padding:10px 14px;font-family:'DM Sans',sans-serif;font-size:0.6rem;letter-spacing:0.12em;text-transform:uppercase;color:#3A3A42;text-align:left;font-weight:500;"
     st.markdown(f"""
-    <div style="border:1px solid #1E1E2E;border-radius:12px;overflow:hidden;">
-        <table style="width:100%;border-collapse:collapse;background:#12121A;">
-            <thead><tr style="background:#0D0D14;border-bottom:2px solid #1E1E2E;">
+    <div style="border:1px solid #1E1E22;border-radius:12px;overflow:hidden;">
+        <table style="width:100%;border-collapse:collapse;background:#131316;">
+            <thead><tr style="background:#0D0D10;border-bottom:2px solid #1E1E22;">
                 <th style="{th}">#</th><th style="{th}">Date</th>
                 <th style="{th}">0–10m</th><th style="{th}">10–30m</th>
                 <th style="{th}">30–60m</th><th style="{th}">Total</th><th style="{th}">Speed</th>
             </tr></thead><tbody>{rows}</tbody>
         </table>
     </div>""", unsafe_allow_html=True)
-    render_footer()
-    st.stop()
-
-
-# ══════════════════════════════════════════════════════════════════════════════
-# PAGE: COMPARE
-# ══════════════════════════════════════════════════════════════════════════════
-elif page == "COMPARE":
-    page_header("HEAD TO HEAD", "measure yourself against the field", "⚔️", "blue")
-    all_ath = get_all_athletes()
-    if len(all_ath) < 2:
-        empty_state("⚔️", "NEED AT LEAST 2 ATHLETES", "Add more athletes in Settings.")
-        render_footer()
-        st.stop()
-
-    c1, c2 = st.columns(2)
-    default_a = all_ath.index(current_user) if current_user in all_ath else 0
-    default_b = (default_a + 1) % len(all_ath)
-    athlete_a = c1.selectbox("Athlete A", all_ath, index=default_a, key="compare_a")
-    athlete_b = c2.selectbox("Athlete B", all_ath, index=default_b, key="compare_b")
-    da, db_ = load_athlete_runs(athlete_a), load_athlete_runs(athlete_b)
-
-    metrics = [
-        ('Best Total',  'total',       '{:.3f}s', True),
-        ('0–10m PB',    'split_0_10',  '{:.3f}s', True),
-        ('10–30m PB',   'split_10_30', '{:.3f}s', True),
-        ('30–60m PB',   'split_30_60', '{:.3f}s', True),
-        ('Top Speed',   'top_speed',   '{:.1f} mph', False),
-    ]
-    countable = [(col, lib) for _, col, _, lib in metrics if col is not None]
-    wins_a = sum(1 for col, lib in countable
-                 if (lib and da[col].min() < db_[col].min()) or
-                    (not lib and da[col].max() > db_[col].max()))
-    wins_b = sum(1 for col, lib in countable
-                 if (lib and db_[col].min() < da[col].min()) or
-                    (not lib and db_[col].max() > da[col].max()))
-    overall_winner = athlete_a if wins_a > wins_b else athlete_b if wins_b > wins_a else None
-    wc = '#89C4E1' if overall_winner == athlete_a else '#FF3D8A' if overall_winner == athlete_b else '#555566'
-
-    # Overall winner card
-    st.markdown(f"""
-    <div style="background:linear-gradient(135deg,#12121A,#1A1A26);border:1px solid {wc};
-                border-radius:14px;padding:20px 24px;margin:12px 0 20px;text-align:center;">
-        <div style="font-family:'DM Sans';font-size:0.65rem;letter-spacing:0.14em;
-                    text-transform:uppercase;color:#555566;margin-bottom:8px;">Overall winner</div>
-        <div style="font-family:'Bebas Neue';font-size:2.4rem;letter-spacing:0.08em;color:{wc};">
-            {'TIE' if not overall_winner else overall_winner.upper()}</div>
-        <div style="font-family:'JetBrains Mono';font-size:0.8rem;color:#555566;margin-top:4px;">
-            {wins_a} vs {wins_b} categories</div>
-    </div>""", unsafe_allow_html=True)
-
-    # Athlete name headers
-    h_l, h_mid, h_r = st.columns([2, 1, 2])
-    h_l.markdown(f"""
-    <div style="text-align:center;padding:12px;background:#12121A;
-                border:1px solid #89C4E1;border-radius:10px;margin-bottom:8px;">
-        <div style="font-family:'Bebas Neue';font-size:1.4rem;letter-spacing:0.08em;color:#89C4E1;">
-            {athlete_a.upper()}</div>
-    </div>""", unsafe_allow_html=True)
-    h_r.markdown(f"""
-    <div style="text-align:center;padding:12px;background:#12121A;
-                border:1px solid #FF3D8A;border-radius:10px;margin-bottom:8px;">
-        <div style="font-family:'Bebas Neue';font-size:1.4rem;letter-spacing:0.08em;color:#FF3D8A;">
-            {athlete_b.upper()}</div>
-    </div>""", unsafe_allow_html=True)
-
-    all_metrics = metrics + [('Runs Logged', None, '{}', False)]
-    for label, col, fmt, lib in all_metrics:
-        if col is None:
-            va, vb = len(da), len(db_)
-            wa, wb = va > vb, vb > va
-        elif lib:
-            va, vb = da[col].min(), db_[col].min()
-            wa, wb = va < vb - 0.001, vb < va - 0.001
-        else:
-            va, vb = da[col].max(), db_[col].max()
-            wa, wb = va > vb + 0.001, vb > va + 0.001
-
-        ca     = '#F0F0F0' if wa else '#2A2A3E'
-        cb     = '#F0F0F0' if wb else '#2A2A3E'
-        a_bg   = '#12121A' if wa else '#0D0D14'
-        b_bg   = '#12121A' if wb else '#0D0D14'
-        a_tick = '<span style="font-size:0.7rem;margin-left:6px;color:#1DDB8B;">✓</span>' if wa else ''
-        b_tick = '<span style="font-size:0.7rem;margin-left:6px;color:#1DDB8B;">✓</span>' if wb else ''
-
-        l, mid, r = st.columns([2, 1, 2])
-        l.markdown(f"""
-        <div style="background:{a_bg};border:1px solid #1E1E2E;border-radius:8px;
-                    padding:12px 16px;text-align:right;margin-bottom:6px;">
-            <span style="font-family:'JetBrains Mono',monospace;font-size:1.2rem;color:{ca};">
-                {fmt.format(va)}{a_tick}</span>
-        </div>""", unsafe_allow_html=True)
-        mid.markdown(f"""
-        <div style="padding:12px 0;text-align:center;margin-bottom:6px;">
-            <div style="font-family:'DM Sans',sans-serif;font-size:0.6rem;letter-spacing:0.12em;
-                        text-transform:uppercase;color:#2A2A3E;margin-top:8px;">{label}</div>
-        </div>""", unsafe_allow_html=True)
-        r.markdown(f"""
-        <div style="background:{b_bg};border:1px solid #1E1E2E;border-radius:8px;
-                    padding:12px 16px;text-align:left;margin-bottom:6px;">
-            <span style="font-family:'JetBrains Mono',monospace;font-size:1.2rem;color:{cb};">
-                {b_tick}{fmt.format(vb)}</span>
-        </div>""", unsafe_allow_html=True)
-
-    section_header("TOTAL TIME — SEASON OVERLAP", accent='blue')
-    fig = go.Figure()
-    for df_x, name, color in [(da,athlete_a,'#89C4E1'),(db_,athlete_b,'#FF3D8A')]:
-        df_s = df_x[::-1].reset_index(drop=True)
-        df_s['run_num'] = range(1, len(df_s)+1)
-        fig.add_trace(go.Scatter(x=df_s['run_num'], y=df_s['total'],
-            mode='lines+markers', name=name,
-            line=dict(color=color, width=2), marker=dict(size=5)))
-    style_chart(fig, height=320)
-    combined = pd.concat([da['total'], db_['total']])
-    fig.update_layout(yaxis=dict(range=smart_yrange(combined)))
-    st.plotly_chart(fig, use_container_width=True, config=CHART_CFG)
-
-    section_header("SPLIT PROFILE OVERLAY", accent='pink')
-    cats = ['0–10m', '10–30m', '30–60m']
-    fig2 = go.Figure()
-    for df_x, name, color, fc in [
-        (da,athlete_a,'#89C4E1','rgba(137,196,225,0.1)'),
-        (db_,athlete_b,'#FF3D8A','rgba(255,61,138,0.1)'),
-    ]:
-        v = [df_x['split_0_10'].mean(), df_x['split_10_30'].mean(), df_x['split_30_60'].mean()]
-        fig2.add_trace(go.Scatterpolar(r=v+[v[0]], theta=cats+[cats[0]],
-            fill='toself', name=name, line=dict(color=color, width=2), fillcolor=fc))
-    fig2.update_layout(
-        polar=dict(bgcolor='#12121A',
-            radialaxis=dict(showticklabels=False, gridcolor='#1E1E2E'),
-            angularaxis=dict(gridcolor='#1E1E2E', tickfont=dict(color='#8A8A9A', family='DM Sans'))),
-        paper_bgcolor='#12121A', height=320,
-        legend=dict(bgcolor='#0A0A0F', bordercolor='#1E1E2E', borderwidth=1,
-                    font=dict(color='#8A8A9A', family='DM Sans')),
-        margin=dict(l=40,r=40,t=40,b=40))
-    st.plotly_chart(fig2, use_container_width=True, config=CHART_CFG)
-
-    section_header("SPLIT DELTA BREAKDOWN", accent='blue')
-    compare_deltas = [
-        ('0–10m',     float(da['split_0_10'].mean()),  float(db_['split_0_10'].mean()),  False),
-        ('10–30m',    float(da['split_10_30'].mean()), float(db_['split_10_30'].mean()), False),
-        ('30–60m',    float(da['split_30_60'].mean()), float(db_['split_30_60'].mean()), False),
-        ('Total avg', float(da['total'].mean()),        float(db_['total'].mean()),       False),
-        ('Top speed', float(da['top_speed'].max()),     float(db_['top_speed'].max()),    True),
-    ]
-    delta_rows = ''
-    for label, val_a, val_b, is_speed in compare_deltas:
-        a_wins = (val_a > val_b) if is_speed else (val_a < val_b)
-        delta  = val_a - val_b
-        sign   = '+' if delta > 0 else ''
-        dcol   = '#1DDB8B' if (delta < 0 and not is_speed) or (delta > 0 and is_speed) else '#FF4D6A'
-        unit_s = ' mph' if is_speed else 's'
-        delta_rows += f"""
-        <tr style="border-bottom:1px solid #1A1A26;">
-            <td style="padding:10px 14px;font-family:DM Sans;color:#8A8A9A;font-size:0.8rem;">{label}</td>
-            <td style="padding:10px 14px;font-family:JetBrains Mono;color:{'#89C4E1' if a_wins else '#555566'};font-size:0.85rem;text-align:right;">{val_a:.3f}{unit_s}</td>
-            <td style="padding:10px 14px;font-family:JetBrains Mono;color:{dcol};font-size:0.82rem;text-align:center;">{sign}{delta:.3f}{'s' if not is_speed else ''}</td>
-            <td style="padding:10px 14px;font-family:JetBrains Mono;color:{'#FF3D8A' if not a_wins else '#555566'};font-size:0.85rem;text-align:left;">{val_b:.3f}{unit_s}</td>
-        </tr>"""
-    th_d = "padding:10px 14px;font-family:DM Sans;font-size:0.6rem;letter-spacing:0.12em;text-transform:uppercase;color:#2A2A3E;font-weight:500;"
-    st.markdown(f"""
-    <div style="border:1px solid #1E1E2E;border-radius:12px;overflow:hidden;margin-bottom:16px;">
-        <table style="width:100%;border-collapse:collapse;background:#12121A;">
-            <thead>
-                <tr style="background:#0D0D14;border-bottom:2px solid #1E1E2E;">
-                    <th style="{th_d};text-align:left;">Split</th>
-                    <th style="{th_d};text-align:right;color:#89C4E1;">{athlete_a}</th>
-                    <th style="{th_d};text-align:center;">Δ</th>
-                    <th style="{th_d};text-align:left;color:#FF3D8A;">{athlete_b}</th>
-                </tr>
-            </thead>
-            <tbody>{delta_rows}</tbody>
-        </table>
-    </div>
-    """, unsafe_allow_html=True)
-
     render_footer()
     st.stop()
 
@@ -2387,14 +2060,14 @@ elif page == "SETTINGS":
 
     if user_role != 'coach':
         st.markdown("""
-        <div style="background:#12121A;border:1px solid #1E1E2E;border-left:3px solid #FF4D6A;
+        <div style="background:#131316;border:1px solid #1E1E22;border-left:3px solid #FF4D4D;
                     border-radius:0 12px 12px 0;padding:24px 28px;margin:20px 0;text-align:center;">
             <div style="font-size:2rem;margin-bottom:10px;">🔒</div>
-            <div style="font-family:'Bebas Neue';font-size:1.4rem;letter-spacing:0.08em;
-                        color:#FF4D6A;margin-bottom:8px;">Coach Access Only</div>
-            <div style="font-family:'DM Sans';font-size:0.82rem;color:#555566;line-height:1.6;">
+            <div style="font-family:'DM Sans';font-weight:700;font-size:1.2rem;
+                        color:#FF4D4D;margin-bottom:8px;">Coach Access Only</div>
+            <div style="font-family:'DM Sans';font-size:0.82rem;color:#6E6E76;line-height:1.6;">
                 Team management is handled by the coach account.<br>
-                To edit your profile, visit <span style="color:#89C4E1;">MY PROFILE</span>.
+                To edit your profile, visit <span style="color:#FC4C02;">MY PROFILE</span>.
             </div>
         </div>
         """, unsafe_allow_html=True)
@@ -2434,17 +2107,17 @@ elif page == "SETTINGS":
     section_header("MANAGE ATHLETES", accent='blue')
     athletes_df = get_all_athletes_with_stats()
     if not athletes_df.empty:
-        rows = ''.join(f"""<tr style="border-bottom:1px solid #1A1A26;">
-            <td style="padding:10px 14px;font-family:'DM Sans',sans-serif;color:#F0F0F0;font-size:0.85rem;">{row['name']}</td>
-            <td style="padding:10px 14px;font-family:'JetBrains Mono',monospace;color:#89C4E1;font-size:0.82rem;">{row['runs']}</td>
-            <td style="padding:10px 14px;font-family:'JetBrains Mono',monospace;color:#FF3D8A;font-size:0.82rem;">{row['best']:.3f}s</td>
-            <td style="padding:10px 14px;font-family:'DM Sans',sans-serif;color:#555566;font-size:0.78rem;">{str(row['last_run'])[:10]}</td>
+        rows = ''.join(f"""<tr style="border-bottom:1px solid #1A1A1F;">
+            <td style="padding:10px 14px;font-family:'DM Sans',sans-serif;color:#F5F5F7;font-size:0.85rem;">{row['name']}</td>
+            <td style="padding:10px 14px;font-family:'JetBrains Mono',monospace;color:#FC4C02;font-size:0.82rem;">{row['runs']}</td>
+            <td style="padding:10px 14px;font-family:'JetBrains Mono',monospace;color:#FC4C02;font-size:0.82rem;">{row['best']:.3f}s</td>
+            <td style="padding:10px 14px;font-family:'DM Sans',sans-serif;color:#6E6E76;font-size:0.78rem;">{str(row['last_run'])[:10]}</td>
         </tr>""" for _, row in athletes_df.iterrows())
-        th = "padding:10px 14px;font-family:'DM Sans',sans-serif;font-size:0.6rem;letter-spacing:0.12em;text-transform:uppercase;color:#2A2A3E;text-align:left;font-weight:500;"
+        th = "padding:10px 14px;font-family:'DM Sans',sans-serif;font-size:0.6rem;letter-spacing:0.12em;text-transform:uppercase;color:#3A3A42;text-align:left;font-weight:500;"
         st.markdown(f"""
-        <div style="border:1px solid #1E1E2E;border-radius:12px;overflow:hidden;">
-            <table style="width:100%;border-collapse:collapse;background:#12121A;">
-                <thead><tr style="background:#0D0D14;border-bottom:2px solid #1E1E2E;">
+        <div style="border:1px solid #1E1E22;border-radius:12px;overflow:hidden;">
+            <table style="width:100%;border-collapse:collapse;background:#131316;">
+                <thead><tr style="background:#0D0D10;border-bottom:2px solid #1E1E22;">
                     <th style="{th}">Athlete</th><th style="{th}">Runs</th>
                     <th style="{th}">Best Total</th><th style="{th}">Last Run</th>
                 </tr></thead><tbody>{rows}</tbody>
@@ -2455,11 +2128,11 @@ elif page == "SETTINGS":
 
     section_header("IMPORT RUNS FROM CSV", accent='blue')
     st.markdown("""
-    <div style="background:#12121A;border:1px solid #1E1E2E;border-radius:10px;
+    <div style="background:#131316;border:1px solid #1E1E22;border-radius:10px;
                 padding:16px 18px;margin-bottom:12px;">
-        <div style="font-family:'DM Sans';font-size:0.75rem;color:#8A8A9A;margin-bottom:8px;line-height:1.6;">
+        <div style="font-family:'DM Sans';font-size:0.75rem;color:#9A9AA2;margin-bottom:8px;line-height:1.6;">
             Upload a CSV with columns:
-            <span style="font-family:JetBrains Mono;color:#89C4E1;font-size:0.72rem;">
+            <span style="font-family:JetBrains Mono;color:#FC4C02;font-size:0.72rem;">
                 athlete, date, split_0_10, split_10_30, split_30_60
             </span>
             — total and top_speed will be auto-calculated.
@@ -2504,7 +2177,7 @@ elif page == "SETTINGS":
             st.markdown(f"""
             <div style="background:#1A0D0D;border:1px solid rgba(255,77,106,0.27);border-radius:8px;
                         padding:12px 16px;margin-bottom:12px;">
-                <span style="font-family:DM Sans;font-size:0.78rem;color:#FF4D6A;">
+                <span style="font-family:DM Sans;font-size:0.78rem;color:#FF4D4D;">
                     ⚠️ This will permanently delete all runs for {del_athlete}. This cannot be undone.
                 </span>
             </div>
@@ -2518,7 +2191,7 @@ elif page == "SETTINGS":
                 st.success(f"All runs deleted for {del_athlete}.")
                 st.rerun()
         else:
-            st.markdown('<div style="color:#555566;font-size:0.8rem;">No athletes yet.</div>', unsafe_allow_html=True)
+            st.markdown('<div style="color:#6E6E76;font-size:0.8rem;">No athletes yet.</div>', unsafe_allow_html=True)
 
     render_footer()
     st.stop()
