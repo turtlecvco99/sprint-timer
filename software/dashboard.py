@@ -513,7 +513,7 @@ def style_chart(fig, height=360):
     return fig
 
 
-def page_header(title, subtitle, icon, accent='blue'):
+def page_header(title, subtitle):
     st.markdown(f"""
     <div style="padding:16px 0 20px;border-bottom:1px solid #1E1E22;margin-bottom:24px;
                 display:flex;align-items:flex-end;justify-content:space-between;">
@@ -560,7 +560,7 @@ def render_rankings_table(lb_df, current_user=''):
     for _, row in lb_df.iterrows():
         rank = int(row['rank'])
         rc = ACCENT if rank == 1 else '#6E6E76'
-        rank_label = f'👑 #{rank}' if rank == 1 else f'#{rank}'
+        rank_label = f'♛ #{rank}' if rank == 1 else f'#{rank}'
         is_me = row['athlete'] == current_user
         you_badge = f'<span style="font-family:DM Sans;font-size:0.55rem;background:{ACCENT};color:#FFFFFF;border-radius:999px;padding:2px 7px;margin-left:8px;font-weight:600;vertical-align:middle;">YOU</span>' if is_me else ''
         name_color = '#F5F5F7' if is_me else '#D0D0D6'
@@ -611,7 +611,7 @@ def render_rankings_table(lb_df, current_user=''):
     </div>""", unsafe_allow_html=True)
 
 
-def empty_state(icon='📭', title="NO DATA", subtitle="Log some runs to unlock this."):
+def empty_state(icon='◇', title="NO DATA", subtitle="Log some runs to unlock this."):
     st.markdown(f"""
     <div style="background:#131316;border:1px solid #1E1E22;border-radius:10px;
                 padding:48px 32px;text-align:center;margin:8px 0;">
@@ -682,7 +682,7 @@ if st.session_state.public_view and st.session_state.current_user is None:
 
     lb_pub = load_leaderboard()
     if lb_pub.empty:
-        empty_state("🏟️", "NO DATA YET", "Check back once athletes have logged runs.")
+        empty_state("◇", "NO DATA YET", "Check back once athletes have logged runs.")
     else:
         # Global stats strip
         gs = get_global_stats()
@@ -717,7 +717,7 @@ if st.session_state.public_view and st.session_state.current_user is None:
     st.markdown('<div style="height:20px;"></div>', unsafe_allow_html=True)
     col_login, col_mid, col_right = st.columns([1, 2, 1])
     with col_mid:
-        if st.button("🔐  LOG IN TO YOUR ACCOUNT", use_container_width=True):
+        if st.button("LOG IN TO YOUR ACCOUNT", use_container_width=True):
             st.session_state.public_view = False
             st.rerun()
     st.markdown("""
@@ -988,12 +988,13 @@ if not st.session_state.get('user_role'):
 # SIDEBAR
 # ══════════════════════════════════════════════════════════════════════════════
 _base_nav = [
-    ("⚡", "MY DASHBOARD"),
-    ("🏆", "LEADERBOARD"),
-    ("👤", "MY PROFILE"),
-    ("📈", "MY PROGRESS"),
+    ("▪", "MY DASHBOARD"),
+    ("▲", "LEADERBOARD"),
+    ("◎", "GLOBAL"),
+    ("●", "MY PROFILE"),
+    ("↗", "MY PROGRESS"),
 ]
-_coach_nav = [("⚙️", "SETTINGS")]
+_coach_nav = [("≡", "SETTINGS")]
 NAV_ITEMS = _base_nav + (_coach_nav if st.session_state.get('user_role') == 'coach' else [])
 
 with st.sidebar:
@@ -1007,7 +1008,7 @@ with st.sidebar:
     </div>""", unsafe_allow_html=True)
 
     # Identity pill
-    role_label = '⚙️ Coach' if user_role == 'coach' else '🏃 Athlete'
+    role_label = '≡ Coach' if user_role == 'coach' else '● Athlete'
     st.markdown(f"""
     <div style="background:#131316;border:1px solid #1E1E22;
                 border-radius:10px;padding:12px 14px;margin-bottom:14px;
@@ -1077,8 +1078,8 @@ page = st.session_state.page
 if page == "MY DASHBOARD":
     df_me = load_athlete_runs(current_user)
     if df_me.empty:
-        page_header("MY DASHBOARD", f"welcome back, {current_user.lower()}", "⚡", "blue")
-        empty_state("🏃", "NO RUNS YET", "Head to Settings to log your first run.")
+        page_header("MY DASHBOARD", f"welcome back, {current_user.lower()}")
+        empty_state("◇", "NO RUNS YET", "Head to Settings to log your first run.")
         render_footer()
         st.stop()
 
@@ -1091,7 +1092,7 @@ if page == "MY DASHBOARD":
     my_rank = int(rankings[rankings['athlete'] == current_user].index[0]) + 1
     total_athletes = len(rankings)
 
-    page_header("MY DASHBOARD", f"welcome back, {current_user.lower()}", "⚡", "blue")
+    page_header("MY DASHBOARD", f"welcome back, {current_user.lower()}")
 
     # ── Streak calc ──
     df_me_dates = sorted(df_me['date'].dt.date.unique(), reverse=True)
@@ -1103,7 +1104,7 @@ if page == "MY DASHBOARD":
             check = d
         else:
             break
-    streak_emoji = '🔥' if streak >= 3 else '⚡' if streak >= 1 else '—'
+    streak_emoji = '▲' if streak >= 1 else '–'
     rank_color   = ACCENT if my_rank == 1 else '#F5F5F7'
 
     # ── 5-card hero strip (rank / PB / speed / runs / streak) ──
@@ -1169,7 +1170,7 @@ if page == "MY DASHBOARD":
         <div style="background:#131316;border:1px solid #1E1E22;border-radius:10px;
                     padding:16px 20px;margin-bottom:16px;
                     display:flex;align-items:center;gap:20px;">
-            <div style="font-size:1.8rem;">🎯</div>
+            <div style="font-size:1.6rem;color:{ACCENT};">◉</div>
             <div style="flex:1;">
                 <div style="font-family:'DM Sans';font-size:0.62rem;letter-spacing:0.1em;
                             text-transform:uppercase;color:#6E6E76;margin-bottom:4px;">Time to beat</div>
@@ -1190,7 +1191,7 @@ if page == "MY DASHBOARD":
         <div style="background:#131316;border:1px solid #1E1E22;border-radius:10px;
                     padding:16px 20px;margin-bottom:16px;
                     display:flex;align-items:center;gap:20px;">
-            <div style="font-size:1.8rem;">👑</div>
+            <div style="font-size:1.6rem;color:{SUCCESS};">♛</div>
             <div>
                 <div style="font-family:'DM Sans';font-size:1rem;font-weight:700;color:{SUCCESS};">You're leading the pack</div>
                 <div style="font-family:'DM Sans';font-size:0.8rem;color:#6E6E76;">
@@ -1225,7 +1226,7 @@ if page == "MY DASHBOARD":
                     padding:12px 16px;margin-bottom:12px;">
             <div style="font-family:'DM Sans';font-size:0.62rem;letter-spacing:0.1em;
                         text-transform:uppercase;color:{SUCCESS};margin-bottom:4px;">
-                💡 Season insight</div>
+                ✦ Season insight</div>
             <div style="font-family:'DM Sans';font-size:0.8rem;color:#9A9AA2;
                         line-height:1.55;">{insight_text}</div>
         </div>
@@ -1290,22 +1291,22 @@ if page == "MY DASHBOARD":
 # ══════════════════════════════════════════════════════════════════════════════
 elif page == "LEADERBOARD":
     lb = load_leaderboard()
-    page_header("LEADERBOARD", f"{len(get_all_athletes())} athletes ranked · season 2026", "🏆", "pink")
+    page_header("LEADERBOARD", f"{len(get_all_athletes())} athletes ranked · season 2026")
 
     st.markdown(f"""
     <div style="background:#131316;border:1px solid #1E1E22;border-left:3px solid {ACCENT};
                 border-radius:0 8px 8px 0;padding:10px 16px;margin-bottom:16px;
                 display:flex;align-items:center;gap:10px;">
-        <span style="font-size:1rem;">🌐</span>
+        <span style="font-size:1rem;color:{ACCENT};">◎</span>
         <span style="font-family:'DM Sans';font-size:0.78rem;color:#9A9AA2;">
-            Share the public leaderboard — anyone can view rankings without logging in
-            by visiting the app URL and clicking <strong style="color:{ACCENT};">View Public Leaderboard</strong>.
+            This is your squad's board. Check <strong style="color:{ACCENT};">GLOBAL</strong> in the sidebar
+            for the same rankings shared publicly — anyone can view it without logging in.
         </span>
     </div>
     """, unsafe_allow_html=True)
 
     if lb.empty:
-        empty_state("🏟️", "NO RUNS LOGGED YET", "Get on the track and break some beams.")
+        empty_state("◇", "NO RUNS LOGGED YET", "Get on the track and break some beams.")
         render_footer()
         st.stop()
 
@@ -1522,6 +1523,53 @@ elif page == "LEADERBOARD":
 
 
 # ══════════════════════════════════════════════════════════════════════════════
+# PAGE: GLOBAL
+# ══════════════════════════════════════════════════════════════════════════════
+elif page == "GLOBAL":
+    lb_g = load_leaderboard()
+    page_header("GLOBAL", "the same board, shared publicly — no login required to view")
+
+    if lb_g.empty:
+        empty_state("◇", "NO DATA YET", "Check back once athletes have logged runs.")
+        render_footer()
+        st.stop()
+
+    gs = get_global_stats()
+    gg1, gg2, gg3, gg4 = st.columns(4)
+    stat_card(gg1, "Athletes", str(gs['athlete_count']), accent='#F5F5F7')
+    stat_card(gg2, "Total Runs", str(gs['total_runs']), accent='#F5F5F7')
+    stat_card(gg3, "Fastest Time", f"{gs['fastest_total']:.2f}", "s", accent=ACCENT)
+    stat_card(gg4, "Top Speed", f"{gs['top_speed_ever']:.1f}", "mph", accent=ACCENT)
+    st.markdown('<div style="height:16px;"></div>', unsafe_allow_html=True)
+
+    section_header("FULL RANKINGS")
+    render_rankings_table(lb_g, current_user)
+
+    section_header("BEST TOTAL TIME")
+    lb_gs = lb_g.sort_values('best_total')
+    fig_g = go.Figure(go.Bar(
+        x=lb_gs['athlete'], y=lb_gs['best_total'],
+        marker=dict(color=lb_gs['best_total'], colorscale=SCALE, showscale=False,
+                    line=dict(color='#0A0A0D', width=1)),
+        text=[f"{v:.2f}s" for v in lb_gs['best_total']],
+        textposition='outside', textfont=dict(family='JetBrains Mono', size=11, color='#F5F5F7'),
+        cliponaxis=False,
+    ))
+    style_chart(fig_g, height=300)
+    fig_g.update_layout(
+        bargap=0.35,
+        yaxis=dict(visible=False, range=[lb_gs['best_total'].min()*0.97, lb_gs['best_total'].max()*1.04]),
+        xaxis=dict(tickfont=dict(family='DM Sans', size=12, color='#9A9AA2')),
+    )
+    st.plotly_chart(fig_g, use_container_width=True, config=CHART_CFG)
+
+    info_card("This view is identical to what's shown at the app's public URL — share it with anyone, no account needed.")
+
+    render_footer()
+    st.stop()
+
+
+# ══════════════════════════════════════════════════════════════════════════════
 # PAGE: MY PROFILE
 # ══════════════════════════════════════════════════════════════════════════════
 elif page == "MY PROFILE":
@@ -1529,8 +1577,8 @@ elif page == "MY PROFILE":
     athlete_data = load_athlete_runs(current_user)
 
     if athlete_data.empty:
-        page_header("MY PROFILE", f"{current_user.lower()}'s athlete card", "👤", "blue")
-        empty_state("🏃", "NO RUNS YET")
+        page_header("MY PROFILE", f"{current_user.lower()}'s athlete card")
+        empty_state("◇", "NO RUNS YET")
         render_footer()
         st.stop()
 
@@ -1540,7 +1588,7 @@ elif page == "MY PROFILE":
     my_rank  = int(rankings[rankings['athlete'] == current_user].index[0]) + 1
     accent   = ACCENT
 
-    page_header("MY PROFILE", f"{current_user.lower()}'s athlete card", "👤", "blue")
+    page_header("MY PROFILE", f"{current_user.lower()}'s athlete card")
 
     # ── Build profile tags as plain variables (no nested f-string quotes) ──
     acc_bg  = f'{ACCENT}18'
@@ -1688,10 +1736,10 @@ elif page == "MY PROFILE":
     # ── Personal records board — 2x2 grid + top speed full-width ──
     section_header("PERSONAL RECORDS", accent='pink')
     pr_splits = [
-        ('⚡', '0–10m',  athlete_data['split_0_10'].min(),  '1st 10 meters — reaction + first step',  '#FC4C02'),
-        ('🔥', '10–30m', athlete_data['split_10_30'].min(), 'Drive phase — peak acceleration window', '#9A9AA2'),
-        ('💨', '30–60m', athlete_data['split_30_60'].min(), 'Max velocity — highest speed window',    '#FC4C02'),
-        ('🏁', 'Total',  athlete_data['total'].min(),        '60m combined — full sprint',             '#F5F5F7'),
+        ('①', '0–10m',  athlete_data['split_0_10'].min(),  '1st 10 meters — reaction + first step',  '#FC4C02'),
+        ('②', '10–30m', athlete_data['split_10_30'].min(), 'Drive phase — peak acceleration window', '#9A9AA2'),
+        ('③', '30–60m', athlete_data['split_30_60'].min(), 'Max velocity — highest speed window',    '#FC4C02'),
+        ('④', 'Total',  athlete_data['total'].min(),        '60m combined — full sprint',             '#F5F5F7'),
     ]
     pc1, pc2 = st.columns(2)
     for i, (icon, label, val, desc, lcolor) in enumerate(pr_splits):
@@ -1716,7 +1764,7 @@ elif page == "MY PROFILE":
     <div style="background:#131316;border:1px solid #1E1E22;border-left:3px solid #FFD700;
                 border-radius:0 10px 10px 0;padding:14px 18px;margin-bottom:8px;
                 display:flex;align-items:center;gap:14px;">
-        <span style="font-size:1.4rem;">🚀</span>
+        <span style="font-size:1.4rem;color:#FFD700;">▲</span>
         <div style="flex:1;">
             <div style="font-family:'DM Sans';font-size:0.62rem;letter-spacing:0.1em;
                         text-transform:uppercase;color:#6E6E76;">Top speed</div>
@@ -1792,7 +1840,7 @@ elif page == "MY PROFILE":
 
     # ── Edit profile form ──
     section_header("EDIT MY PROFILE", accent='pink')
-    with st.expander("✏️  Update profile information", expanded=False):
+    with st.expander("Update profile information", expanded=False):
         st.markdown('<div style="height:8px"></div>', unsafe_allow_html=True)
         st.markdown('<div style="font-family:\'DM Sans\';font-weight:700;font-size:0.85rem;letter-spacing:0.06em;color:#9A9AA2;margin-bottom:12px;">IDENTITY</div>', unsafe_allow_html=True)
         ci1, ci2, ci3 = st.columns(3)
@@ -1818,7 +1866,7 @@ elif page == "MY PROFILE":
         goal_10_30 = cg3.number_input("10–30m goal (s)", 0.0, 5.0,  float(profile.get('goal_10_30') or 0.0), step=0.001, format="%.3f")
         goal_30_60 = cg4.number_input("30–60m goal (s)", 0.0, 5.0,  float(profile.get('goal_30_60') or 0.0), step=0.001, format="%.3f")
 
-        if st.button("💾  SAVE MY PROFILE", use_container_width=True):
+        if st.button("SAVE MY PROFILE", use_container_width=True):
             save_athlete_profile(current_user, school, events, age, height, weight, bio,
                                   hometown=hometown, coach=coach, grad_year=grad_year,
                                   position=position, goal_total=goal_total,
@@ -1835,10 +1883,10 @@ elif page == "MY PROFILE":
 # PAGE: MY PROGRESS
 # ══════════════════════════════════════════════════════════════════════════════
 elif page == "MY PROGRESS":
-    page_header("MY PROGRESS", f"{current_user.lower()}'s season arc", "📈", "pink")
+    page_header("MY PROGRESS", f"{current_user.lower()}'s season arc")
     df_p = load_athlete_runs(current_user)
     if df_p.empty:
-        empty_state("🏃", "NO RUNS YET")
+        empty_state("◇", "NO RUNS YET")
         render_footer()
         st.stop()
 
@@ -2056,13 +2104,13 @@ elif page == "MY PROGRESS":
 # PAGE: SETTINGS
 # ══════════════════════════════════════════════════════════════════════════════
 elif page == "SETTINGS":
-    page_header("SETTINGS", "manage athletes and sessions", "⚙️", "pink")
+    page_header("SETTINGS", "manage athletes and sessions")
 
     if user_role != 'coach':
         st.markdown("""
         <div style="background:#131316;border:1px solid #1E1E22;border-left:3px solid #FF4D4D;
                     border-radius:0 12px 12px 0;padding:24px 28px;margin:20px 0;text-align:center;">
-            <div style="font-size:2rem;margin-bottom:10px;">🔒</div>
+            <div style="font-size:1.8rem;margin-bottom:10px;color:#FF4D4D;">!</div>
             <div style="font-family:'DM Sans';font-weight:700;font-size:1.2rem;
                         color:#FF4D4D;margin-bottom:8px;">Coach Access Only</div>
             <div style="font-family:'DM Sans';font-size:0.82rem;color:#6E6E76;line-height:1.6;">
@@ -2124,7 +2172,7 @@ elif page == "SETTINGS":
             </table>
         </div>""", unsafe_allow_html=True)
     else:
-        empty_state("👥", "NO ATHLETES YET", "Use the form above to add your first athlete.")
+        empty_state("◇", "NO ATHLETES YET", "Use the form above to add your first athlete.")
 
     section_header("IMPORT RUNS FROM CSV", accent='blue')
     st.markdown("""
@@ -2170,7 +2218,7 @@ elif page == "SETTINGS":
             st.error(f"Missing columns: {', '.join(missing_cols)}")
 
     section_header("DANGER ZONE", accent='pink')
-    with st.expander("⚠️  Delete athlete data", expanded=False):
+    with st.expander("Delete athlete data", expanded=False):
         del_athletes_list = get_all_athletes()
         if del_athletes_list:
             del_athlete = st.selectbox("Select athlete to clear runs", del_athletes_list, key="del_select")
@@ -2178,7 +2226,7 @@ elif page == "SETTINGS":
             <div style="background:#1A0D0D;border:1px solid rgba(255,77,106,0.27);border-radius:8px;
                         padding:12px 16px;margin-bottom:12px;">
                 <span style="font-family:DM Sans;font-size:0.78rem;color:#FF4D4D;">
-                    ⚠️ This will permanently delete all runs for {del_athlete}. This cannot be undone.
+                    ! This will permanently delete all runs for {del_athlete}. This cannot be undone.
                 </span>
             </div>
             """, unsafe_allow_html=True)
