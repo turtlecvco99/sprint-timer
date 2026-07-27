@@ -6,6 +6,9 @@ import datetime
 import random
 import os
 import io
+import json
+import urllib.request
+import urllib.error
 
 from db import (
     get_all_athletes, load_athlete_runs, load_all_runs, load_leaderboard,
@@ -123,6 +126,24 @@ SUCCESS = '#1DDB8B'
 DANGER = '#FF4D4D'
 SCALE = [[0,ACCENT],[1.0,'#3A3A42']]
 CHART_CFG = {'displayModeBar': False, 'staticPlot': False, 'responsive': True}
+
+RECEIVER_URL = os.environ.get('DRIVE_PHASE_RECEIVER_URL', 'http://localhost:8502')
+
+
+def _receiver_request(path, payload=None, timeout=1.5):
+    """Talk to the gate receiver (software/receiver.py). Returns (ok, data_or_error)."""
+    url = f"{RECEIVER_URL}{path}"
+    try:
+        if payload is not None:
+            req = urllib.request.Request(
+                url, data=json.dumps(payload).encode('utf-8'),
+                headers={'Content-Type': 'application/json'}, method='POST')
+        else:
+            req = urllib.request.Request(url)
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            return True, json.loads(resp.read().decode('utf-8'))
+    except Exception as e:
+        return False, str(e)
 
 # ── Fonts ──────────────────────────────────────────────────────────────────────
 st.markdown("""
@@ -2121,6 +2142,34 @@ elif page == "SETTINGS":
         """, unsafe_allow_html=True)
         render_footer()
         st.stop()
+
+    section_header("GATE TIMING")
+    ok, data = _receiver_request('/status')
+    if ok:
+        armed = data.get('armed_athlete', '—')
+        st.markdown(f"""
+        <div style="background:#131316;border:1px solid #1E1E22;border-left:3px solid {SUCCESS};
+                    border-radius:0 8px 8px 0;padding:10px 16px;margin-bottom:12px;">
+            <span style="font-family:'DM Sans';font-size:0.78rem;color:#9A9AA2;">
+                Gate receiver online — next run from the gates will be logged as
+                <strong style="color:{ACCENT};">{armed}</strong>.
+            </span>
+        </div>
+        """, unsafe_allow_html=True)
+    else:
+        info_card(f"Gate receiver not reachable at {RECEIVER_URL} — manual entry below still works. "
+                  f"Start it with `python software/receiver.py` on the machine your gates connect to.")
+
+    arm_list = get_all_athletes()
+    if arm_list:
+        ac1, ac2 = st.columns([3, 1])
+        next_athlete = ac1.selectbox("Who's running next?", arm_list, key="arm_athlete", label_visibility="collapsed")
+        if ac2.button("ARM", use_container_width=True):
+            armed_ok, armed_data = _receiver_request('/arm', payload={'athlete': next_athlete})
+            if armed_ok:
+                st.success(f"Armed for {next_athlete} — next completed run from the gates will use this name.")
+            else:
+                st.error(f"Couldn't reach the gate receiver: {armed_data}")
 
     section_header("ADD NEW ATHLETE", accent='blue')
     with st.form("add_athlete"):
