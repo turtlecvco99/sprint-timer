@@ -7,8 +7,10 @@ import random
 import os
 import io
 import json
+import base64
 import urllib.request
 import urllib.error
+from PIL import Image
 
 from db import (
     get_all_athletes, load_athlete_runs, load_all_runs, load_leaderboard,
@@ -92,6 +94,10 @@ def _bootstrap():
         ('salt',          "TEXT DEFAULT NULL"),
         ('role',          "TEXT DEFAULT 'athlete'"),
         ('username',      "TEXT DEFAULT NULL"),
+        ('gender',        "TEXT DEFAULT ''"),
+        ('avatar_type',   "TEXT DEFAULT 'initial'"),
+        ('avatar_emoji',  "TEXT DEFAULT ''"),
+        ('avatar_image',  "BLOB DEFAULT NULL"),
     ]:
         try:
             conn.execute(f"ALTER TABLE athletes ADD COLUMN {col_def[0]} {col_def[1]}")
@@ -552,6 +558,32 @@ def page_header(title, subtitle):
     """, unsafe_allow_html=True)
 
 
+AVATAR_EMOJI_OPTIONS = ['🏃', '⚡', '🔥', '🐆', '🦅', '🐎', '⭐', '🚀', '🏆', '💪', '🎯', '🌟']
+
+
+def avatar_html(profile, name, size=80, font_size='2.2rem'):
+    """Render an athlete's avatar: uploaded photo, chosen emoji, or a plain initial."""
+    profile = profile or {}
+    avatar_type = profile.get('avatar_type') or 'initial'
+    base = (f'width:{size}px;height:{size}px;border-radius:50%;flex-shrink:0;'
+            f'display:flex;align-items:center;justify-content:center;overflow:hidden;')
+
+    if avatar_type == 'image' and profile.get('avatar_image') is not None:
+        img_bytes = profile['avatar_image']
+        if isinstance(img_bytes, (bytes, bytearray, memoryview)):
+            b64 = base64.b64encode(bytes(img_bytes)).decode('ascii')
+            return (f'<div style="{base}background:#1E1E22;">'
+                    f'<img src="data:image/png;base64,{b64}" style="width:100%;height:100%;object-fit:cover;">'
+                    f'</div>')
+
+    if avatar_type == 'emoji' and profile.get('avatar_emoji'):
+        return (f'<div style="{base}background:#1E1E22;border:1px solid #26262C;'
+                f'font-size:{size*0.5:.0f}px;">{profile["avatar_emoji"]}</div>')
+
+    return (f'<div style="{base}background:{ACCENT};font-family:\'DM Sans\';font-weight:800;'
+            f'font-size:{font_size};color:#FFFFFF;">{name[0].upper()}</div>')
+
+
 def stat_card(col, label, value, unit='', accent='#FC4C02', sublabel='', size='normal'):
     font_size = '1.7rem' if size == 'normal' else '1.3rem' if size == 'small' else '2.2rem'
     sub_html = f'<div style="font-family:DM Sans;font-size:0.68rem;color:#4A4A52;margin-top:4px;">{sublabel}</div>' if sublabel else ''
@@ -1004,6 +1036,8 @@ user_role = st.session_state.get('user_role') or 'athlete'
 if not st.session_state.get('user_role'):
     st.session_state.user_role = user_role
 
+sidebar_profile = load_athlete_profile(current_user)
+
 
 # ══════════════════════════════════════════════════════════════════════════════
 # SIDEBAR
@@ -1034,11 +1068,7 @@ with st.sidebar:
     <div style="background:#131316;border:1px solid #1E1E22;
                 border-radius:10px;padding:12px 14px;margin-bottom:14px;
                 display:flex;align-items:center;gap:10px;">
-        <div style="width:32px;height:32px;border-radius:50%;background:{ACCENT};
-                    display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-            <span style="font-family:'DM Sans';font-weight:700;font-size:1rem;color:#FFFFFF;">
-                {current_user[0].upper()}</span>
-        </div>
+        {avatar_html(sidebar_profile, current_user, size=32, font_size='1rem')}
         <div>
             <div style="font-family:'DM Sans';font-weight:700;font-size:0.9rem;
                         color:#F5F5F7;line-height:1;">{current_user}</div>
@@ -1628,6 +1658,9 @@ elif page == "MY PROFILE":
     if profile.get('age') and int(profile.get('age') or 0) > 0:
         v = profile['age']
         tag_parts.append(f'<span style="font-family:DM Sans;font-size:0.68rem;background:#1E1E22;color:#6E6E76;border-radius:999px;padding:3px 10px;">Age {v}</span>')
+    if profile.get('gender'):
+        v = profile['gender']
+        tag_parts.append(f'<span style="font-family:DM Sans;font-size:0.68rem;background:#1E1E22;color:#6E6E76;border-radius:999px;padding:3px 10px;">{v}</span>')
     profile_tags = ' '.join(tag_parts)
 
     bio_val  = profile.get('bio', '') or ''
@@ -1638,12 +1671,7 @@ elif page == "MY PROFILE":
                 margin-bottom:28px;">
         <div style="padding:28px 32px;">
             <div style="display:flex;align-items:center;gap:24px;flex-wrap:wrap;">
-                <div style="width:80px;height:80px;border-radius:50%;flex-shrink:0;
-                            background:{accent};
-                            display:flex;align-items:center;justify-content:center;
-                            font-family:'DM Sans';font-weight:800;font-size:2.2rem;color:#FFFFFF;">
-                    {current_user[0].upper()}
-                </div>
+                {avatar_html(profile, current_user, size=80, font_size='2.2rem')}
                 <div style="flex:1;min-width:200px;">
                     <div style="font-family:'DM Sans';font-weight:800;font-size:1.8rem;
                                 color:#F5F5F7;line-height:1;margin-bottom:8px;">
@@ -1870,14 +1898,57 @@ elif page == "MY PROFILE":
         coach    = ci3.text_input("Coach",           value=str(profile.get('coach','') or ''))
         ci4, ci5, ci6, ci7 = st.columns(4)
         age       = ci4.number_input("Age",      10, 40, int(profile.get('age') or 18))
-        height    = ci5.text_input("Height",         value=str(profile.get('height','') or ''))
-        weight    = ci6.text_input("Weight",         value=str(profile.get('weight','') or ''))
-        grad_year = ci7.text_input("Grad year",      value=str(profile.get('grad_year','') or ''))
-        ci8, ci9 = st.columns(2)
-        events   = ci8.text_input("Events (e.g. 100m, 200m, 4x1)", value=str(profile.get('events','') or ''))
-        position = ci9.text_input("Position / role",               value=str(profile.get('position','') or ''))
+        gender_options = ['', 'Male', 'Female', 'Other', 'Prefer not to say']
+        gender_current = str(profile.get('gender', '') or '')
+        gender_idx = gender_options.index(gender_current) if gender_current in gender_options else 0
+        gender    = ci5.selectbox("Gender", gender_options, index=gender_idx)
+        height    = ci6.text_input("Height",         value=str(profile.get('height','') or ''))
+        weight    = ci7.text_input("Weight",         value=str(profile.get('weight','') or ''))
+        ci8, ci9, ci10 = st.columns(3)
+        grad_year = ci8.text_input("Grad year",      value=str(profile.get('grad_year','') or ''))
+        events    = ci9.text_input("Events (e.g. 100m, 200m, 4x1)", value=str(profile.get('events','') or ''))
+        position  = ci10.text_input("Position / role",              value=str(profile.get('position','') or ''))
         bio      = st.text_area("Bio", value=str(profile.get('bio','') or ''),
                                 placeholder="Training philosophy, goals, personal notes...", height=100)
+
+        st.markdown('<div style="font-family:\'DM Sans\';font-weight:700;font-size:0.85rem;letter-spacing:0.06em;color:#9A9AA2;margin:16px 0 12px;">AVATAR</div>', unsafe_allow_html=True)
+        type_labels = {'initial': 'Initial', 'emoji': 'Emoji', 'image': 'Photo'}
+        type_by_label = {v: k for k, v in type_labels.items()}
+        current_type = profile.get('avatar_type') or 'initial'
+        avatar_choice = st.radio("Avatar type", list(type_by_label.keys()),
+                                  index=list(type_labels.values()).index(type_labels.get(current_type, 'Initial')),
+                                  horizontal=True, label_visibility="collapsed")
+        avatar_type_db = type_by_label[avatar_choice]
+
+        emoji_state_key = f'avatar_emoji_choice_{current_user}'
+        if emoji_state_key not in st.session_state:
+            st.session_state[emoji_state_key] = profile.get('avatar_emoji') or AVATAR_EMOJI_OPTIONS[0]
+        avatar_image_bytes = profile.get('avatar_image')
+        avatar_image_bytes = bytes(avatar_image_bytes) if isinstance(avatar_image_bytes, (bytes, bytearray, memoryview)) else None
+
+        if avatar_type_db == 'emoji':
+            ecols = st.columns(len(AVATAR_EMOJI_OPTIONS))
+            for i, em in enumerate(AVATAR_EMOJI_OPTIONS):
+                if ecols[i].button(em, key=f"pick_avatar_{em}", use_container_width=True):
+                    st.session_state[emoji_state_key] = em
+            st.markdown(
+                f'<div style="margin-top:6px;font-family:DM Sans;font-size:0.75rem;color:#6E6E76;">'
+                f'Selected: <span style="font-size:1.3rem;">{st.session_state[emoji_state_key]}</span></div>',
+                unsafe_allow_html=True)
+        elif avatar_type_db == 'image':
+            uploaded_avatar = st.file_uploader("Upload a photo", type=['png', 'jpg', 'jpeg'],
+                                                label_visibility="collapsed")
+            if uploaded_avatar is not None:
+                img = Image.open(uploaded_avatar).convert('RGB')
+                img.thumbnail((300, 300))
+                buf = io.BytesIO()
+                img.save(buf, format='PNG')
+                avatar_image_bytes = buf.getvalue()
+            preview_profile = {'avatar_type': 'image', 'avatar_image': avatar_image_bytes}
+            if avatar_image_bytes is not None:
+                st.markdown(avatar_html(preview_profile, current_user, size=72), unsafe_allow_html=True)
+            else:
+                st.markdown('<div style="font-family:DM Sans;font-size:0.75rem;color:#6E6E76;">No photo uploaded yet.</div>', unsafe_allow_html=True)
 
         st.markdown('<div style="font-family:\'DM Sans\';font-weight:700;font-size:0.85rem;letter-spacing:0.06em;color:#9A9AA2;margin:16px 0 12px;">SEASON GOALS</div>', unsafe_allow_html=True)
         st.markdown('<div style="font-family:\'DM Sans\';font-size:0.75rem;color:#6E6E76;margin-bottom:12px;">Set target times — progress bars track how close you are</div>', unsafe_allow_html=True)
@@ -1892,7 +1963,10 @@ elif page == "MY PROFILE":
                                   hometown=hometown, coach=coach, grad_year=grad_year,
                                   position=position, goal_total=goal_total,
                                   goal_0_10=goal_0_10, goal_10_30=goal_10_30,
-                                  goal_30_60=goal_30_60)
+                                  goal_30_60=goal_30_60, gender=gender,
+                                  avatar_type=avatar_type_db,
+                                  avatar_emoji=st.session_state[emoji_state_key],
+                                  avatar_image=avatar_image_bytes)
             st.success("Profile saved.")
             st.rerun()
 

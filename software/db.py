@@ -74,14 +74,17 @@ def load_athlete_profile(name):
 def save_athlete_profile(name, school, events, age, height, weight, bio,
                          hometown='', coach='', grad_year='', position='',
                          goal_total=0.0, goal_0_10=0.0, goal_10_30=0.0,
-                         goal_30_60=0.0, profile_color='#89C4E1'):
+                         goal_30_60=0.0, profile_color='#89C4E1',
+                         gender='', avatar_type='initial', avatar_emoji='',
+                         avatar_image=None):
     conn = get_conn()
     conn.execute('''
         INSERT INTO athletes
             (name,school,events,age,height,weight,bio,hometown,coach,
              grad_year,position,goal_total,goal_0_10,goal_10_30,
-             goal_30_60,profile_color,created_at)
-        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+             goal_30_60,profile_color,gender,avatar_type,avatar_emoji,
+             avatar_image,created_at)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
         ON CONFLICT(name) DO UPDATE SET
             school=excluded.school, events=excluded.events,
             age=excluded.age, height=excluded.height,
@@ -90,10 +93,13 @@ def save_athlete_profile(name, school, events, age, height, weight, bio,
             grad_year=excluded.grad_year, position=excluded.position,
             goal_total=excluded.goal_total, goal_0_10=excluded.goal_0_10,
             goal_10_30=excluded.goal_10_30, goal_30_60=excluded.goal_30_60,
-            profile_color=excluded.profile_color
+            profile_color=excluded.profile_color, gender=excluded.gender,
+            avatar_type=excluded.avatar_type, avatar_emoji=excluded.avatar_emoji,
+            avatar_image=excluded.avatar_image
     ''', (name, school, events, age, height, weight, bio, hometown,
           coach, grad_year, position, goal_total, goal_0_10,
-          goal_10_30, goal_30_60, profile_color,
+          goal_10_30, goal_30_60, profile_color, gender, avatar_type,
+          avatar_emoji, avatar_image,
           datetime.now().isoformat()))
     conn.commit()
     conn.close()
