@@ -10,14 +10,15 @@ import json
 import base64
 import urllib.request
 import urllib.error
-from PIL import Image
+from PIL import Image, ImageDraw, ImageFont
 
 from db import (
     get_all_athletes, load_athlete_runs, load_all_runs, load_leaderboard,
     load_athlete_profile, save_athlete_profile, log_run_to_db,
     get_all_athletes_with_stats, add_athlete_to_db, get_global_stats, DB,
     register_user, verify_login, username_exists, get_name_by_username,
-    get_user_role, name_has_runs,
+    get_user_role, name_has_runs, update_run, delete_run,
+    get_recent_runs, add_kudos,
 )
 
 st.set_page_config(
@@ -57,7 +58,12 @@ def _bootstrap():
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         date TEXT, athlete TEXT,
         split_0_10 REAL, split_10_30 REAL,
-        split_30_60 REAL, total REAL, top_speed REAL)''')
+        split_30_60 REAL, total REAL, top_speed REAL,
+        kudos INTEGER DEFAULT 0)''')
+    try:
+        conn.execute("ALTER TABLE runs ADD COLUMN kudos INTEGER DEFAULT 0")
+    except Exception:
+        pass
     conn.execute('''CREATE TABLE IF NOT EXISTS athletes (
         id           INTEGER PRIMARY KEY AUTOINCREMENT,
         name         TEXT UNIQUE,
@@ -582,6 +588,76 @@ def avatar_html(profile, name, size=80, font_size='2.2rem'):
 
     return (f'<div style="{base}background:{ACCENT};font-family:\'DM Sans\';font-weight:800;'
             f'font-size:{font_size};color:#FFFFFF;">{name[0].upper()}</div>')
+
+
+_FONT_CANDIDATES_BOLD = [
+    "/System/Library/Fonts/Supplemental/Arial Bold.ttf",
+    "/Library/Fonts/Arial Bold.ttf",
+    "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+    "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
+]
+_FONT_CANDIDATES_REGULAR = [
+    "/System/Library/Fonts/Supplemental/Arial.ttf",
+    "/Library/Fonts/Arial.ttf",
+    "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+    "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf",
+]
+
+
+def _find_font(bold=False, size=48):
+    for path in (_FONT_CANDIDATES_BOLD if bold else _FONT_CANDIDATES_REGULAR):
+        if os.path.exists(path):
+            try:
+                return ImageFont.truetype(path, size)
+            except Exception:
+                continue
+    try:
+        return ImageFont.load_default(size=size)
+    except TypeError:
+        return ImageFont.load_default()
+
+
+def generate_pb_card(athlete, total, s1, s2, s3, top_speed, date_str):
+    """Render a shareable square PB card as PNG bytes."""
+    W, H = 1080, 1080
+    accent, white, muted = (252, 76, 2), (245, 245, 247), (110, 110, 118)
+    img = Image.new('RGB', (W, H), (10, 10, 13))
+    draw = ImageDraw.Draw(img)
+
+    f_brand = _find_font(bold=True, size=34)
+    f_label = _find_font(bold=False, size=26)
+    f_time  = _find_font(bold=True, size=150)
+    f_unit  = _find_font(bold=True, size=48)
+    f_name  = _find_font(bold=True, size=52)
+    f_split = _find_font(bold=True, size=36)
+    f_split_label = _find_font(bold=False, size=20)
+
+    draw.text((70, 70), "DRIVE PHASE", font=f_brand, fill=white)
+    draw.text((70, 122), "NEW PERSONAL BEST", font=f_label, fill=accent)
+
+    time_str = f"{total:.3f}"
+    draw.text((70, 340), time_str, font=f_time, fill=accent)
+    tb = draw.textbbox((70, 340), time_str, font=f_time)
+    draw.text((tb[2] + 12, tb[3] - 56), "s", font=f_unit, fill=muted)
+
+    draw.text((70, 560), athlete, font=f_name, fill=white)
+    draw.text((70, 626), date_str, font=f_label, fill=muted)
+
+    draw.line((70, 720, W - 70, 720), fill=(30, 30, 34), width=2)
+
+    splits = [("0-10M", f"{s1:.3f}s"), ("10-30M", f"{s2:.3f}s"),
+              ("30-60M", f"{s3:.3f}s"), ("TOP SPEED", f"{top_speed:.1f} MPH")]
+    col_w = (W - 140) // 4
+    for i, (label, val) in enumerate(splits):
+        x = 70 + i * col_w
+        draw.text((x, 770), val, font=f_split, fill=white)
+        draw.text((x, 820), label, font=f_split_label, fill=muted)
+
+    draw.text((70, H - 90), "built by athletes · powered by data", font=f_split_label, fill=muted)
+
+    buf = io.BytesIO()
+    img.save(buf, format='PNG')
+    return buf.getvalue()
 
 
 def stat_card(col, label, value, unit='', accent='#FC4C02', sublabel='', size='normal'):
@@ -1361,6 +1437,44 @@ elif page == "LEADERBOARD":
         render_footer()
         st.stop()
 
+    section_header("ACTIVITY FEED")
+    recent_runs = get_recent_runs(limit=15)
+    if recent_runs.empty:
+        empty_state("◇", "NO ACTIVITY YET", "Runs will show up here as soon as they're logged.")
+    else:
+        _feed_profile_cache = {}
+        for _, run_row in recent_runs.iterrows():
+            feed_athlete = run_row['athlete']
+            if feed_athlete not in _feed_profile_cache:
+                _feed_profile_cache[feed_athlete] = load_athlete_profile(feed_athlete)
+            feed_profile = _feed_profile_cache[feed_athlete]
+            pb_badge = (
+                f'<span style="font-family:DM Sans;font-size:0.6rem;background:{ACCENT}22;color:{ACCENT};'
+                f'border:1px solid {ACCENT}44;border-radius:999px;padding:2px 8px;margin-left:8px;font-weight:600;">'
+                f'NEW PB</span>'
+            ) if run_row['is_pb'] else ''
+            date_str = run_row['date'].strftime('%b %d, %Y')
+
+            fc1, fc2 = st.columns([6, 1])
+            fc1.markdown(
+                '<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #1A1A1F;">'
+                f'{avatar_html(feed_profile, feed_athlete, size=40, font_size="1rem")}'
+                '<div style="flex:1;">'
+                f'<div style="font-family:\'DM Sans\';font-size:0.88rem;color:#F5F5F7;">'
+                f'<strong>{feed_athlete}</strong> ran <span style="font-family:JetBrains Mono;color:{ACCENT};">{run_row["total"]:.3f}s</span>{pb_badge}'
+                f'</div>'
+                f'<div style="font-family:\'DM Sans\';font-size:0.7rem;color:#6E6E76;margin-top:2px;">'
+                f'{date_str} · {run_row["top_speed"]:.1f} mph top speed</div>'
+                '</div></div>',
+                unsafe_allow_html=True
+            )
+            with fc2:
+                st.markdown('<div style="height:8px;"></div>', unsafe_allow_html=True)
+                if st.button(f"♡ {int(run_row['kudos'])}", key=f"kudos_{int(run_row['id'])}", use_container_width=True):
+                    add_kudos(int(run_row['id']))
+                    st.cache_data.clear()
+                    st.rerun()
+
     section_header("FULL RANKINGS")
     render_rankings_table(lb, current_user)
 
@@ -1863,6 +1977,15 @@ elif page == "MY PROFILE":
     </div>
     """, unsafe_allow_html=True)
 
+    pb_card_bytes = generate_pb_card(
+        current_user, total_time_br,
+        float(best_run['split_0_10']), float(best_run['split_10_30']), float(best_run['split_30_60']),
+        float(best_run['top_speed']), br_date_str,
+    )
+    st.download_button("DOWNLOAD PB CARD", data=pb_card_bytes,
+                        file_name=f"{current_user}_pb_{total_time_br:.3f}s.png",
+                        mime="image/png", use_container_width=True)
+
     # ── Athlete info grid ──
     info_items = [
         ('Height',   profile.get('height','')),
@@ -2217,6 +2340,55 @@ elif page == "SETTINGS":
         render_footer()
         st.stop()
 
+    section_header("TEAM ANALYTICS")
+    all_runs_ta = load_all_runs()
+    if all_runs_ta.empty:
+        empty_state("◇", "NO DATA YET", "Team analytics will appear once runs are logged.")
+    else:
+        ta_df = all_runs_ta.copy()
+        ta_df['week'] = ta_df['date'].dt.to_period('W').apply(lambda p: p.start_time)
+        weekly_avg = ta_df.groupby('week')['total'].mean().reset_index()
+
+        tac1, tac2, tac3 = st.columns(3)
+        best_ever = all_runs_ta.nsmallest(1, 'total').iloc[0]
+        busiest_athlete = all_runs_ta['athlete'].value_counts().idxmax()
+        stat_card(tac1, "Team avg total", f"{all_runs_ta['total'].mean():.2f}", "s", accent='#F5F5F7')
+        stat_card(tac2, "Fastest ever", f"{best_ever['total']:.2f}", "s", accent=ACCENT,
+                  sublabel=best_ever['athlete'])
+        stat_card(tac3, "Most active", busiest_athlete, accent='#F5F5F7')
+        st.markdown('<div style="height:12px;"></div>', unsafe_allow_html=True)
+
+        fig_ta = go.Figure(go.Scatter(
+            x=weekly_avg['week'], y=weekly_avg['total'], mode='lines+markers',
+            line=dict(color=ACCENT, width=2), marker=dict(size=6),
+        ))
+        style_chart(fig_ta, height=260)
+        fig_ta.update_layout(yaxis=dict(range=smart_yrange(weekly_avg['total'])),
+                              xaxis=dict(title='Week of'))
+        st.plotly_chart(fig_ta, use_container_width=True, config=CHART_CFG)
+
+        last_active = all_runs_ta.groupby('athlete')['date'].max().reset_index()
+        last_active['days_since'] = (pd.Timestamp.now() - last_active['date']).dt.days
+        last_active = last_active.sort_values('days_since')
+        la_rows = ''
+        for _, r in last_active.iterrows():
+            stale = r['days_since'] > 7
+            la_color = DANGER if stale else '#9A9AA2'
+            la_flag = ' — no runs in over a week' if stale else ''
+            la_rows += f"""<tr style="border-bottom:1px solid #1A1A1F;">
+                <td style="padding:10px 14px;font-family:'DM Sans';color:#F5F5F7;font-size:0.85rem;">{r['athlete']}</td>
+                <td style="padding:10px 14px;font-family:'JetBrains Mono';color:{la_color};font-size:0.82rem;">{r['days_since']}d ago{la_flag}</td>
+            </tr>"""
+        la_th = "padding:10px 14px;font-family:'DM Sans';font-size:0.6rem;letter-spacing:0.1em;text-transform:uppercase;color:#6E6E76;text-align:left;font-weight:500;"
+        st.markdown(f"""
+        <div style="border:1px solid #1E1E22;border-radius:10px;overflow:hidden;margin-top:8px;">
+            <table style="width:100%;border-collapse:collapse;background:#131316;">
+                <thead><tr style="background:#0D0D10;border-bottom:2px solid #1E1E22;">
+                    <th style="{la_th}">Athlete</th><th style="{la_th}">Last run</th>
+                </tr></thead><tbody>{la_rows}</tbody>
+            </table>
+        </div>""", unsafe_allow_html=True)
+
     section_header("GATE TIMING")
     ok, data = _receiver_request('/status')
     if ok:
@@ -2296,6 +2468,44 @@ elif page == "SETTINGS":
         </div>""", unsafe_allow_html=True)
     else:
         empty_state("◇", "NO ATHLETES YET", "Use the form above to add your first athlete.")
+
+    section_header("MANAGE RUNS", accent='pink')
+    mr_athletes = get_all_athletes()
+    if mr_athletes:
+        mr_athlete = st.selectbox("Athlete", mr_athletes, key="manage_runs_athlete")
+        mr_runs = load_athlete_runs(mr_athlete)
+        if not mr_runs.empty:
+            run_options = {
+                f"{row['date'].strftime('%b %d, %Y')} — {row['total']:.3f}s": int(row['id'])
+                for _, row in mr_runs.iterrows()
+            }
+            mr_pick_label = st.selectbox("Run", list(run_options.keys()), key="manage_runs_pick")
+            mr_run_id = run_options[mr_pick_label]
+            mr_row = mr_runs[mr_runs['id'] == mr_run_id].iloc[0]
+
+            mc1, mc2, mc3, mc4 = st.columns(4)
+            edit_date = mc1.date_input("Date", value=mr_row['date'].date(), key="edit_run_date")
+            edit_s1 = mc2.number_input("0–10m (s)",  min_value=0.0, value=float(mr_row['split_0_10']),  step=0.001, format="%.3f", key="edit_run_s1")
+            edit_s2 = mc3.number_input("10–30m (s)", min_value=0.0, value=float(mr_row['split_10_30']), step=0.001, format="%.3f", key="edit_run_s2")
+            edit_s3 = mc4.number_input("30–60m (s)", min_value=0.0, value=float(mr_row['split_30_60']), step=0.001, format="%.3f", key="edit_run_s3")
+
+            sc1, sc2 = st.columns(2)
+            if sc1.button("SAVE CHANGES", use_container_width=True, key="save_run_edit"):
+                new_total = round(edit_s1 + edit_s2 + edit_s3, 3)
+                new_top_speed = round(30 / edit_s3 * 2.237, 2) if edit_s3 > 0 else 0.0
+                update_run(mr_run_id, str(edit_date), edit_s1, edit_s2, edit_s3, new_total, new_top_speed)
+                st.cache_data.clear()
+                st.success("Run updated.")
+                st.rerun()
+            if sc2.button("DELETE THIS RUN", use_container_width=True, key="delete_single_run"):
+                delete_run(mr_run_id)
+                st.cache_data.clear()
+                st.success("Run deleted.")
+                st.rerun()
+        else:
+            info_card(f"{mr_athlete} has no runs logged yet.")
+    else:
+        empty_state("◇", "NO ATHLETES YET", "Add an athlete above to start logging runs.")
 
     section_header("IMPORT RUNS FROM CSV", accent='blue')
     st.markdown("""

@@ -25,7 +25,7 @@ def load_athlete_runs(name):
     df = pd.read_sql(
         "SELECT * FROM runs WHERE athlete=? ORDER BY date DESC", conn, params=(name,))
     conn.close()
-    df['date'] = pd.to_datetime(df['date'])
+    df['date'] = pd.to_datetime(df['date'], format='mixed')
     return df
 
 
@@ -33,7 +33,7 @@ def load_all_runs():
     conn = get_conn()
     df = pd.read_sql("SELECT * FROM runs ORDER BY date DESC", conn)
     conn.close()
-    df['date'] = pd.to_datetime(df['date'])
+    df['date'] = pd.to_datetime(df['date'], format='mixed')
     return df
 
 
@@ -56,7 +56,7 @@ def load_leaderboard():
     if df.empty:
         return df
     df['rank'] = range(1, len(df) + 1)
-    df['last_run'] = pd.to_datetime(df['last_run']).dt.strftime('%b %d, %Y')
+    df['last_run'] = pd.to_datetime(df['last_run'], format='mixed').dt.strftime('%b %d, %Y')
     return df
 
 
@@ -111,6 +111,45 @@ def log_run_to_db(athlete, date, s1, s2, s3, total, top_speed):
         (date,athlete,split_0_10,split_10_30,split_30_60,total,top_speed)
         VALUES (?,?,?,?,?,?,?)''',
         (date, athlete, s1, s2, s3, total, top_speed))
+    conn.commit()
+    conn.close()
+
+
+def get_recent_runs(limit=20):
+    conn = get_conn()
+    df = pd.read_sql("SELECT * FROM runs ORDER BY date DESC, id DESC LIMIT ?", conn, params=(limit,))
+    best_df = pd.read_sql("SELECT athlete, MIN(total) as pb FROM runs GROUP BY athlete", conn)
+    conn.close()
+    if df.empty:
+        return df
+    df['date'] = pd.to_datetime(df['date'], format='mixed')
+    df = df.merge(best_df, on='athlete', how='left')
+    df['is_pb'] = (df['total'] - df['pb']).abs() < 0.001
+    if 'kudos' not in df.columns:
+        df['kudos'] = 0
+    df['kudos'] = df['kudos'].fillna(0).astype(int)
+    return df
+
+
+def add_kudos(run_id):
+    conn = get_conn()
+    conn.execute('UPDATE runs SET kudos = COALESCE(kudos, 0) + 1 WHERE id=?', (run_id,))
+    conn.commit()
+    conn.close()
+
+
+def update_run(run_id, date, s1, s2, s3, total, top_speed):
+    conn = get_conn()
+    conn.execute('''UPDATE runs SET date=?, split_0_10=?, split_10_30=?,
+        split_30_60=?, total=?, top_speed=? WHERE id=?''',
+        (date, s1, s2, s3, total, top_speed, run_id))
+    conn.commit()
+    conn.close()
+
+
+def delete_run(run_id):
+    conn = get_conn()
+    conn.execute('DELETE FROM runs WHERE id=?', (run_id,))
     conn.commit()
     conn.close()
 
