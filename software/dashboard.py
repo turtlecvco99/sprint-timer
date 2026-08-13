@@ -10,6 +10,7 @@ import json
 import base64
 import urllib.request
 import urllib.error
+import urllib.parse
 from PIL import Image, ImageDraw, ImageFont
 
 from db import (
@@ -457,6 +458,10 @@ hr {
 /* ── Table row hover ── */
 tr:hover { background: #17171B !important; }
 
+/* ── Athlete name links (clickable to public profile) ── */
+.dp-link { text-decoration: none !important; cursor: pointer; }
+.dp-link:hover { color: #FC4C02 !important; text-decoration: underline !important; }
+
 /* ── Number input +/- buttons styled ── */
 [data-testid="stNumberInput"] > div {
     background: #131316 !important;
@@ -694,9 +699,11 @@ def render_rankings_table(lb_df, current_user=''):
         you_badge = f'<span style="font-family:DM Sans;font-size:0.55rem;background:{ACCENT};color:#FFFFFF;border-radius:999px;padding:2px 7px;margin-left:8px;font-weight:600;vertical-align:middle;">YOU</span>' if is_me else ''
         name_color = '#F5F5F7' if is_me else '#D0D0D6'
         row_bg = 'background:#17171B;' if is_me else ''
+        profile_href = f"?view_profile={urllib.parse.quote(row['athlete'])}"
+        name_link = f'<a href="{profile_href}" target="_self" class="dp-link" style="color:{name_color};">{row["athlete"]}</a>'
         rows += f"""<tr style="border-bottom:1px solid #1A1A1F;{row_bg}">
             <td style="padding:12px 16px;font-family:'JetBrains Mono',monospace;color:{rc};font-size:0.85rem;">{rank_label}</td>
-            <td style="padding:12px 16px;font-family:'DM Sans',sans-serif;color:{name_color};font-size:0.9rem;font-weight:500;">{row['athlete']}{you_badge}</td>
+            <td style="padding:12px 16px;font-family:'DM Sans',sans-serif;color:{name_color};font-size:0.9rem;font-weight:500;">{name_link}{you_badge}</td>
             <td style="padding:12px 16px;font-family:'JetBrains Mono',monospace;color:#F5F5F7;font-size:0.85rem;">{row['best_total']:.3f}s</td>
             <td style="padding:12px 16px;font-family:'JetBrains Mono',monospace;color:#9A9AA2;font-size:0.85rem;">{row['best_0_10']:.3f}s</td>
             <td style="padding:12px 16px;font-family:'JetBrains Mono',monospace;color:#9A9AA2;font-size:0.85rem;">{row['best_10_30']:.3f}s</td>
@@ -738,6 +745,110 @@ def render_rankings_table(lb_df, current_user=''):
             </tr></thead><tbody>{rows}</tbody>
         </table>
     </div>""", unsafe_allow_html=True)
+
+
+def render_public_profile(name):
+    """A standalone, no-login-required profile view — reachable by clicking
+    an athlete's name on any leaderboard. Deliberately shows only what's
+    meant to be public: avatar, name, school, join date, and top runs —
+    not bio, goals, hometown, or other fields treated as private elsewhere."""
+    st.markdown("""<style>
+    [data-testid="stMainBlockContainer"] { max-width:900px !important; margin:0 auto !important; }
+    [data-testid="stSidebar"] { display:none !important; }
+    </style>""", unsafe_allow_html=True)
+
+    profile = load_athlete_profile(name)
+    runs = load_athlete_runs(name)
+
+    if runs.empty and not profile:
+        empty_state("◇", "ATHLETE NOT FOUND", "This athlete doesn't have a profile yet.")
+    else:
+        joined_str = ''
+        created_at = profile.get('created_at') if profile else None
+        if created_at:
+            try:
+                joined_str = pd.to_datetime(created_at, format='mixed').strftime('%B %Y')
+            except Exception:
+                joined_str = ''
+
+        tag_parts = []
+        if profile and profile.get('school'):
+            tag_parts.append(
+                f'<span style="font-family:DM Sans;font-size:0.68rem;background:{ACCENT}18;'
+                f'border:1px solid {ACCENT}44;color:{ACCENT};border-radius:999px;padding:3px 10px;">'
+                f'{profile["school"]}</span>')
+        if joined_str:
+            tag_parts.append(
+                f'<span style="font-family:DM Sans;font-size:0.68rem;background:#1E1E22;'
+                f'color:#9A9AA2;border-radius:999px;padding:3px 10px;">Joined {joined_str}</span>')
+        tags_html = ' '.join(tag_parts)
+
+        best = runs.nsmallest(1, 'total').iloc[0] if not runs.empty else None
+        best_html = ''
+        if best is not None:
+            best_html = (
+                '<div style="text-align:center;background:#0A0A0D;border-radius:10px;'
+                'padding:14px 20px;border:1px solid #1E1E22;">'
+                f'<div style="font-family:\'JetBrains Mono\';font-size:1.8rem;color:{ACCENT};line-height:1;">'
+                f'{best["total"]:.2f}s</div>'
+                '<div style="font-family:\'DM Sans\';font-size:0.6rem;letter-spacing:0.1em;'
+                'text-transform:uppercase;color:#6E6E76;margin-top:4px;">Personal best</div>'
+                '</div>'
+            )
+
+        st.markdown(
+            '<div style="background:#131316;border:1px solid #1E1E22;border-radius:14px;'
+            'padding:28px 32px;margin:24px 0;">'
+            '<div style="display:flex;align-items:center;gap:24px;flex-wrap:wrap;">'
+            f'{avatar_html(profile, name, size=80, font_size="2.2rem")}'
+            '<div style="flex:1;min-width:200px;">'
+            f'<div style="font-family:\'DM Sans\';font-weight:800;font-size:1.8rem;color:#F5F5F7;line-height:1;">{name}</div>'
+            f'<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">{tags_html}</div>'
+            '</div>'
+            f'{best_html}'
+            '</div></div>',
+            unsafe_allow_html=True
+        )
+
+        if not runs.empty:
+            section_header("TOP CAREER RUNS")
+            top_career = runs.nsmallest(5, 'total').reset_index(drop=True)
+            tc_rows = ''
+            for i, row in top_career.iterrows():
+                tc_rows += f"""
+                <tr style="border-bottom:1px solid #1A1A1F;">
+                    <td style="padding:10px 14px;font-family:JetBrains Mono;color:#FFD700;font-size:0.8rem;">#{i+1}</td>
+                    <td style="padding:10px 14px;font-family:DM Sans;color:#6E6E76;font-size:0.75rem;">{row['date'].strftime('%b %d, %Y')}</td>
+                    <td style="padding:10px 14px;font-family:JetBrains Mono;color:{ACCENT};font-size:0.82rem;">{float(row['split_0_10']):.3f}s</td>
+                    <td style="padding:10px 14px;font-family:JetBrains Mono;color:#9A9AA2;font-size:0.82rem;">{float(row['split_10_30']):.3f}s</td>
+                    <td style="padding:10px 14px;font-family:JetBrains Mono;color:{ACCENT};font-size:0.82rem;">{float(row['split_30_60']):.3f}s</td>
+                    <td style="padding:10px 14px;font-family:JetBrains Mono;color:#F5F5F7;font-size:0.9rem;font-weight:500;">{float(row['total']):.3f}s</td>
+                    <td style="padding:10px 14px;font-family:JetBrains Mono;color:#6E6E76;font-size:0.78rem;">{float(row['top_speed']):.1f} mph</td>
+                </tr>"""
+            th_tc = "padding:10px 14px;font-family:DM Sans;font-size:0.6rem;letter-spacing:0.12em;text-transform:uppercase;color:#3A3A42;text-align:left;font-weight:500;"
+            st.markdown(f"""
+            <div style="border:1px solid #1E1E22;border-radius:12px;overflow:hidden;margin-bottom:16px;">
+                <table style="width:100%;border-collapse:collapse;background:#131316;">
+                    <thead>
+                        <tr style="background:#0D0D10;border-bottom:2px solid #1E1E22;">
+                            {''.join([f'<th style="{th_tc}">{h}</th>' for h in ['#','Date','0–10m','10–30m','30–60m','Total','Speed']])}
+                        </tr>
+                    </thead>
+                    <tbody>{tc_rows}</tbody>
+                </table>
+            </div>
+            """, unsafe_allow_html=True)
+        else:
+            empty_state("◇", "NO RUNS YET", f"{name} hasn't logged any runs.")
+
+    st.markdown('<div style="height:12px;"></div>', unsafe_allow_html=True)
+    if st.button("← BACK", key="profile_back_btn"):
+        st.query_params.clear()
+        if st.session_state.current_user:
+            st.session_state.page = "LEADERBOARD"
+        else:
+            st.session_state.public_view = True
+        st.rerun()
 
 
 def empty_state(icon='◇', title="NO DATA", subtitle="Log some runs to unlock this."):
@@ -785,6 +896,11 @@ def quick_stat(label, value, color):
 # IDENTITY SYSTEM — show fullscreen selector on first visit
 # ══════════════════════════════════════════════════════════════════════════════
 all_athletes = get_all_athletes()
+
+# ── PUBLIC PROFILE (no login required — reachable from any leaderboard) ──────
+if st.query_params.get('view_profile'):
+    render_public_profile(st.query_params.get('view_profile'))
+    st.stop()
 
 # ── PUBLIC LEADERBOARD (no login) ────────────────────────────────────────────
 if st.session_state.public_view and st.session_state.current_user is None:
