@@ -1534,7 +1534,7 @@ if page == "MY DASHBOARD":
 # ══════════════════════════════════════════════════════════════════════════════
 elif page == "LEADERBOARD":
     lb = load_leaderboard()
-    page_header("LEADERBOARD", f"{len(get_all_athletes())} athletes ranked · season 2026")
+    page_header("LEADERBOARD", f"{len(lb)} athletes ranked · season 2026")
 
     st.markdown(f"""
     <div style="background:#131316;border:1px solid #1E1E22;border-left:3px solid {ACCENT};
@@ -2569,8 +2569,8 @@ elif page == "SETTINGS":
         rows = ''.join(f"""<tr style="border-bottom:1px solid #1A1A1F;">
             <td style="padding:10px 14px;font-family:'DM Sans',sans-serif;color:#F5F5F7;font-size:0.85rem;">{row['name']}</td>
             <td style="padding:10px 14px;font-family:'JetBrains Mono',monospace;color:#FC4C02;font-size:0.82rem;">{row['runs']}</td>
-            <td style="padding:10px 14px;font-family:'JetBrains Mono',monospace;color:#FC4C02;font-size:0.82rem;">{row['best']:.3f}s</td>
-            <td style="padding:10px 14px;font-family:'DM Sans',sans-serif;color:#6E6E76;font-size:0.78rem;">{str(row['last_run'])[:10]}</td>
+            <td style="padding:10px 14px;font-family:'JetBrains Mono',monospace;color:#FC4C02;font-size:0.82rem;">{f"{row['best']:.3f}s" if pd.notna(row['best']) else '—'}</td>
+            <td style="padding:10px 14px;font-family:'DM Sans',sans-serif;color:#6E6E76;font-size:0.78rem;">{str(row['last_run'])[:10] if pd.notna(row['last_run']) else '—'}</td>
         </tr>""" for _, row in athletes_df.iterrows())
         th = "padding:10px 14px;font-family:'DM Sans',sans-serif;font-size:0.6rem;letter-spacing:0.12em;text-transform:uppercase;color:#3A3A42;text-align:left;font-weight:500;"
         st.markdown(f"""

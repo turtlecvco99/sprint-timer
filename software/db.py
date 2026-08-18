@@ -14,8 +14,15 @@ def get_conn():
 
 
 def get_all_athletes():
+    """All known athletes — anyone added via Settings (even with zero runs
+    logged yet) plus anyone with runs on record, minus coach accounts."""
     conn = get_conn()
-    df = pd.read_sql("SELECT DISTINCT athlete FROM runs ORDER BY athlete", conn)
+    df = pd.read_sql('''
+        SELECT name AS athlete FROM athletes WHERE role IS NULL OR role != 'coach'
+        UNION
+        SELECT DISTINCT athlete FROM runs
+        ORDER BY athlete
+    ''', conn)
     conn.close()
     return df['athlete'].tolist()
 
@@ -155,14 +162,21 @@ def delete_run(run_id):
 
 
 def get_all_athletes_with_stats():
+    """Like get_all_athletes(), but with run stats — athletes with zero
+    runs logged yet still show up, just with 0/blank stats."""
+    names = get_all_athletes()
+    if not names:
+        return pd.DataFrame(columns=['name', 'runs', 'best', 'last_run'])
     conn = get_conn()
-    df = pd.read_sql('''SELECT athlete as name,
+    stats = pd.read_sql('''SELECT athlete as name,
         COUNT(*) as runs,
         MIN(total) as best,
         MAX(date) as last_run
-        FROM runs GROUP BY athlete ORDER BY best''', conn)
+        FROM runs GROUP BY athlete''', conn)
     conn.close()
-    return df
+    df = pd.DataFrame({'name': names}).merge(stats, on='name', how='left')
+    df['runs'] = pd.to_numeric(df['runs'], errors='coerce').fillna(0).astype(int)
+    return df.sort_values('best', na_position='last').reset_index(drop=True)
 
 
 def add_athlete_to_db(name, school, events, age, height):
