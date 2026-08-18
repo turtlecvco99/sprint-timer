@@ -1,10 +1,18 @@
 from flask import Flask, request, jsonify
 import sqlite3
 import os
+import re
 import socket
 import threading
 import time
 from datetime import datetime
+
+try:
+    import serial
+    import serial.tools.list_ports
+    _SERIAL_AVAILABLE = True
+except ImportError:
+    _SERIAL_AVAILABLE = False
 
 app = Flask(__name__)
 _here = os.path.dirname(os.path.abspath(__file__))
@@ -14,6 +22,13 @@ DB = os.path.join(_here, '..', 'data', 'sprint_data.db')
 # need to fire the instant they happen, no HTTP handshake overhead.
 UDP_PORT = 8503
 GATE_TIMEOUT_S = 15  # abandon a run if a gate never reports back (missed beam break, dead WiFi, etc.)
+
+# The hub (4 gates wired into one board) reports over USB serial instead —
+# it prints its own "Gate N: X.XX ms" summary once a run finishes, so no
+# aggregation is needed here, just parsing.
+SERIAL_PORT = os.environ.get('DRIVE_PHASE_SERIAL_PORT', '')
+SERIAL_BAUD = int(os.environ.get('DRIVE_PHASE_SERIAL_BAUD', '9600'))
+_GATE_LINE_RE = re.compile(r'Gate\s+(\d+)\s*:\s*([\d.]+)\s*ms', re.IGNORECASE)
 
 _armed_lock = threading.Lock()
 _armed_athlete = 'Franklin'
@@ -150,8 +165,68 @@ def _gate_listener():
                 _complete_run(*completed)
 
 
+def _pick_serial_port():
+    if SERIAL_PORT:
+        return SERIAL_PORT
+    ports = list(serial.tools.list_ports.comports())
+    if len(ports) == 1:
+        print(f"[hub] auto-detected serial port: {ports[0].device}")
+        return ports[0].device
+    if not ports:
+        print("[hub] no serial ports found — plug in the hub, or set DRIVE_PHASE_SERIAL_PORT")
+    else:
+        names = ', '.join(p.device for p in ports)
+        print(f"[hub] multiple serial ports found ({names}) — set DRIVE_PHASE_SERIAL_PORT to pick one")
+    return None
+
+
+def _serial_listener():
+    """Background thread: reads the hub's plain-text run summaries over USB
+    serial and logs a completed run each time all 4 gate times arrive.
+
+    Expected lines (anywhere in the stream, other lines are ignored):
+      "Gate 0: 0.00 ms"
+      "Gate 1: <cumulative ms since gate 0>"
+      "Gate 2: <cumulative ms since gate 0>"
+      "Gate 3: <cumulative ms since gate 0>"
+    """
+    gate_ms = {}
+    while True:
+        port = _pick_serial_port()
+        if not port:
+            time.sleep(5)
+            continue
+        try:
+            with serial.Serial(port, SERIAL_BAUD, timeout=2) as ser:
+                print(f"[hub] connected on {port} @ {SERIAL_BAUD} baud")
+                gate_ms.clear()
+                while True:
+                    line = ser.readline().decode('utf-8', errors='ignore').strip()
+                    if not line:
+                        continue
+                    m = _GATE_LINE_RE.search(line)
+                    if not m:
+                        continue
+                    gate_id, ms = int(m.group(1)), float(m.group(2))
+                    gate_ms[gate_id] = ms
+                    if all(g in gate_ms for g in (0, 1, 2, 3)):
+                        base = gate_ms[0]
+                        elapsed_10 = (gate_ms[1] - base) / 1000.0
+                        elapsed_30 = (gate_ms[2] - base) / 1000.0
+                        elapsed_60 = (gate_ms[3] - base) / 1000.0
+                        gate_ms.clear()
+                        _complete_run(elapsed_10, elapsed_30, elapsed_60)
+        except (serial.SerialException, OSError) as e:
+            print(f"[hub] serial connection lost ({e}) — retrying in 5s")
+            time.sleep(5)
+
+
 if __name__ == '__main__':
     init_db()
     threading.Thread(target=_gate_listener, daemon=True).start()
-    print("Receiver live on port 8502 (HTTP) and 8503 (UDP gate feed)")
+    if _SERIAL_AVAILABLE:
+        threading.Thread(target=_serial_listener, daemon=True).start()
+    else:
+        print("[hub] pyserial not installed — skipping USB hub listener (pip install pyserial)")
+    print("Receiver live on port 8502 (HTTP), 8503 (UDP gate feed), and USB serial (hub)")
     app.run(host='0.0.0.0', port=8502)
