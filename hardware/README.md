@@ -18,17 +18,22 @@ Streamlit app — start both, in either order, on the same machine.
 Your hub already does the split math itself and prints one block per run:
 
 ```
+Gate 0 triggered!
+Gate 1 triggered!
+Gate 2 triggered!
+Gate 3 triggered!
 === RUN COMPLETE ===
-Gate 0: 0.00 ms
-Gate 1: 0.59 ms
-Gate 2: 0.86 ms
-Gate 3: 1.09 ms
-=====================
+Gate 0: 0.00 seconds
+Gate 1: 0.66 seconds
+Gate 2: 1.02 seconds
+Gate 3: 1.33 seconds
+====================
 Ready for next run!
 ```
 
 `receiver.py` reads this directly over the USB cable — no changes needed
-on the hub's end.
+on the hub's end. It accepts either `ms` or `seconds` as the unit, so
+this works regardless of which one your hub's firmware prints.
 
 ### 1. Install pyserial
 
@@ -52,12 +57,14 @@ explicitly before starting the receiver:
 export DRIVE_PHASE_SERIAL_PORT=/dev/tty.usbserial-XXXX   # macOS/Linux example
 ```
 
-On Windows this looks like `COM3`. If your hub's code uses a baud rate
-other than the default `9600` (check its `Serial.begin(...)` call), set
-that too:
+On Windows this looks like `COM3`. The default baud rate is `115200`
+(confirmed against this hub's actual firmware). If yours uses something
+else — check its `Serial.begin(...)` call, or open it in Arduino IDE's
+Serial Monitor and try baud rates until the text is readable instead of
+garbled — override it:
 
 ```bash
-export DRIVE_PHASE_SERIAL_BAUD=115200
+export DRIVE_PHASE_SERIAL_BAUD=9600
 ```
 
 ### 3. Run the receiver

@@ -27,8 +27,10 @@ GATE_TIMEOUT_S = 15  # abandon a run if a gate never reports back (missed beam b
 # it prints its own "Gate N: X.XX ms" summary once a run finishes, so no
 # aggregation is needed here, just parsing.
 SERIAL_PORT = os.environ.get('DRIVE_PHASE_SERIAL_PORT', '')
-SERIAL_BAUD = int(os.environ.get('DRIVE_PHASE_SERIAL_BAUD', '9600'))
-_GATE_LINE_RE = re.compile(r'Gate\s+(\d+)\s*:\s*([\d.]+)\s*ms', re.IGNORECASE)
+SERIAL_BAUD = int(os.environ.get('DRIVE_PHASE_SERIAL_BAUD', '115200'))
+_GATE_LINE_RE = re.compile(
+    r'Gate\s+(\d+)\s*:\s*([\d.]+)\s*(ms|milliseconds|seconds|secs|sec|s)\b',
+    re.IGNORECASE)
 
 _armed_lock = threading.Lock()
 _armed_athlete = 'Franklin'
@@ -207,7 +209,8 @@ def _serial_listener():
                     m = _GATE_LINE_RE.search(line)
                     if not m:
                         continue
-                    gate_id, ms = int(m.group(1)), float(m.group(2))
+                    gate_id, value, unit = int(m.group(1)), float(m.group(2)), m.group(3).lower()
+                    ms = value if unit in ('ms', 'milliseconds') else value * 1000.0
                     gate_ms[gate_id] = ms
                     if all(g in gate_ms for g in (0, 1, 2, 3)):
                         base = gate_ms[0]
