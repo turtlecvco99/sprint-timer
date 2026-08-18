@@ -3,7 +3,6 @@ import pandas as pd
 import plotly.graph_objects as go
 import sqlite3
 import datetime
-import random
 import os
 import io
 import json
@@ -112,22 +111,6 @@ def _bootstrap():
             pass
     conn.execute("UPDATE athletes SET username = name WHERE username IS NULL AND password_hash IS NOT NULL")
     conn.commit()
-    if conn.execute('SELECT COUNT(*) FROM runs').fetchone()[0] == 0:
-        base = datetime.datetime.now() - datetime.timedelta(days=30)
-        for name, b1, b2, b3 in [
-            ("Franklin",1.92,2.48,3.20),("Marcus",1.88,2.42,3.12),
-            ("Jordan",1.95,2.55,3.30),("Darius",1.90,2.46,3.18),
-            ("Tyler",1.97,2.58,3.35),("Zion",1.86,2.39,3.08),
-            ("Cameron",1.93,2.50,3.22),("Elijah",1.89,2.44,3.15),
-        ]:
-            for i in range(20):
-                imp = i*0.003; fat = random.uniform(-0.02,0.04)
-                s1,s2,s3 = round(b1-imp+fat,3),round(b2-imp+fat,3),round(b3-imp+fat,3)
-                total = round(s1+s2+s3,3)
-                conn.execute(
-                    'INSERT INTO runs (date,athlete,split_0_10,split_10_30,split_30_60,total,top_speed) VALUES (?,?,?,?,?,?,?)',
-                    ((base+datetime.timedelta(days=i*1.5)).isoformat(),name,s1,s2,s3,total,round(30/s3*2.237,2)))
-        conn.commit()
     conn.close()
 
 
